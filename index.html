@@ -11,18 +11,26 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
       background: url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;
       background-size: cover;
-      font-family: 'Poppins', sans-serif;
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75); /* Dark overlay for readability */
+      z-index: -1;
     }
   </style>
 </head>
-<body class="bg-gray-900 text-white">
+<body class="text-white">
+<div class="overlay"></div>
 <div id="root"></div>
 
 <script type="text/babel">
 const { useState, useEffect } = React;
-const { motion, AnimatePresence } = framerMotion;
+const { motion } = framerMotion;
 
 // Character Images for Level Unlock
 const characterImages = [
@@ -67,7 +75,6 @@ const bossTask = "Defeat the Boss: Complete 1 mock test and revise 3 topics toda
 function getXPForLevel(level) {
   return level * level * 100;
 }
-
 function getRank(level) {
   if (level < 5) return rankTitles[0];
   if (level < 10) return rankTitles[1];
@@ -190,11 +197,11 @@ function App() {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-4 max-w-2xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg">
       <header className="text-center mb-4">
         <h1 className="text-3xl font-bold">Solo Leveling Grind</h1>
         <p className="mt-2">Level {level} ({getRank(level)})</p>
-        <div className="w-full bg-gray-700 rounded h-4 mt-2">
+        <div className="w-full bg-gray-700 rounded h-4 mt-2 overflow-hidden">
           <div
             className="bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded"
             style={{ width: `${(xp / getXPForLevel(level)) * 100}%` }}
@@ -209,7 +216,7 @@ function App() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center text-4xl font-bold"
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center text-4xl font-bold z-50"
         >
           <div className="text-white text-center">
             <p>You’ve Leveled Up!</p>
@@ -219,11 +226,9 @@ function App() {
       )}
 
       {punishments.length > 0 && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center">
-          <div className="bg-gray-800 p-6 rounded text-center">
-            <h2 className="text-2xl font-bold mb-4">
-              Punishment {punishments.length > 1 ? `(${punishments.length} queued)` : ''}
-            </h2>
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-6 rounded text-center max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Punishment</h2>
             <p className="mb-4">{punishments[0].text}</p>
             <button
               onClick={completePunishment}
@@ -231,42 +236,47 @@ function App() {
             >
               Punishment Completed
             </button>
+            <p className="mt-2 text-sm">Remaining: {punishments.length - 1}</p>
           </div>
         </div>
       )}
 
       <div className="mt-6">
-        <h2 className="text-xl mb-2">Tasks</h2>
-        <div className="mb-4 flex justify-between">
+        <h2 className="text-xl mb-2 font-semibold">Your Tasks</h2>
+        <div className="mb-4 flex justify-end">
           <button onClick={() => setShowAddModal(true)} className="bg-blue-500 px-4 py-2 rounded">+ Add Task</button>
         </div>
         <div>
-          {tasks.map(task => (
-            <motion.div
-              key={task.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="bg-gray-800 p-4 rounded mb-2 flex justify-between items-center"
-            >
-              <div>
-                <p className="font-bold">{task.title}</p>
-                <p className="text-sm">{task.type === 'daily' ? `Time: ${task.start} - ${task.end}` : `Deadline: ${task.days} days`}</p>
-              </div>
-              <button onClick={() => completeTask(task.id)} className="bg-green-500 px-3 py-1 rounded">Done</button>
-            </motion.div>
-          ))}
+          {tasks.length === 0 ? (
+            <p className="text-center text-gray-300">No tasks yet. Add one!</p>
+          ) : (
+            tasks.map(task => (
+              <motion.div
+                key={task.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="bg-gray-800 p-4 rounded mb-2 flex justify-between items-center"
+              >
+                <div>
+                  <p className="font-bold">{task.title}</p>
+                  <p className="text-sm text-gray-400">{task.type === 'daily' ? `Time: ${task.start} - ${task.end}` : `Deadline: ${task.days} days`}</p>
+                </div>
+                <button onClick={() => completeTask(task.id)} className="bg-green-500 px-3 py-1 rounded">Done</button>
+              </motion.div>
+            ))
+          )}
         </div>
       </div>
 
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center">
-          <div className="bg-gray-900 p-6 rounded">
-            <h2 className="text-xl mb-4">Add Task</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded max-w-md w-full">
+            <h2 className="text-xl mb-4 font-semibold">Add Task</h2>
             <select
               value={newTask.type}
               onChange={(e) => setNewTask({ ...newTask, type: e.target.value })}
-              className="mb-4 w-full p-2 text-black"
+              className="mb-4 w-full p-2 text-black rounded"
             >
               <option value="daily">Daily Task</option>
               <option value="timed">Timed Task</option>
@@ -276,19 +286,21 @@ function App() {
               placeholder="Task title"
               value={newTask.title}
               onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-              className="w-full mb-4 p-2 text-black"
+              className="w-full mb-4 p-2 text-black rounded"
             />
             {newTask.type === 'daily' && (
               <>
-                <input type="time" className="w-full mb-2 text-black" onChange={(e) => setNewTask({ ...newTask, start: e.target.value })}/>
-                <input type="time" className="w-full mb-4 text-black" onChange={(e) => setNewTask({ ...newTask, end: e.target.value })}/>
+                <input type="time" className="w-full mb-2 p-2 text-black rounded" onChange={(e) => setNewTask({ ...newTask, start: e.target.value })}/>
+                <input type="time" className="w-full mb-4 p-2 text-black rounded" onChange={(e) => setNewTask({ ...newTask, end: e.target.value })}/>
               </>
             )}
             {newTask.type === 'timed' && (
-              <input type="number" placeholder="Days" className="w-full mb-4 p-2 text-black" onChange={(e) => setNewTask({ ...newTask, days: e.target.value })}/>
+              <input type="number" placeholder="Days" className="w-full mb-4 p-2 text-black rounded" onChange={(e) => setNewTask({ ...newTask, days: e.target.value })}/>
             )}
-            <button onClick={addTask} className="bg-blue-600 px-4 py-2 rounded">Add</button>
-            <button onClick={() => setShowAddModal(false)} className="ml-2 bg-gray-600 px-4 py-2 rounded">Cancel</button>
+            <div className="flex justify-end">
+              <button onClick={addTask} className="bg-blue-600 px-4 py-2 rounded">Add</button>
+              <button onClick={() => setShowAddModal(false)} className="ml-2 bg-gray-600 px-4 py-2 rounded">Cancel</button>
+            </div>
           </div>
         </div>
       )}
