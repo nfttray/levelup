@@ -42,32 +42,9 @@
 <script>
 const { useState, useEffect } = React;
 
-// Punishment Lists
-const normalPunishments = [
-  "Do 20 push-ups",
-  "Solve 50 GK questions",
-  "Revise 2 topics you hate",
-  "No social media for 6 hours",
-  "Read 30 pages from a book"
-];
-
-const deathModePunishments = [
-  "Study 6 hours straight + Write summary",
-  "Complete 200 questions + 50 push-ups",
-  "Write all important formulas twice",
-  "Do full mock test now + No phone for 8 hrs",
-  "Revise 5 topics + Cold shower"
-];
-
-const rewards = [
-  "Hang out with friends for 1 hour",
-  "Eat your favorite snack",
-  "Watch 1 anime episode guilt-free",
-  "Listen to music for 30 min",
-  "Take a relaxing bath"
-];
-
-const bossTask = "Defeat the Boss: Complete 1 mock test and revise 3 topics today!";
+const normalPunishments = ["Do 20 push-ups","Solve 50 GK questions","Revise 2 topics","No social media 6 hrs","Read 30 pages"];
+const deathModePunishments = ["Study 6 hrs straight","Complete 200 questions","Write all formulas twice","Do full mock test"];
+const rewards = ["Hang out 1 hr","Eat favorite snack","Watch 1 anime episode","Listen music 30 min","Take a relaxing bath"];
 
 const characterImages = [
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/45.png',
@@ -76,196 +53,139 @@ const characterImages = [
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/21.png'
 ];
 
-const rankTitles = ['E-Rank Hunter', 'D-Rank', 'C-Rank', 'B-Rank', 'A-Rank', 'S-Rank'];
+const rankTitles = ['E-Rank Hunter','D-Rank','C-Rank','B-Rank','A-Rank','S-Rank'];
+function getXPForLevel(level){return level*level*100;}
+function getRank(level){if(level<5)return rankTitles[0];if(level<10)return rankTitles[1];if(level<15)return rankTitles[2];if(level<20)return rankTitles[3];if(level<25)return rankTitles[4];return rankTitles[5];}
 
-function getXPForLevel(level) {
-  return level * level * 100;
-}
+function App(){
+  const [xp,setXP]=useState(parseInt(localStorage.getItem('xp'))||0);
+  const [level,setLevel]=useState(parseInt(localStorage.getItem('level'))||1);
+  const [tasks,setTasks]=useState(JSON.parse(localStorage.getItem('tasks'))||[]);
+  const [habits,setHabits]=useState(JSON.parse(localStorage.getItem('habits'))||[]);
+  const [punishments,setPunishments]=useState(JSON.parse(localStorage.getItem('punishments'))||[]);
+  const [showAddModal,setShowAddModal]=useState(false);
+  const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
+  const [bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
+  const [showLevelUp,setShowLevelUp]=useState(false);
 
-function getRank(level) {
-  if (level < 5) return rankTitles[0];
-  if (level < 10) return rankTitles[1];
-  if (level < 15) return rankTitles[2];
-  if (level < 20) return rankTitles[3];
-  if (level < 25) return rankTitles[4];
-  return rankTitles[5];
-}
+  useEffect(()=>{
+    localStorage.setItem('xp',xp);
+    localStorage.setItem('level',level);
+    localStorage.setItem('tasks',JSON.stringify(tasks));
+    localStorage.setItem('habits',JSON.stringify(habits));
+    localStorage.setItem('punishments',JSON.stringify(punishments));
+    localStorage.setItem('bossCountdown',bossCountdown);
+  },[xp,level,tasks,habits,punishments,bossCountdown]);
 
-function showNotification(title, body) {
-  if (Notification.permission === "granted") {
-    new Notification(title, { body });
-  }
-}
+  useEffect(()=>{if(xp>=getXPForLevel(level)){setXP(xp-getXPForLevel(level));setLevel(level+1);setShowLevelUp(true);setTimeout(()=>setShowLevelUp(false),2000);}},[xp]);
 
-function App() {
-  const [xp, setXP] = useState(parseInt(localStorage.getItem('xp')) || 0);
-  const [level, setLevel] = useState(parseInt(localStorage.getItem('level')) || 1);
-  const [tasks, setTasks] = useState(JSON.parse(localStorage.getItem('tasks')) || []);
-  const [punishments, setPunishments] = useState(JSON.parse(localStorage.getItem('punishments')) || []);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newTask, setNewTask] = useState({ type: 'daily', title: '', start: '', end: '', days: '' });
-  const [bossCountdown, setBossCountdown] = useState(parseInt(localStorage.getItem('bossCountdown')) || 0);
-  const [showLevelUp, setShowLevelUp] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem('xp', xp);
-    localStorage.setItem('level', level);
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-    localStorage.setItem('punishments', JSON.stringify(punishments));
-    localStorage.setItem('bossCountdown', bossCountdown);
-  }, [xp, level, tasks, punishments, bossCountdown]);
-
-  // Level-up check
-  useEffect(() => {
-    if (xp >= getXPForLevel(level)) {
-      setXP(xp - getXPForLevel(level));
-      setLevel(level + 1);
-      setShowLevelUp(true);
-      setTimeout(() => setShowLevelUp(false), 2000);
+  // Reset habits daily
+  useEffect(()=>{
+    const today=new Date().toDateString();
+    const lastReset=localStorage.getItem('lastReset');
+    if(lastReset!==today){
+      const resetHabits=habits.map(h=>({...h,done:false}));
+      setHabits(resetHabits);
+      localStorage.setItem('lastReset',today);
     }
-  }, [xp]);
+  },[]);
 
-  // Boss battle trigger
-  useEffect(() => {
-    if (bossCountdown >= 5) {
-      addPunishment({ type: 'boss', text: bossTask, deathMode: true });
-      showNotification("Boss Battle!", "Defeat the Boss before the day ends!");
-      setBossCountdown(0);
-    }
-  }, [bossCountdown]);
-
-  // Notifications permission
-  useEffect(() => {
-    if (Notification.permission !== "granted") {
-      Notification.requestPermission();
-    }
-  }, []);
-
-  // AUTO PUNISHMENT CHECK
-  useEffect(() => {
-    const checkMissedTasks = () => {
-      const now = new Date();
-      let updatedTasks = [];
-      tasks.forEach(task => {
-        if (task.type === 'daily') {
-          if (task.end) {
-            const [endHour, endMin] = task.end.split(':').map(Number);
-            const endTime = new Date();
-            endTime.setHours(endHour, endMin, 0);
-            if (now > endTime) {
-              assignMissedTaskPunishment(task.title);
-              return;
-            }
-          }
-        } else if (task.type === 'timed') {
-          const created = new Date(task.created);
-          const deadline = new Date(created);
-          deadline.setDate(created.getDate() + parseInt(task.days));
-          if (now > deadline) {
-            assignMissedTaskPunishment(task.title);
-            return;
-          }
-        }
-        updatedTasks.push(task);
-      });
-      setTasks(updatedTasks);
-    };
-
-    const interval = setInterval(checkMissedTasks, 60000); // check every 1 min
-    return () => clearInterval(interval);
-  }, [tasks]);
-
-  function addTask() {
-    if (!newTask.title) return;
-    const id = Date.now();
-    const task = { ...newTask, id, done: false, created: new Date().toISOString() };
-    setTasks([...tasks, task]);
+  function addTask(){
+    if(!newTask.title)return;
+    const id=Date.now();
+    const task={...newTask,id,created:new Date().toISOString(),done:false};
+    if(newTask.type==='habit'){setHabits([...habits,task]);}
+    else{setTasks([...tasks,task]);}
     setShowAddModal(false);
-    setNewTask({ type: 'daily', title: '', start: '', end: '', days: '' });
+    setNewTask({type:'daily',title:'',start:'',end:'',days:''});
   }
 
-  function completeTask(id) {
-    setTasks(tasks.filter(t => t.id !== id));
-    setXP(xp + 2);
-    setBossCountdown(bossCountdown + 1);
+  function completeTask(id){
+    setTasks(tasks.filter(t=>t.id!==id));
+    setXP(xp+2);
+    setBossCountdown(bossCountdown+1);
   }
 
-  function assignMissedTaskPunishment(taskTitle) {
-    const isDeath = Math.random() < 0.5;
-    const punishmentText = isDeath
-      ? deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)]
-      : normalPunishments[Math.floor(Math.random() * normalPunishments.length)];
-
-    addPunishment({ type: 'punishment', text: `${taskTitle} missed! ${punishmentText}`, deathMode: isDeath });
-    setXP(xp - (isDeath ? 25 : 10));
-    showNotification("Punishment Assigned!", `${taskTitle} missed. Punishment: ${punishmentText}`);
+  function completeHabit(id){
+    const updated=habits.map(h=>h.id===id?{...h,done:true}:h);
+    setHabits(updated);
+    setXP(xp+2);
   }
 
-  function addPunishment(p) {
-    setPunishments([...punishments, p]);
+  function deleteHabit(id){
+    setHabits(habits.filter(h=>h.id!==id));
   }
 
-  function completePunishment() {
-    const [first, ...rest] = punishments;
-    if (first.deathMode) {
-      const reward = rewards[Math.floor(Math.random() * rewards.length)];
-      alert(`Reward Unlocked: ${reward}`);
-    }
+  function addPunishment(p){setPunishments([...punishments,p]);}
+  function completePunishment(){
+    const[first,...rest]=punishments;
+    if(first.deathMode){alert(`Reward: ${rewards[Math.floor(Math.random()*rewards.length)]}`);}
     setPunishments(rest);
   }
 
-  return React.createElement('div', { className: "p-4 max-w-2xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg " + (showLevelUp ? 'flash' : '') }, 
-    React.createElement('header', { className: "text-center mb-4" }, 
-      React.createElement('h1', { className: "text-3xl font-bold" }, "Solo Leveling Grind"),
-      React.createElement('p', { className: "mt-2" }, `Level ${level} (${getRank(level)})`),
-      React.createElement('div', { className: "w-full bg-gray-700 rounded h-4 mt-2 overflow-hidden" }, 
-        React.createElement('div', { className: "bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded", style: { width: `${(xp / getXPForLevel(level)) * 100}%` }})
-      ),
-      React.createElement('p', { className: "text-sm mt-1" }, `${xp} / ${getXPForLevel(level)} XP`),
-      React.createElement('img', { src: characterImages[Math.min(level - 1, characterImages.length - 1)], alt: "Character", className: "mx-auto w-32 mt-4" })
+  return React.createElement('div',{className:"p-4 max-w-3xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg "+(showLevelUp?'flash':'')},
+    React.createElement('header',{className:"text-center mb-4"},
+      React.createElement('h1',{className:"text-3xl font-bold"},"Solo Leveling Grind"),
+      React.createElement('p',{className:"mt-2"},`Level ${level} (${getRank(level)})`),
+      React.createElement('div',{className:"w-full bg-gray-700 rounded h-4 mt-2 overflow-hidden"},
+        React.createElement('div',{className:"bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded",style:{width:`${(xp/getXPForLevel(level))*100}%`}})),
+      React.createElement('p',{className:"text-sm mt-1"},`${xp} / ${getXPForLevel(level)} XP`),
+      React.createElement('img',{src:characterImages[Math.min(level-1,characterImages.length-1)],alt:"Character",className:"mx-auto w-32 mt-4"})
     ),
-    punishments.length > 0 && React.createElement('div', { className: "fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50" },
-      React.createElement('div', { className: "bg-gray-800 p-6 rounded text-center max-w-md" },
-        React.createElement('h2', { className: "text-2xl font-bold mb-4" }, "Punishment"),
-        React.createElement('p', { className: "mb-4" }, punishments[0].text),
-        React.createElement('button', { onClick: completePunishment, className: "bg-red-500 px-4 py-2 rounded text-white font-bold" }, "Punishment Completed"),
-        React.createElement('p', { className: "mt-2 text-sm" }, `Remaining: ${punishments.length - 1}`)
+    punishments.length>0&&React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"},
+      React.createElement('div',{className:"bg-gray-800 p-6 rounded text-center max-w-md"},
+        React.createElement('h2',{className:"text-2xl font-bold mb-4"},"Punishment"),
+        React.createElement('p',{className:"mb-4"},punishments[0].text),
+        React.createElement('button',{onClick:completePunishment,className:"bg-red-500 px-4 py-2 rounded text-white font-bold"},"Punishment Completed"),
+        React.createElement('p',{className:"mt-2 text-sm"},`Remaining: ${punishments.length-1}`)
       )
     ),
-    React.createElement('div', { className: "mt-6" },
-      React.createElement('h2', { className: "text-xl mb-2 font-semibold" }, "Your Tasks"),
-      React.createElement('div', { className: "mb-4 flex justify-end" },
-        React.createElement('button', { onClick: () => setShowAddModal(true), className: "bg-blue-500 px-4 py-2 rounded" }, "+ Add Task")
+    React.createElement('div',{className:"mt-6"},
+      React.createElement('h2',{className:"text-xl mb-2 font-semibold"},"Daily & Timed Tasks"),
+      React.createElement('div',{className:"mb-4 flex justify-end"},
+        React.createElement('button',{onClick:()=>setShowAddModal(true),className:"bg-blue-500 px-4 py-2 rounded"},"+ Add Task")
       ),
-      tasks.length === 0 ? 
-        React.createElement('p', { className: "text-center text-gray-300" }, "No tasks yet. Add one!") :
-        tasks.map(task =>
-          React.createElement('div', { key: task.id, className: "bg-gray-800 p-4 rounded mb-2 flex justify-between items-center" },
-            React.createElement('div', null,
-              React.createElement('p', { className: "font-bold" }, task.title),
-              React.createElement('p', { className: "text-sm text-gray-400" }, task.type === 'daily' ? `Time: ${task.start} - ${task.end}` : `Deadline: ${task.days} days`)
-            ),
-            React.createElement('button', { onClick: () => completeTask(task.id), className: "bg-green-500 px-3 py-1 rounded" }, "Done")
-          )
-        )
+      tasks.length===0?
+        React.createElement('p',{className:"text-center text-gray-300"},"No tasks yet."):
+        tasks.map(task=>React.createElement('div',{key:task.id,className:"bg-gray-800 p-4 rounded mb-2 flex justify-between items-center"},
+          React.createElement('div',null,
+            React.createElement('p',{className:"font-bold"},task.title),
+            React.createElement('p',{className:"text-sm text-gray-400"},task.type==='daily'?`Time: ${task.start}-${task.end}`:`Deadline: ${task.days} days`)
+          ),
+          React.createElement('button',{onClick:()=>completeTask(task.id),className:"bg-green-500 px-3 py-1 rounded"},"Done")
+        ))
     ),
-    showAddModal && React.createElement('div', { className: "fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50" },
-      React.createElement('div', { className: "bg-gray-900 p-6 rounded max-w-md w-full" },
-        React.createElement('h2', { className: "text-xl mb-4 font-semibold" }, "Add Task"),
-        React.createElement('select', { value: newTask.type, onChange: e => setNewTask({ ...newTask, type: e.target.value }), className: "mb-4 w-full p-2 text-black rounded" },
-          React.createElement('option', { value: "daily" }, "Daily Task"),
-          React.createElement('option', { value: "timed" }, "Timed Task")
+    React.createElement('div',{className:"mt-8"},
+      React.createElement('h2',{className:"text-xl mb-2 font-semibold"},"Habit Tasks"),
+      habits.length===0?
+        React.createElement('p',{className:"text-center text-gray-300"},"No habits yet."):
+        habits.map(h=>React.createElement('div',{key:h.id,className:"bg-gray-800 p-4 rounded mb-2 flex justify-between items-center"},
+          React.createElement('p',{className:"font-bold"},h.title),
+          React.createElement('div',null,
+            React.createElement('button',{onClick:()=>completeHabit(h.id),disabled:h.done,className:`px-3 py-1 rounded ${h.done?"bg-gray-500":"bg-green-500"}`},h.done?"Done":"Mark Done"),
+            React.createElement('button',{onClick:()=>deleteHabit(h.id),className:"bg-red-500 px-3 py-1 ml-2 rounded"},"Delete")
+          )
+        ))
+    ),
+    showAddModal&&React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"},
+      React.createElement('div',{className:"bg-gray-900 p-6 rounded max-w-md w-full"},
+        React.createElement('h2',{className:"text-xl mb-4 font-semibold"},"Add Task"),
+        React.createElement('select',{value:newTask.type,onChange:e=>setNewTask({...newTask,type:e.target.value}),className:"mb-4 w-full p-2 text-black rounded"},
+          React.createElement('option',{value:"daily"},"Daily Task"),
+          React.createElement('option',{value:"timed"},"Timed Task"),
+          React.createElement('option',{value:"habit"},"Habit Task")
         ),
-        React.createElement('input', { type: "text", placeholder: "Task title", value: newTask.title, onChange: e => setNewTask({ ...newTask, title: e.target.value }), className: "w-full mb-4 p-2 text-black rounded" }),
-        newTask.type === 'daily' ? 
-          React.createElement(React.Fragment, null,
-            React.createElement('input', { type: "time", className: "w-full mb-2 p-2 text-black rounded", onChange: e => setNewTask({ ...newTask, start: e.target.value }) }),
-            React.createElement('input', { type: "time", className: "w-full mb-4 p-2 text-black rounded", onChange: e => setNewTask({ ...newTask, end: e.target.value }) })
-          ) :
-          React.createElement('input', { type: "number", placeholder: "Days", className: "w-full mb-4 p-2 text-black rounded", onChange: e => setNewTask({ ...newTask, days: e.target.value }) }),
-        React.createElement('div', { className: "flex justify-end" },
-          React.createElement('button', { onClick: addTask, className: "bg-blue-600 px-4 py-2 rounded" }, "Add"),
-          React.createElement('button', { onClick: () => setShowAddModal(false), className: "ml-2 bg-gray-600 px-4 py-2 rounded" }, "Cancel")
+        React.createElement('input',{type:"text",placeholder:"Task title",value:newTask.title,onChange:e=>setNewTask({...newTask,title:e.target.value}),className:"w-full mb-4 p-2 text-black rounded"}),
+        newTask.type==='daily'?
+          React.createElement(React.Fragment,null,
+            React.createElement('input',{type:"time",className:"w-full mb-2 p-2 text-black rounded",onChange:e=>setNewTask({...newTask,start:e.target.value})}),
+            React.createElement('input',{type:"time",className:"w-full mb-4 p-2 text-black rounded",onChange:e=>setNewTask({...newTask,end:e.target.value})})
+          ):
+          newTask.type==='timed'?
+            React.createElement('input',{type:"number",placeholder:"Days",className:"w-full mb-4 p-2 text-black rounded",onChange:e=>setNewTask({...newTask,days:e.target.value})}):null,
+        React.createElement('div',{className:"flex justify-end"},
+          React.createElement('button',{onClick:addTask,className:"bg-blue-600 px-4 py-2 rounded"},"Add"),
+          React.createElement('button',{onClick:()=>setShowAddModal(false),className:"ml-2 bg-gray-600 px-4 py-2 rounded"},"Cancel")
         )
       )
     )
