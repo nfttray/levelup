@@ -38,9 +38,6 @@ const deathModePunishments = [
 const rewards = [
   "Watch 1 anime episode", "Eat favorite snack", "Listen to music", "Take a relaxing bath", "Play a game for 20 mins"
 ];
-const bossTask = "Boss Fight: Revise last 7 topics today!";
-const weeklyBossTask = "Weekly Boss: Revise all last week's topics today!";
-
 const characterImages = [
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/45.png',
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/20.png',
@@ -95,25 +92,47 @@ function App(){
     }
   },[]);
 
+  // ✅ Track Completed Tasks
+  function saveToHistory(title){
+    const history=JSON.parse(localStorage.getItem('completedHistory'))||[];
+    history.push({title,date:new Date().toISOString()});
+    localStorage.setItem('completedHistory',JSON.stringify(history));
+  }
+
+  // ✅ Get topics dynamically
+  function getTopics(daysBack=7,limit=10){
+    const history=JSON.parse(localStorage.getItem('completedHistory'))||[];
+    const now=new Date();
+    const cutoff=new Date();
+    cutoff.setDate(now.getDate()-daysBack);
+    const filtered=history.filter(item=>new Date(item.date)>=cutoff).map(item=>item.title);
+    return filtered.slice(-limit);
+  }
+
+  // ✅ Small Boss after every 7 completions
   useEffect(()=>{
     if(bossCountdown>=7){
-      addPunishment({type:'boss',text:bossTask,deathMode:false});
+      const topics=getTopics(30,7);
+      const message=topics.length>0?`Boss Fight: Revise these topics:\n- ${topics.join('\n- ')}`:"Boss Fight: No recent topics! Complete tasks to fight bosses.";
+      addPunishment({type:'boss',text:message,deathMode:false});
       setBossCountdown(0);
     }
   },[bossCountdown]);
 
-  // Weekly Boss on Monday
+  // ✅ Weekly Boss (Monday)
   useEffect(()=>{
     const today=new Date();
-    const day=today.getDay();
+    const day=today.getDay(); // 1=Monday
     const lastWeekly=localStorage.getItem('lastWeeklyBoss');
     if(day===1 && lastWeekly!==today.toDateString()){
-      addPunishment({type:'weeklyBoss',text:weeklyBossTask,deathMode:true});
+      const topics=getTopics(7,12);
+      const message=topics.length>0?`Weekly Boss: Revise these topics:\n- ${topics.join('\n- ')}`:"Weekly Boss: Nothing to revise this week! Do better next time.";
+      addPunishment({type:'weeklyBoss',text:message,deathMode:true});
       localStorage.setItem('lastWeeklyBoss',today.toDateString());
     }
   },[]);
 
-  // Auto check missed tasks
+  // ✅ Auto check missed tasks
   useEffect(()=>{
     const checkMissed=()=>{
       const now=new Date();
@@ -157,15 +176,19 @@ function App(){
   }
 
   function completeTask(id){
+    const completedTask=tasks.find(t=>t.id===id);
     setTasks(tasks.filter(t=>t.id!==id));
     setXP(xp+2);
     setBossCountdown(bossCountdown+1);
+    if(completedTask)saveToHistory(completedTask.title);
   }
 
   function completeHabit(id){
     const updated=habits.map(h=>h.id===id?{...h,done:true}:h);
     setHabits(updated);
     setXP(xp+1);
+    const habit=habits.find(h=>h.id===id);
+    if(habit)saveToHistory(habit.title);
   }
 
   function deleteHabit(id){ setHabits(habits.filter(h=>h.id!==id)); }
@@ -180,7 +203,6 @@ function App(){
     setPunishments(rest);
   }
 
-  // Check if Tuesday and Weekly Boss is pending
   const today=new Date();
   const showWeeklyAlert=today.getDay()===2 && punishments.some(p=>p.type==='weeklyBoss');
 
@@ -201,7 +223,7 @@ function App(){
     punishments.length>0&&React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"},
       React.createElement('div',{className:"bg-gray-800 p-6 rounded text-center max-w-md"},
         React.createElement('h2',{className:"text-2xl font-bold mb-4"},"Punishment"),
-        React.createElement('p',{className:"mb-4"},punishments[0].text),
+        React.createElement('pre',{className:"mb-4 whitespace-pre-wrap text-left"},punishments[0].text),
         React.createElement('button',{onClick:completePunishment,className:"bg-red-500 px-4 py-2 rounded text-white font-bold"},"Punishment Completed"),
         React.createElement('p',{className:"mt-2 text-sm"},`Remaining: ${punishments.length-1}`)
       )
