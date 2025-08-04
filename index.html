@@ -24,6 +24,9 @@
 <div class="overlay"></div>
 <div id="root"></div>
 <script>
+  if ('Notification' in window && Notification.permission !== 'granted') {
+  Notification.requestPermission();
+  }
 const { useState, useEffect } = React;
 
 const normalPunishments = [
@@ -143,6 +146,39 @@ function App(){
       addPunishment({type:'dungeon',text:`Dungeon Raid: Complete 15 tasks in 24 hours for +50 XP!`,deathMode:false});
     }
   },[]);
+
+  useEffect(() => {
+  const checkTaskStart = () => {
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+    tasks.forEach(task => {
+      if (task.type === 'daily' && task.start === currentTime && !task.notified) {
+        if (Notification.permission === 'granted') {
+          new Notification('Task Time!', {
+            body: `Start now: ${task.title}`,
+            icon: 'https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png'
+          });
+        }
+        if ('vibrate' in navigator) {
+          navigator.vibrate([300, 100, 300]);
+        }
+        // Optionally, play a sound
+        const audio = document.getElementById('alarmSound');
+        if (audio) audio.play();
+
+        // Mark task as notified so it doesn't repeat
+        task.notified = true;
+      }
+    });
+
+    // Save updated tasks with notified flag
+    setTasks([...tasks]);
+  };
+
+  const interval = setInterval(checkTaskStart, 30000); // every 30 sec
+  return () => clearInterval(interval);
+}, [tasks]);
 
   // Rival XP simulation
   // Rival XP Hybrid system
