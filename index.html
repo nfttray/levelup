@@ -145,12 +145,25 @@ function App(){
   },[]);
 
   // Rival XP simulation
-  useEffect(()=>{
-    const interval=setInterval(()=>{
-      setRivalXP(prev=>prev+Math.floor(Math.random()*3));
-    },60000);
-    return()=>clearInterval(interval);
-  },[]);
+  // Rival XP Hybrid system
+useEffect(()=>{
+    // Hourly gain: 0–1 XP
+    const interval = setInterval(()=>{
+        setRivalXP(prev => prev + Math.floor(Math.random() * 2)); 
+    }, 3600000); // every 1 hour
+    return ()=>clearInterval(interval);
+},[]);
+
+useEffect(()=>{
+    // Daily boost: +20–25 XP
+    const today = new Date().toDateString();
+    const lastUpdate = localStorage.getItem('lastRivalUpdate');
+    if(lastUpdate !== today){
+        const gain = 20 + Math.floor(Math.random() * 6); // 20–25 XP
+        setRivalXP(prev => prev + gain);
+        localStorage.setItem('lastRivalUpdate', today);
+    }
+},[]);
 
   // Check missed tasks
   useEffect(()=>{
