@@ -5,14 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Solo Leveling Study Grind</title>
   <link rel="icon" href="https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png" type="image/png">
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
   <style>
-    body {margin:0;font-family:'Poppins',sans-serif;background:url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;background-size:cover;}
-    .overlay {position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:-1;}
-    .flash {animation:flashEffect 1s ease-in-out;}
-    @keyframes flashEffect {0%{background-color:rgba(255,255,255,0.4);}100%{background-color:transparent;}}
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: -1;
+    }
+    .flash {
+      animation: flashEffect 1s ease-in-out;
+    }
+    @keyframes flashEffect {
+      0% { background-color: rgba(255,255,255,0.4); }
+      100% { background-color: transparent; }
+    }
   </style>
 </head>
 <body class="text-white">
@@ -23,9 +43,45 @@
 const { useState, useEffect } = React;
 
 // Punishments & Rewards
-const normalPunishments = ["Do 20 push-ups","Solve 50 GK questions","Revise 2 topics","No social media for 6 hrs","Read 30 pages"];
-const deathModePunishments = ["Study 6 hrs straight","Complete 200 questions","Write all formulas twice","Do full mock test"];
-const rewards = ["Hang out 1 hr","Eat favorite snack","Watch 1 anime episode","Listen to music 30 min","Take a relaxing bath"];
+const normalPunishments = [
+  "Do 20 push-ups",
+  "Solve 50 GK questions",
+  "Revise 2 topics you hate",
+  "No social media for 6 hours",
+  "Read 30 pages from a book"
+];
+
+const deathModePunishments = [
+  "Study 6 hours straight + Write summary",
+  "Complete 200 questions + 50 push-ups",
+  "Write all important formulas twice",
+  "Do full mock test now + No phone for 8 hrs",
+  "Revise 5 topics + Cold shower"
+];
+
+const rewards = [
+  "Hang out with friends for 1 hour",
+  "Eat your favorite snack",
+  "Watch 1 anime episode guilt-free",
+  "Listen to music for 30 min",
+  "Take a relaxing bath"
+];
+
+const bossNames = [
+  "Ant King",
+  "Ice Monarch",
+  "Shadow Monarch's Trial",
+  "Blood Red Monarch",
+  "Dragon Kamish"
+];
+
+const bossTasks = [
+  "Revise 3 topics you completed earlier",
+  "Do 1 mock test & review mistakes",
+  "Summarize last 7 tasks in your notes",
+  "Teach 2 topics to someone else",
+  "Revise 4 topics & solve 30 questions"
+];
 
 const characterImages = [
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/45.png',
@@ -43,21 +99,22 @@ function App(){
   const [level,setLevel]=useState(parseInt(localStorage.getItem('level'))||1);
   const [tasks,setTasks]=useState(JSON.parse(localStorage.getItem('tasks'))||[]);
   const [habits,setHabits]=useState(JSON.parse(localStorage.getItem('habits'))||[]);
-  const [completedTasks,setCompletedTasks]=useState(JSON.parse(localStorage.getItem('completedTasks'))||[]);
+  const [completedTasks,setCompletedTasks]=useState(JSON.parse(localStorage.getItem('completedTasks'))||0);
   const [punishments,setPunishments]=useState(JSON.parse(localStorage.getItem('punishments'))||[]);
-  const [boss,setBoss]=useState(null);
   const [showAddModal,setShowAddModal]=useState(false);
   const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
   const [showLevelUp,setShowLevelUp]=useState(false);
-
+  const [lastWeekReset,setLastWeekReset]=useState(localStorage.getItem('lastWeekReset')||'');
+  
   useEffect(()=>{
     localStorage.setItem('xp',xp);
     localStorage.setItem('level',level);
     localStorage.setItem('tasks',JSON.stringify(tasks));
     localStorage.setItem('habits',JSON.stringify(habits));
-    localStorage.setItem('completedTasks',JSON.stringify(completedTasks));
+    localStorage.setItem('completedTasks',completedTasks);
     localStorage.setItem('punishments',JSON.stringify(punishments));
-  },[xp,level,tasks,habits,completedTasks,punishments]);
+    localStorage.setItem('lastWeekReset',lastWeekReset);
+  },[xp,level,tasks,habits,completedTasks,punishments,lastWeekReset]);
 
   useEffect(()=>{
     if(xp>=getXPForLevel(level)){
@@ -79,67 +136,93 @@ function App(){
     }
   },[]);
 
-  // Check missed tasks every minute
+  // Weekly Boss Reset
   useEffect(()=>{
-    const checkMissed=()=>{
+    const now=new Date();
+    const currentWeek=`${now.getFullYear()}-W${getWeekNumber(now)}`;
+    if(currentWeek!==lastWeekReset){
+      // Weekly Boss Spawn
+      addBoss(true);
+      setLastWeekReset(currentWeek);
+    }
+  },[]);
+
+  function getWeekNumber(d){
+    d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+    const dayNum=d.getUTCDay()||7;
+    d.setUTCDate(d.getUTCDate()+4-dayNum);
+    const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return Math.ceil((((d-yearStart)/86400000)+1)/7);
+  }
+
+  // Boss Spawn after every 7 tasks
+  useEffect(()=>{
+    if(completedTasks>0 && completedTasks%7===0){
+      addBoss(false);
+    }
+  },[completedTasks]);
+
+  function addBoss(isWeekly){
+    const bossName=isWeekly?`WEEKLY BOSS: ${bossNames[Math.floor(Math.random()*bossNames.length)]}`:`Boss Fight: ${bossNames[Math.floor(Math.random()*bossNames.length)]}`;
+    const bossTask=isWeekly?`Weekly Challenge: Revise 6 topics & solve 50 questions`:`${bossTasks[Math.floor(Math.random()*bossTasks.length)]}`;
+    setPunishments([...punishments,{type:'boss',text:`${bossName} - ${bossTask}`,deathMode:true}]);
+  }
+
+  // Missed Task Punishment
+  useEffect(()=>{
+    const interval=setInterval(()=>{
       const now=new Date();
-      let updated=[...tasks];
-      let missed=[];
-      updated.forEach(task=>{
-        if(task.type==='daily' && task.end && now>new Date(`${new Date().toDateString()} ${task.end}`)){
-          missed.push(task);
+      let remainingTasks=[];
+      tasks.forEach(t=>{
+        if(t.type==='daily'){
+          if(t.end){
+            const [h,m]=t.end.split(':').map(Number);
+            const endTime=new Date();
+            endTime.setHours(h,m,0);
+            if(now>endTime){assignMissedTaskPunishment(t.title);return;}
+          }
+        }else if(t.type==='timed'){
+          const created=new Date(t.created);
+          const deadline=new Date(created);
+          deadline.setDate(created.getDate()+parseInt(t.days));
+          if(now>deadline){assignMissedTaskPunishment(t.title);return;}
         }
-        if(task.type==='timed'){
-          const created=new Date(task.created);
-          const deadline=new Date(created.getTime()+(task.days*24*60*60*1000));
-          if(now>deadline) missed.push(task);
-        }
+        remainingTasks.push(t);
       });
-      if(missed.length>0){
-        const punish=normalPunishments[Math.floor(Math.random()*normalPunishments.length)];
-        alert(`⚠ Missed ${missed.length} task(s)! Punishment: ${punish}`);
-        setXP(prev=>Math.max(0,prev-(missed.length*5)));
-        updated=updated.filter(task=>!missed.includes(task));
-        setTasks(updated);
-      }
-    };
-    const interval=setInterval(checkMissed,60000);
+      setTasks(remainingTasks);
+    },60000);
     return()=>clearInterval(interval);
   },[tasks]);
 
-  // Weekly Boss trigger
-  useEffect(()=>{
-    const lastWeek=new Date();
-    lastWeek.setDate(lastWeek.getDate()-7);
-    const recentTasks=completedTasks.filter(t=>new Date(t.date)>lastWeek);
-    if(recentTasks.length>0 && !boss && new Date().getDay()===0){ // Sunday Boss
-      setBoss({name:"Weekly Boss",topics:recentTasks.map(t=>t.title)});
+  function assignMissedTaskPunishment(title){
+    const isDeath=Math.random()<0.5;
+    const punishment=isDeath?deathModePunishments[Math.floor(Math.random()*deathModePunishments.length)]:normalPunishments[Math.floor(Math.random()*normalPunishments.length)];
+    setPunishments([...punishments,{type:'punishment',text:`${title} missed! ${punishment}`,deathMode:isDeath}]);
+    setXP(xp-(isDeath?25:10));
+  }
+
+  function completePunishment(){
+    const [first,...rest]=punishments;
+    if(first.deathMode){
+      const reward=rewards[Math.floor(Math.random()*rewards.length)];
+      alert(`Reward Unlocked: ${reward}`);
     }
-  },[completedTasks,boss]);
+    setPunishments(rest);
+  }
 
   function addTask(){
     if(!newTask.title)return;
     const id=Date.now();
-    const task={...newTask,id,created:new Date().toISOString(),done:false};
-    if(newTask.type==='habit'){setHabits([...habits,task]);}
-    else{setTasks([...tasks,task]);}
+    const task={...newTask,id,done:false,created:new Date().toISOString()};
+    setTasks([...tasks,task]);
     setShowAddModal(false);
     setNewTask({type:'daily',title:'',start:'',end:'',days:''});
   }
 
   function completeTask(id){
-    const t=tasks.find(task=>task.id===id);
-    setTasks(tasks.filter(task=>task.id!==id));
-    setXP(xp+10);
-    const newCompleted=[...completedTasks,{title:t.title,date:new Date().toISOString()}];
-    setCompletedTasks(newCompleted);
-
-    // Boss logic
-    if(newCompleted.length%14===0){
-      setBoss({name:"Mid Boss",topics:newCompleted.slice(-5).map(t=>t.title)});
-    }else if(newCompleted.length%7===0){
-      setBoss({name:"Mini Boss",topics:newCompleted.slice(-2).map(t=>t.title)});
-    }
+    setTasks(tasks.filter(t=>t.id!==id));
+    setXP(xp+5);
+    setCompletedTasks(completedTasks+1);
   }
 
   function completeHabit(id){
@@ -152,23 +235,6 @@ function App(){
     setHabits(habits.filter(h=>h.id!==id));
   }
 
-  function completeBoss(){
-    setXP(xp+20); // XP reward for boss
-    setBoss(null);
-  }
-
-  function addPunishment(p){
-    setPunishments([...punishments,p]);
-  }
-
-  function completePunishment(){
-    const[first,...rest]=punishments;
-    if(first.deathMode){
-      alert(`Reward Unlocked: ${rewards[Math.floor(Math.random()*rewards.length)]}`);
-    }
-    setPunishments(rest);
-  }
-
   return React.createElement('div',{className:"p-4 max-w-3xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg "+(showLevelUp?'flash':'')},
     React.createElement('header',{className:"text-center mb-4"},
       React.createElement('h1',{className:"text-3xl font-bold"},"Solo Leveling Grind"),
@@ -178,19 +244,11 @@ function App(){
       React.createElement('p',{className:"text-sm mt-1"},`${xp} / ${getXPForLevel(level)} XP`),
       React.createElement('img',{src:characterImages[Math.min(level-1,characterImages.length-1)],alt:"Character",className:"mx-auto w-32 mt-4"})
     ),
-    boss && React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"},
-      React.createElement('div',{className:"bg-gray-800 p-6 rounded text-center max-w-md"},
-        React.createElement('h2',{className:"text-2xl font-bold mb-4"},`${boss.name} Appeared!`),
-        React.createElement('p',{className:"mb-4"},"Revise these topics:"),
-        React.createElement('ul',{className:"text-left mb-4"},boss.topics.map((topic,i)=>React.createElement('li',{key:i},`• ${topic}`))),
-        React.createElement('button',{onClick:completeBoss,className:"bg-green-500 px-4 py-2 rounded"},"Boss Defeated")
-      )
-    ),
     punishments.length>0&&React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"},
       React.createElement('div',{className:"bg-gray-800 p-6 rounded text-center max-w-md"},
         React.createElement('h2',{className:"text-2xl font-bold mb-4"},"Punishment"),
         React.createElement('p',{className:"mb-4"},punishments[0].text),
-        React.createElement('button',{onClick:completePunishment,className:"bg-red-500 px-4 py-2 rounded"},"Punishment Completed"),
+        React.createElement('button',{onClick:completePunishment,className:"bg-red-500 px-4 py-2 rounded text-white font-bold"},"Punishment Completed"),
         React.createElement('p',{className:"mt-2 text-sm"},`Remaining: ${punishments.length-1}`)
       )
     ),
