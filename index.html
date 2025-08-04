@@ -5,41 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Solo Leveling Study Grind</title>
   <link rel="icon" href="https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png" type="image/png">
-
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- React -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
   <style>
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;
-      background-size: cover;
-    }
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      z-index: -1;
-    }
-    .flash {
-      animation: flashEffect 1s ease-in-out;
-    }
-    @keyframes flashEffect {
-      0% { background-color: rgba(255,255,255,0.4); }
-      100% { background-color: transparent; }
-    }
-    .boss-modal {
-      animation: bossIntro 1s ease-in-out;
-    }
-    @keyframes bossIntro {
-      0% { transform: scale(0.8); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
+    body {margin:0;font-family:'Poppins',sans-serif;background:url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;background-size:cover;}
+    .overlay {position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:-1;}
+    .flash {animation:flashEffect 1s ease-in-out;}
+    @keyframes flashEffect {0%{background-color:rgba(255,255,255,0.4);}100%{background-color:transparent;}}
   </style>
 </head>
 <body class="text-white">
@@ -49,21 +22,10 @@
 <script>
 const { useState, useEffect } = React;
 
-const normalPunishments = [
-  "Do 20 push-ups", "Solve 50 GK questions", "Revise 2 topics",
-  "No social media 6 hrs", "Read 30 pages"
-];
-const rewards = [
-  "Hang out 1 hr", "Eat favorite snack", "Watch 1 anime episode",
-  "Listen music 30 min", "Take a relaxing bath"
-];
-
-const bossNames = ["Shadow Knight", "Orc Commander", "Demon King", "Blood Reaper", "Chaos Mage"];
-const bossImages = [
-  "https://wallpapercave.com/wp/wp9420280.jpg",
-  "https://wallpapercave.com/wp/wp10850984.jpg",
-  "https://wallpapercave.com/wp/wp9735398.jpg"
-];
+// Punishments & Rewards
+const normalPunishments = ["Do 20 push-ups","Solve 50 GK questions","Revise 2 topics","No social media for 6 hrs","Read 30 pages"];
+const deathModePunishments = ["Study 6 hrs straight","Complete 200 questions","Write all formulas twice","Do full mock test"];
+const rewards = ["Hang out 1 hr","Eat favorite snack","Watch 1 anime episode","Listen to music 30 min","Take a relaxing bath"];
 
 const characterImages = [
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/45.png',
@@ -82,13 +44,11 @@ function App(){
   const [tasks,setTasks]=useState(JSON.parse(localStorage.getItem('tasks'))||[]);
   const [habits,setHabits]=useState(JSON.parse(localStorage.getItem('habits'))||[]);
   const [completedTasks,setCompletedTasks]=useState(JSON.parse(localStorage.getItem('completedTasks'))||[]);
-  const [lastWeeklyBoss,setLastWeeklyBoss]=useState(localStorage.getItem('lastWeeklyBoss')||null);
-
+  const [punishments,setPunishments]=useState(JSON.parse(localStorage.getItem('punishments'))||[]);
+  const [boss,setBoss]=useState(null);
   const [showAddModal,setShowAddModal]=useState(false);
   const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
   const [showLevelUp,setShowLevelUp]=useState(false);
-
-  const [boss,setBoss]=useState(null); // {type: 'mini'|'weekly', topics:[], name:''}
 
   useEffect(()=>{
     localStorage.setItem('xp',xp);
@@ -96,8 +56,8 @@ function App(){
     localStorage.setItem('tasks',JSON.stringify(tasks));
     localStorage.setItem('habits',JSON.stringify(habits));
     localStorage.setItem('completedTasks',JSON.stringify(completedTasks));
-    localStorage.setItem('lastWeeklyBoss',lastWeeklyBoss);
-  },[xp,level,tasks,habits,completedTasks,lastWeeklyBoss]);
+    localStorage.setItem('punishments',JSON.stringify(punishments));
+  },[xp,level,tasks,habits,completedTasks,punishments]);
 
   useEffect(()=>{
     if(xp>=getXPForLevel(level)){
@@ -119,22 +79,43 @@ function App(){
     }
   },[]);
 
-  // Check for weekly boss
+  // Check missed tasks every minute
   useEffect(()=>{
-    const now=new Date();
-    if(!lastWeeklyBoss || (now - new Date(lastWeeklyBoss)) > 7*24*60*60*1000){
-      const weekTasks=completedTasks.filter(t=>{
-        return (now - new Date(t.completedAt)) <= 7*24*60*60*1000;
+    const checkMissed=()=>{
+      const now=new Date();
+      let updated=[...tasks];
+      let missed=[];
+      updated.forEach(task=>{
+        if(task.type==='daily' && task.end && now>new Date(`${new Date().toDateString()} ${task.end}`)){
+          missed.push(task);
+        }
+        if(task.type==='timed'){
+          const created=new Date(task.created);
+          const deadline=new Date(created.getTime()+(task.days*24*60*60*1000));
+          if(now>deadline) missed.push(task);
+        }
       });
-      if(weekTasks.length>0){
-        setBoss({
-          type:'weekly',
-          topics:weekTasks.map(t=>t.title),
-          name:'Weekly Demon King'
-        });
+      if(missed.length>0){
+        const punish=normalPunishments[Math.floor(Math.random()*normalPunishments.length)];
+        alert(`⚠ Missed ${missed.length} task(s)! Punishment: ${punish}`);
+        setXP(prev=>Math.max(0,prev-(missed.length*5)));
+        updated=updated.filter(task=>!missed.includes(task));
+        setTasks(updated);
       }
+    };
+    const interval=setInterval(checkMissed,60000);
+    return()=>clearInterval(interval);
+  },[tasks]);
+
+  // Weekly Boss trigger
+  useEffect(()=>{
+    const lastWeek=new Date();
+    lastWeek.setDate(lastWeek.getDate()-7);
+    const recentTasks=completedTasks.filter(t=>new Date(t.date)>lastWeek);
+    if(recentTasks.length>0 && !boss && new Date().getDay()===0){ // Sunday Boss
+      setBoss({name:"Weekly Boss",topics:recentTasks.map(t=>t.title)});
     }
-  },[]);
+  },[completedTasks,boss]);
 
   function addTask(){
     if(!newTask.title)return;
@@ -147,20 +128,17 @@ function App(){
   }
 
   function completeTask(id){
-    const task=tasks.find(t=>t.id===id);
-    setTasks(tasks.filter(t=>t.id!==id));
-    const updated=[...completedTasks,{title:task.title,completedAt:new Date().toISOString()}];
-    setCompletedTasks(updated);
-    setXP(xp+2);
+    const t=tasks.find(task=>task.id===id);
+    setTasks(tasks.filter(task=>task.id!==id));
+    setXP(xp+10);
+    const newCompleted=[...completedTasks,{title:t.title,date:new Date().toISOString()}];
+    setCompletedTasks(newCompleted);
 
-    // Check for mini boss after every 7 tasks
-    if(updated.length % 7 === 0){
-      const last7=updated.slice(-7);
-      setBoss({
-        type:'mini',
-        topics:last7.map(t=>t.title),
-        name:bossNames[Math.floor(Math.random()*bossNames.length)]
-      });
+    // Boss logic
+    if(newCompleted.length%14===0){
+      setBoss({name:"Mid Boss",topics:newCompleted.slice(-5).map(t=>t.title)});
+    }else if(newCompleted.length%7===0){
+      setBoss({name:"Mini Boss",topics:newCompleted.slice(-2).map(t=>t.title)});
     }
   }
 
@@ -174,17 +152,21 @@ function App(){
     setHabits(habits.filter(h=>h.id!==id));
   }
 
-  function defeatBoss(){
-    if(boss.type==='mini'){setXP(xp+15);}
-    if(boss.type==='weekly'){setXP(xp+50);setLastWeeklyBoss(new Date().toISOString());}
+  function completeBoss(){
+    setXP(xp+20); // XP reward for boss
     setBoss(null);
   }
 
-  function skipBoss(){
-    const punishment=normalPunishments[Math.floor(Math.random()*normalPunishments.length)];
-    alert(`Punishment: ${punishment}`);
-    setXP(Math.max(0,xp-10));
-    setBoss(null);
+  function addPunishment(p){
+    setPunishments([...punishments,p]);
+  }
+
+  function completePunishment(){
+    const[first,...rest]=punishments;
+    if(first.deathMode){
+      alert(`Reward Unlocked: ${rewards[Math.floor(Math.random()*rewards.length)]}`);
+    }
+    setPunishments(rest);
   }
 
   return React.createElement('div',{className:"p-4 max-w-3xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg "+(showLevelUp?'flash':'')},
@@ -196,23 +178,22 @@ function App(){
       React.createElement('p',{className:"text-sm mt-1"},`${xp} / ${getXPForLevel(level)} XP`),
       React.createElement('img',{src:characterImages[Math.min(level-1,characterImages.length-1)],alt:"Character",className:"mx-auto w-32 mt-4"})
     ),
-
-    // Boss Modal
-    boss && React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 boss-modal"},
-      React.createElement('div',{className:"bg-gray-900 p-6 rounded max-w-md text-center"},
-        React.createElement('img',{src:bossImages[Math.floor(Math.random()*bossImages.length)],className:"w-full h-40 object-cover rounded mb-4"}),
-        React.createElement('h2',{className:"text-2xl font-bold mb-2"},boss.type==='mini'?"Mini Boss Appears!":"Weekly Boss Appears!"),
-        React.createElement('p',{className:"mb-2 font-semibold"},boss.name),
+    boss && React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"},
+      React.createElement('div',{className:"bg-gray-800 p-6 rounded text-center max-w-md"},
+        React.createElement('h2',{className:"text-2xl font-bold mb-4"},`${boss.name} Appeared!`),
         React.createElement('p',{className:"mb-4"},"Revise these topics:"),
-        React.createElement('ul',{className:"text-left mb-4"},boss.topics.map((t,i)=>React.createElement('li',{key:i},`• ${t}`))),
-        React.createElement('div',{className:"flex justify-center gap-4"},
-          React.createElement('button',{onClick:defeatBoss,className:"bg-green-500 px-4 py-2 rounded"},"Defeat Boss"),
-          React.createElement('button',{onClick:skipBoss,className:"bg-red-500 px-4 py-2 rounded"},"Skip (Punishment)")
-        )
+        React.createElement('ul',{className:"text-left mb-4"},boss.topics.map((topic,i)=>React.createElement('li',{key:i},`• ${topic}`))),
+        React.createElement('button',{onClick:completeBoss,className:"bg-green-500 px-4 py-2 rounded"},"Boss Defeated")
       )
     ),
-
-    // Tasks Section
+    punishments.length>0&&React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"},
+      React.createElement('div',{className:"bg-gray-800 p-6 rounded text-center max-w-md"},
+        React.createElement('h2',{className:"text-2xl font-bold mb-4"},"Punishment"),
+        React.createElement('p',{className:"mb-4"},punishments[0].text),
+        React.createElement('button',{onClick:completePunishment,className:"bg-red-500 px-4 py-2 rounded"},"Punishment Completed"),
+        React.createElement('p',{className:"mt-2 text-sm"},`Remaining: ${punishments.length-1}`)
+      )
+    ),
     React.createElement('div',{className:"mt-6"},
       React.createElement('h2',{className:"text-xl mb-2 font-semibold"},"Daily & Timed Tasks"),
       React.createElement('div',{className:"mb-4 flex justify-end"},
@@ -228,8 +209,6 @@ function App(){
           React.createElement('button',{onClick:()=>completeTask(task.id),className:"bg-green-500 px-3 py-1 rounded"},"Done")
         ))
     ),
-
-    // Habits Section
     React.createElement('div',{className:"mt-8"},
       React.createElement('h2',{className:"text-xl mb-2 font-semibold"},"Habit Tasks"),
       habits.length===0?
@@ -242,8 +221,6 @@ function App(){
           )
         ))
     ),
-
-    // Add Task Modal
     showAddModal&&React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"},
       React.createElement('div',{className:"bg-gray-900 p-6 rounded max-w-md w-full"},
         React.createElement('h2',{className:"text-xl mb-4 font-semibold"},"Add Task"),
