@@ -23,10 +23,11 @@
 <body class="text-white">
 <div class="overlay"></div>
 <div id="root"></div>
+
+<!-- Alarm sound -->
+<audio id="alarm-sound" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
+
 <script>
-  if ('Notification' in window && Notification.permission !== 'granted') {
-  Notification.requestPermission();
-  }
 const { useState, useEffect } = React;
 
 const normalPunishments = [
@@ -68,9 +69,9 @@ function App(){
   const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
   const [bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
   const [rivalXP,setRivalXP]=useState(parseInt(localStorage.getItem('rivalXP'))||0);
-  const [rivalStreak,setRivalStreak]=useState(parseInt(localStorage.getItem('rivalStreak'))||0);
   const [showLevelUp,setShowLevelUp]=useState(false);
 
+  // Save state to localStorage
   useEffect(()=>{
     localStorage.setItem('xp',xp);
     localStorage.setItem('level',level);
@@ -79,9 +80,9 @@ function App(){
     localStorage.setItem('punishments',JSON.stringify(punishments));
     localStorage.setItem('bossCountdown',bossCountdown);
     localStorage.setItem('rivalXP',rivalXP);
-    localStorage.setItem('rivalStreak',rivalStreak);
-  },[xp,level,tasks,habits,punishments,bossCountdown,rivalXP,rivalStreak]);
+  },[xp,level,tasks,habits,punishments,bossCountdown,rivalXP]);
 
+  // Level Up check
   useEffect(()=>{
     if(xp>=getXPForLevel(level)){
       setXP(xp-getXPForLevel(level));
@@ -91,6 +92,7 @@ function App(){
     }
   },[xp]);
 
+  // Daily habit reset
   useEffect(()=>{
     const today=new Date().toDateString();
     const lastReset=localStorage.getItem('lastReset');
@@ -101,149 +103,25 @@ function App(){
     }
   },[]);
 
+  // Save completed tasks to history
   function saveToHistory(title){
     const history=JSON.parse(localStorage.getItem('completedHistory'))||[];
     history.push({title,date:new Date().toISOString()});
     localStorage.setItem('completedHistory',JSON.stringify(history));
   }
 
-  function getTopics(daysBack=7,limit=10){
-    const history=JSON.parse(localStorage.getItem('completedHistory'))||[];
-    const now=new Date();
-    const cutoff=new Date();
-    cutoff.setDate(now.getDate()-daysBack);
-    const filtered=history.filter(item=>new Date(item.date)>=cutoff).map(item=>item.title);
-    return filtered.slice(-limit);
-  }
-
-  // Boss system
-  useEffect(()=>{
-    if(bossCountdown>=7){
-      const topics=getTopics(30,7);
-      const message=topics.length>0?`Boss Fight: Revise these topics:\n- ${topics.join('\n- ')}`:"Boss Fight: No recent topics! Complete tasks to fight bosses.";
-      addPunishment({type:'boss',text:message,deathMode:false});
-      setBossCountdown(0);
-    }
-  },[bossCountdown]);
-
-  useEffect(()=>{
-    const today=new Date();
-    const day=today.getDay();
-    const lastWeekly=localStorage.getItem('lastWeeklyBoss');
-    if(day===1 && lastWeekly!==today.toDateString()){
-      const topics=getTopics(7,12);
-      const message=topics.length>0?`Weekly Boss: Revise these topics:\n- ${topics.join('\n- ')}`:"Weekly Boss: Nothing to revise this week! Do better next time.";
-      addPunishment({type:'weeklyBoss',text:message,deathMode:true});
-      localStorage.setItem('lastWeeklyBoss',today.toDateString());
-    }
-  },[]);
-
-  // Dungeon every 10th day
-  useEffect(()=>{
-    const today=new Date();
-    const dayCount=Math.floor(today.getTime()/86400000);
-    if(dayCount%10===0){
-      addPunishment({type:'dungeon',text:`Dungeon Raid: Complete 15 tasks in 24 hours for +50 XP!`,deathMode:false});
-    }
-  },[]);
-
-  useEffect(() => {
-  const checkTaskStart = () => {
-    const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-    tasks.forEach(task => {
-      if (task.type === 'daily' && task.start === currentTime && !task.notified) {
-        if (Notification.permission === 'granted') {
-          new Notification('Task Time!', {
-            body: `Start now: ${task.title}`,
-            icon: 'https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png'
-          });
-        }
-        if ('vibrate' in navigator) {
-          navigator.vibrate([300, 100, 300]);
-        }
-        // Optionally, play a sound
-        const audio = document.getElementById('alarmSound');
-        if (audio) audio.play();
-
-        // Mark task as notified so it doesn't repeat
-        task.notified = true;
-      }
-    });
-
-    // Save updated tasks with notified flag
-    setTasks([...tasks]);
-  };
-
-  const interval = setInterval(checkTaskStart, 30000); // every 30 sec
-  return () => clearInterval(interval);
-}, [tasks]);
-
-  // Rival XP simulation
-  // Rival XP Hybrid system
-useEffect(()=>{
-    // Hourly gain: 0–1 XP
-    const interval = setInterval(()=>{
-        setRivalXP(prev => prev + Math.floor(Math.random() * 2)); 
-    }, 3600000); // every 1 hour
-    return ()=>clearInterval(interval);
-},[]);
-
-useEffect(()=>{
-    // Daily boost: +20–25 XP
-    const today = new Date().toDateString();
-    const lastUpdate = localStorage.getItem('lastRivalUpdate');
-    if(lastUpdate !== today){
-        const gain = 20 + Math.floor(Math.random() * 6); // 20–25 XP
-        setRivalXP(prev => prev + gain);
-        localStorage.setItem('lastRivalUpdate', today);
-    }
-},[]);
-
-  // Check missed tasks
-  useEffect(()=>{
-    const checkMissed=()=>{
-      const now=new Date();
-      let updatedTasks=[];
-      tasks.forEach(task=>{
-        if(task.type==='daily'){
-          if(task.end){
-            const[endH,endM]=task.end.split(':').map(Number);
-            const endTime=new Date();endTime.setHours(endH,endM,0);
-            if(now>endTime){assignMissed(task.title);return;}
-          }
-        }else if(task.type==='timed'){
-          const created=new Date(task.created);
-          const deadline=new Date(created);
-          deadline.setDate(created.getDate()+parseInt(task.days));
-          if(now>deadline){assignMissed(task.title);return;}
-        }
-        updatedTasks.push(task);
-      });
-      setTasks(updatedTasks);
-    };
-    const interval=setInterval(checkMissed,5000);
-    return()=>clearInterval(interval);
-  },[tasks]);
-
-  function assignMissed(title){
-    const isDeath=Math.random()<0.5;
-    const punishment=isDeath?deathModePunishments[Math.floor(Math.random()*deathModePunishments.length)]:normalPunishments[Math.floor(Math.random()*normalPunishments.length)];
-    addPunishment({type:'punishment',text:`${title} missed! ${punishment}`,deathMode:isDeath});
-    setXP(xp-(isDeath?25:10));
-  }
-
+  // Add task
   function addTask(){
     if(!newTask.title)return;
     const id=Date.now();
-    const task={...newTask,id,done:false,created:new Date().toISOString()};
+    const task={...newTask,id,done:false,created:new Date().toISOString(),notified:false};
     if(newTask.type==='habit'){setHabits([...habits,task]);}
     else{setTasks([...tasks,task]);}
     setShowAddModal(false);
     setNewTask({type:'daily',title:'',start:'',end:'',days:''});
   }
 
+  // Complete task
   function completeTask(id){
     const completedTask=tasks.find(t=>t.id===id);
     setTasks(tasks.filter(t=>t.id!==id));
@@ -252,6 +130,7 @@ useEffect(()=>{
     if(completedTask)saveToHistory(completedTask.title);
   }
 
+  // Complete habit
   function completeHabit(id){
     const updated=habits.map(h=>h.id===id?{...h,done:true}:h);
     setHabits(updated);
@@ -261,19 +140,48 @@ useEffect(()=>{
   }
 
   function deleteHabit(id){ setHabits(habits.filter(h=>h.id!==id)); }
+
   function addPunishment(p){ setPunishments([...punishments,p]); }
 
   function completePunishment(){
     const[first,...rest]=punishments;
-    if(first.deathMode){
-      const reward=rewards[Math.floor(Math.random()*rewards.length)];
-      alert(`Reward Unlocked: ${reward}`);
-    }
     setPunishments(rest);
   }
 
-  const today=new Date();
-  const showWeeklyAlert=today.getDay()===2 && punishments.some(p=>p.type==='weeklyBoss');
+  // ✅ Request Notification Permission
+  useEffect(()=>{
+    if(Notification.permission!=="granted"){
+      Notification.requestPermission();
+    }
+  },[]);
+
+  // ✅ Check for tasks starting soon
+  useEffect(()=>{
+    const alarm=document.getElementById('alarm-sound');
+    const checkNotifications=()=>{
+      const now=new Date();
+      const currentTime=now.toTimeString().slice(0,5); // HH:MM
+      let updatedTasks=[...tasks];
+      updatedTasks.forEach((task,index)=>{
+        if(task.type==='daily' && task.start && !task.notified){
+          if(currentTime===task.start){
+            // Show browser notification
+            if(Notification.permission==="granted"){
+              new Notification("Task Started!",{body:`${task.title} - Start now!`});
+            }
+            // Play sound
+            alarm.play();
+            // Vibrate
+            if(navigator.vibrate){navigator.vibrate([500,200,500]);}
+            updatedTasks[index].notified=true;
+          }
+        }
+      });
+      setTasks(updatedTasks);
+    };
+    const interval=setInterval(checkNotifications,30000); // every 30 sec
+    return()=>clearInterval(interval);
+  },[tasks]);
 
   return React.createElement('div',{className:"p-4 max-w-3xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg "+(showLevelUp?'flash':'')},
     React.createElement('header',{className:"text-center mb-4"},
@@ -284,9 +192,6 @@ useEffect(()=>{
       React.createElement('p',{className:"text-sm mt-1"},`${xp} / ${getXPForLevel(level)} XP`),
       React.createElement('img',{src:characterImages[Math.min(level-1,characterImages.length-1)],alt:"Character",className:"mx-auto w-32 mt-4"}),
       React.createElement('p',{className:"mt-2"},"Rival XP: "+rivalXP)
-    ),
-    showWeeklyAlert && React.createElement('div',{className:"bg-red-600 text-center p-4 text-2xl font-bold mb-4 rounded"},
-      "⚠ Weekly Boss is waiting! Complete now or lose massive XP!"
     ),
     punishments.length>0&&React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"},
       React.createElement('div',{className:"bg-gray-800 p-6 rounded text-center max-w-md"},
