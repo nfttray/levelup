@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solo Leveling Study Grind</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/framer-motion/dist/framer-motion.umd.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Poppins', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white">
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+const { motion, AnimatePresence } = framerMotion;
+
+// Character Images for Level Unlock
+const characterImages = [
+  'https://i.imgur.com/7G5mQ1Z.png', // Level 1
+  'https://i.imgur.com/IDbxK9J.png', // Level 2
+  'https://i.imgur.com/Ki0IbxF.png', // Level 3
+  'https://i.imgur.com/YQ7T6iP.png', // Level 4+
+];
+
+// Rank Titles
+const rankTitles = ['E-Rank Hunter', 'D-Rank Hunter', 'C-Rank Hunter', 'B-Rank Hunter', 'A-Rank Hunter', 'S-Rank Hunter'];
+
+// Punishment Lists
+const normalPunishments = [
+  "Do 20 push-ups",
+  "Solve 50 GK questions",
+  "Revise 2 topics you hate",
+  "No social media for 6 hours",
+  "Read 30 pages from a book"
+];
+
+const deathModePunishments = [
+  "Study 6 hours straight without break",
+  "Complete 200 questions before sleeping",
+  "Write all important formulas twice",
+  "Do full mock test now"
+];
+
+// Rewards for Death Mode Completion
+const rewards = [
+  "Hang out with friends for 1 hour",
+  "Eat your favorite snack",
+  "Watch 1 anime episode guilt-free",
+  "Listen to music for 30 min",
+  "Take a relaxing bath"
+];
+
+// Boss Battle Task
+const bossTask = "Defeat the Boss: Complete 1 mock test and revise 3 topics today!";
+
+// Helper Functions
+function getXPForLevel(level) {
+  return level * level * 100;
+}
+
+function getRank(level) {
+  if (level < 5) return rankTitles[0];
+  if (level < 10) return rankTitles[1];
+  if (level < 15) return rankTitles[2];
+  if (level < 20) return rankTitles[3];
+  if (level < 25) return rankTitles[4];
+  return rankTitles[5];
+}
+
+function App() {
+  const [xp, setXP] = useState(parseInt(localStorage.getItem('xp')) || 0);
+  const [level, setLevel] = useState(parseInt(localStorage.getItem('level')) || 1);
+  const [tasks, setTasks] = useState(JSON.parse(localStorage.getItem('tasks')) || []);
+  const [punishments, setPunishments] = useState(JSON.parse(localStorage.getItem('punishments')) || []);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newTask, setNewTask] = useState({ type: 'daily', title: '', start: '', end: '', days: '' });
+  const [bossCountdown, setBossCountdown] = useState(parseInt(localStorage.getItem('bossCountdown')) || 0);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('xp', xp);
+    localStorage.setItem('level', level);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    localStorage.setItem('punishments', JSON.stringify(punishments));
+    localStorage.setItem('bossCountdown', bossCountdown);
+  }, [xp, level, tasks, punishments, bossCountdown]);
+
+  // XP and Level Up Check
+  useEffect(() => {
+    if (xp >= getXPForLevel(level)) {
+      setXP(xp - getXPForLevel(level));
+      setLevel(level + 1);
+      setShowLevelUp(true);
+      setTimeout(() => setShowLevelUp(false), 3000);
+    }
+  }, [xp]);
+
+  // Boss Battle Trigger
+  useEffect(() => {
+    if (bossCountdown >= 5) {
+      addPunishment({ type: 'boss', text: bossTask, deathMode: true });
+      setBossCountdown(0);
+    }
+  }, [bossCountdown]);
+
+  // Notification Permission
+  useEffect(() => {
+    if (Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Add new task
+  function addTask() {
+    if (!newTask.title) return;
+    const id = Date.now();
+    const task = { ...newTask, id, done: false };
+    setTasks([...tasks, task]);
+    setShowAddModal(false);
+    setNewTask({ type: 'daily', title: '', start: '', end: '', days: '' });
+  }
+
+  // Complete task
+  function completeTask(id) {
+    setTasks(tasks.filter(t => t.id !== id));
+    setXP(xp + 2);
+    setBossCountdown(bossCountdown + 1);
+  }
+
+  // Check missed tasks
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const updatedTasks = [];
+      tasks.forEach(t => {
+        if (t.type === 'daily') {
+          const end = new Date();
+          const [endHour, endMin] = t.end.split(':');
+          end.setHours(endHour, endMin);
+          if (now > end) {
+            triggerPunishment();
+          } else {
+            updatedTasks.push(t);
+          }
+        } else if (t.type === 'timed') {
+          const created = new Date(t.id);
+          const diffDays = (now - created) / (1000 * 60 * 60 * 24);
+          if (diffDays > t.days) {
+            triggerPunishment();
+          } else {
+            updatedTasks.push(t);
+          }
+        }
+      });
+      setTasks(updatedTasks);
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [tasks]);
+
+  function triggerPunishment() {
+    const isDeath = Math.random() < 0.5;
+    const punishmentText = isDeath
+      ? deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)]
+      : normalPunishments[Math.floor(Math.random() * normalPunishments.length)];
+    addPunishment({ type: 'punishment', text: punishmentText, deathMode: isDeath });
+    setXP(xp - (isDeath ? 25 : 10));
+  }
+
+  function addPunishment(p) {
+    setPunishments([...punishments, p]);
+  }
+
+  function completePunishment() {
+    const [first, ...rest] = punishments;
+    if (first.deathMode) {
+      const reward = rewards[Math.floor(Math.random() * rewards.length)];
+      alert(`Reward Unlocked: ${reward}`);
+    }
+    setPunishments(rest);
+  }
+
+  return (
+    <div className="p-4">
+      <header className="text-center mb-4">
+        <h1 className="text-3xl font-bold">Solo Leveling Grind</h1>
+        <p className="mt-2">Level {level} ({getRank(level)})</p>
+        <div className="w-full bg-gray-700 rounded h-4 mt-2">
+          <div
+            className="bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded"
+            style={{ width: `${(xp / getXPForLevel(level)) * 100}%` }}
+          ></div>
+        </div>
+        <p className="text-sm mt-1">{xp} / {getXPForLevel(level)} XP</p>
+        <img src={characterImages[Math.min(level - 1, characterImages.length - 1)]} alt="Character" className="mx-auto w-32 mt-4"/>
+      </header>
+
+      {showLevelUp && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center text-4xl font-bold"
+        >
+          <div className="text-white text-center">
+            <p>You’ve Leveled Up!</p>
+            <p className="text-xl mt-2 italic">“Only I Level Up.”</p>
+          </div>
+        </motion.div>
+      )}
+
+      {punishments.length > 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center">
+          <div className="bg-gray-800 p-6 rounded text-center">
+            <h2 className="text-2xl font-bold mb-4">
+              Punishment {punishments.length > 1 ? `(${punishments.length} queued)` : ''}
+            </h2>
+            <p className="mb-4">{punishments[0].text}</p>
+            <button
+              onClick={completePunishment}
+              className="bg-red-500 px-4 py-2 rounded text-white font-bold"
+            >
+              Punishment Completed
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-6">
+        <h2 className="text-xl mb-2">Tasks</h2>
+        <div className="mb-4 flex justify-between">
+          <button onClick={() => setShowAddModal(true)} className="bg-blue-500 px-4 py-2 rounded">+ Add Task</button>
+        </div>
+        <div>
+          {tasks.map(task => (
+            <motion.div
+              key={task.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="bg-gray-800 p-4 rounded mb-2 flex justify-between items-center"
+            >
+              <div>
+                <p className="font-bold">{task.title}</p>
+                <p className="text-sm">{task.type === 'daily' ? `Time: ${task.start} - ${task.end}` : `Deadline: ${task.days} days`}</p>
+              </div>
+              <button onClick={() => completeTask(task.id)} className="bg-green-500 px-3 py-1 rounded">Done</button>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center">
+          <div className="bg-gray-900 p-6 rounded">
+            <h2 className="text-xl mb-4">Add Task</h2>
+            <select
+              value={newTask.type}
+              onChange={(e) => setNewTask({ ...newTask, type: e.target.value })}
+              className="mb-4 w-full p-2 text-black"
+            >
+              <option value="daily">Daily Task</option>
+              <option value="timed">Timed Task</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Task title"
+              value={newTask.title}
+              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+              className="w-full mb-4 p-2 text-black"
+            />
+            {newTask.type === 'daily' && (
+              <>
+                <input type="time" className="w-full mb-2 text-black" onChange={(e) => setNewTask({ ...newTask, start: e.target.value })}/>
+                <input type="time" className="w-full mb-4 text-black" onChange={(e) => setNewTask({ ...newTask, end: e.target.value })}/>
+              </>
+            )}
+            {newTask.type === 'timed' && (
+              <input type="number" placeholder="Days" className="w-full mb-4 p-2 text-black" onChange={(e) => setNewTask({ ...newTask, days: e.target.value })}/>
+            )}
+            <button onClick={addTask} className="bg-blue-600 px-4 py-2 rounded">Add</button>
+            <button onClick={() => setShowAddModal(false)} className="ml-2 bg-gray-600 px-4 py-2 rounded">Cancel</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
