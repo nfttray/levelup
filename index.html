@@ -43,7 +43,6 @@
 const { useState, useEffect } = React;
 
 const normalPunishments = ["Do 20 push-ups","Solve 50 GK questions","Revise 2 topics","No social media 6 hrs","Read 30 pages"];
-const deathModePunishments = ["Study 6 hrs straight","Complete 200 questions","Write all formulas twice","Do full mock test"];
 const rewards = ["Hang out 1 hr","Eat favorite snack","Watch 1 anime episode","Listen music 30 min","Take a relaxing bath"];
 
 const characterImages = [
@@ -62,10 +61,8 @@ function App(){
   const [level,setLevel]=useState(parseInt(localStorage.getItem('level'))||1);
   const [tasks,setTasks]=useState(JSON.parse(localStorage.getItem('tasks'))||[]);
   const [habits,setHabits]=useState(JSON.parse(localStorage.getItem('habits'))||[]);
-  const [punishments,setPunishments]=useState(JSON.parse(localStorage.getItem('punishments'))||[]);
   const [showAddModal,setShowAddModal]=useState(false);
   const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
-  const [bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
   const [showLevelUp,setShowLevelUp]=useState(false);
 
   useEffect(()=>{
@@ -73,9 +70,7 @@ function App(){
     localStorage.setItem('level',level);
     localStorage.setItem('tasks',JSON.stringify(tasks));
     localStorage.setItem('habits',JSON.stringify(habits));
-    localStorage.setItem('punishments',JSON.stringify(punishments));
-    localStorage.setItem('bossCountdown',bossCountdown);
-  },[xp,level,tasks,habits,punishments,bossCountdown]);
+  },[xp,level,tasks,habits]);
 
   useEffect(()=>{if(xp>=getXPForLevel(level)){setXP(xp-getXPForLevel(level));setLevel(level+1);setShowLevelUp(true);setTimeout(()=>setShowLevelUp(false),2000);}},[xp]);
 
@@ -103,7 +98,6 @@ function App(){
   function completeTask(id){
     setTasks(tasks.filter(t=>t.id!==id));
     setXP(xp+2);
-    setBossCountdown(bossCountdown+1);
   }
 
   function completeHabit(id){
@@ -116,13 +110,6 @@ function App(){
     setHabits(habits.filter(h=>h.id!==id));
   }
 
-  function addPunishment(p){setPunishments([...punishments,p]);}
-  function completePunishment(){
-    const[first,...rest]=punishments;
-    if(first.deathMode){alert(`Reward: ${rewards[Math.floor(Math.random()*rewards.length)]}`);}
-    setPunishments(rest);
-  }
-
   return React.createElement('div',{className:"p-4 max-w-3xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg "+(showLevelUp?'flash':'')},
     React.createElement('header',{className:"text-center mb-4"},
       React.createElement('h1',{className:"text-3xl font-bold"},"Solo Leveling Grind"),
@@ -131,14 +118,6 @@ function App(){
         React.createElement('div',{className:"bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded",style:{width:`${(xp/getXPForLevel(level))*100}%`}})),
       React.createElement('p',{className:"text-sm mt-1"},`${xp} / ${getXPForLevel(level)} XP`),
       React.createElement('img',{src:characterImages[Math.min(level-1,characterImages.length-1)],alt:"Character",className:"mx-auto w-32 mt-4"})
-    ),
-    punishments.length>0&&React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"},
-      React.createElement('div',{className:"bg-gray-800 p-6 rounded text-center max-w-md"},
-        React.createElement('h2',{className:"text-2xl font-bold mb-4"},"Punishment"),
-        React.createElement('p',{className:"mb-4"},punishments[0].text),
-        React.createElement('button',{onClick:completePunishment,className:"bg-red-500 px-4 py-2 rounded text-white font-bold"},"Punishment Completed"),
-        React.createElement('p',{className:"mt-2 text-sm"},`Remaining: ${punishments.length-1}`)
-      )
     ),
     React.createElement('div',{className:"mt-6"},
       React.createElement('h2',{className:"text-xl mb-2 font-semibold"},"Daily & Timed Tasks"),
