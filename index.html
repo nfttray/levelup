@@ -204,14 +204,49 @@ function getRank(level){
   }
 
   function addPunishment(p){ setPunishments([...punishments,p]); setLockdown(true); }
-  function completePunishment(){
-    const[first,...rest]=punishments;
-    if(first.deathMode){
-      const reward=rewards[Math.floor(Math.random()*rewards.length)];
-      alert(`Reward Unlocked: ${reward}`);
+  function completePunishment() {
+    const [first, ...rest] = punishments;
+
+    let userGain = 0;
+    let rivalGain = 0;
+
+    // ✅ Assign XP for user and rival based on punishment type
+    if (first.type === 'boss') {
+        userGain = 4;    // Small Boss
+        rivalGain = 2;
+        alert(`Boss Defeated! +${userGain} XP`);
+    } else if (first.type === 'weeklyBoss') {
+        userGain = 10;   // Weekly Boss
+        rivalGain = 5;
+        alert(`Weekly Boss Defeated! +${userGain} XP`);
+    } else if (first.type === 'dungeon') {
+        userGain = 20;   // Dungeon Boss
+        rivalGain = 10;
+        alert(`Dungeon Cleared! +${userGain} XP`);
     }
+
+    // ✅ Update User XP
+    setXP(xp + userGain);
+
+    // ✅ Update Rival XP & check level up
+    setRivalXP(prev => {
+        let newXP = prev + rivalGain;
+        if (newXP >= getXPForLevel(rivalLevel)) {
+            newXP = newXP - getXPForLevel(rivalLevel);
+            setRivalLevel(rivalLevel + 1);
+        }
+        return newXP;
+    });
+
+    // ✅ Death Mode reward
+    if (first.deathMode) {
+        const reward = rewards[Math.floor(Math.random() * rewards.length)];
+        alert(`Reward Unlocked: ${reward}`);
+    }
+
+    // ✅ Remove punishment & unlock if none left
     setPunishments(rest);
-    if(rest.length===0)setLockdown(false);
+    if (rest.length === 0) setLockdown(false);
   }
 
   function forgivePunishment(){
