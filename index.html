@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Solo Leveling Study Grind</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#000000" />
-  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png" type="image/png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" href="icon-192.png" type="image/png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -25,22 +25,11 @@
 <body class="text-white">
 <div class="overlay"></div>
 <div id="root"></div>
-
+<audio id="alarm-sound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
 <script>
 const { useState, useEffect } = React;
 
-// ✅ Notification Permission Request
-if ('Notification' in window && Notification.permission !== 'granted') {
-  Notification.requestPermission();
-}
-
-// ✅ Register Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js').then(() => {
-    console.log("Service Worker registered");
-  });
-}
-
+// ----- CONFIG -----
 const normalPunishments = [
   "Do 20 push-ups", "Solve 50 GK questions",
   "Revise 2 topics", "No social media 6 hrs", "Read 30 pages"
@@ -60,6 +49,7 @@ const characterImages = [
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/21.png'
 ];
 
+// XP system
 function getXPForLevel(level){ return level*level*100; }
 function getRank(level){
   if(level<5)return rankTitles[0];
@@ -77,21 +67,21 @@ function App(){
   const [habits,setHabits]=useState(JSON.parse(localStorage.getItem('habits'))||[]);
   const [punishments,setPunishments]=useState(JSON.parse(localStorage.getItem('punishments'))||[]);
   const [showAddModal,setShowAddModal]=useState(false);
-  const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:'',alarm:true});
-  const [rivalXP,setRivalXP]=useState(parseInt(localStorage.getItem('rivalXP'))||0);
+  const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
+  const [bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
   const [showLevelUp,setShowLevelUp]=useState(false);
 
-  // ✅ Save state to localStorage
+  // ---- LocalStorage Sync ----
   useEffect(()=>{
     localStorage.setItem('xp',xp);
     localStorage.setItem('level',level);
     localStorage.setItem('tasks',JSON.stringify(tasks));
     localStorage.setItem('habits',JSON.stringify(habits));
     localStorage.setItem('punishments',JSON.stringify(punishments));
-    localStorage.setItem('rivalXP',rivalXP);
-  },[xp,level,tasks,habits,punishments,rivalXP]);
+    localStorage.setItem('bossCountdown',bossCountdown);
+  },[xp,level,tasks,habits,punishments,bossCountdown]);
 
-  // ✅ Level Up
+  // Level Up
   useEffect(()=>{
     if(xp>=getXPForLevel(level)){
       setXP(xp-getXPForLevel(level));
@@ -101,7 +91,7 @@ function App(){
     }
   },[xp]);
 
-  // ✅ Reset habits daily
+  // Reset habits daily
   useEffect(()=>{
     const today=new Date().toDateString();
     const lastReset=localStorage.getItem('lastReset');
@@ -112,51 +102,71 @@ function App(){
     }
   },[]);
 
-  // ✅ Rival XP gain
+  // Notifications Permission
   useEffect(()=>{
-    const interval=setInterval(()=>{ setRivalXP(prev=>prev+Math.floor(Math.random()*2)); },3600000);
-    return()=>clearInterval(interval);
+    if('Notification' in window){
+      Notification.requestPermission();
+    }
   },[]);
 
-  // ✅ Notification scheduling for daily tasks
-  useEffect(()=>{
-    tasks.forEach(task=>{
-      if(task.type==='daily' && task.alarm && task.start){
-        const [h,m]=task.start.split(':').map(Number);
-        const now=new Date();
-        const alarmTime=new Date();
-        alarmTime.setHours(h,m,0);
-        const diff=alarmTime-now;
-        if(diff>0){
-          setTimeout(()=>{
-            if(Notification.permission==='granted'){
-              navigator.serviceWorker.ready.then(reg=>{
-                reg.showNotification("Task Reminder",{
-                  body:`${task.title} starts now!`,
-                  icon:"https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png"
-                });
-              });
-            }
-          },diff);
-        }
+  function playAlarm(){
+    document.getElementById('alarm-sound').play();
+  }
+
+  function scheduleNotification(task){
+    if(Notification.permission==='granted' && task.end){
+      const [h,m]=task.end.split(':').map(Number);
+      const now=new Date();
+      const taskTime=new Date();
+      taskTime.setHours(h,m,0);
+      const diff=taskTime.getTime()-now.getTime();
+      if(diff>0){
+        setTimeout(()=>{
+          new Notification(`Task Reminder: ${task.title}`,{body:`Deadline reached!`,icon:'icon-192.png'});
+          playAlarm();
+        },diff);
       }
-    });
-  },[tasks]);
+    }
+  }
 
   function addTask(){
     if(!newTask.title)return;
     const id=Date.now();
     const task={...newTask,id,done:false,created:new Date().toISOString()};
     if(newTask.type==='habit'){setHabits([...habits,task]);}
-    else{setTasks([...tasks,task]);}
+    else{setTasks([...tasks,task]); if(newTask.end)scheduleNotification(task);}
     setShowAddModal(false);
-    setNewTask({type:'daily',title:'',start:'',end:'',days:'',alarm:true});
+    setNewTask({type:'daily',title:'',start:'',end:'',days:''});
   }
 
   function completeTask(id){
     const completedTask=tasks.find(t=>t.id===id);
     setTasks(tasks.filter(t=>t.id!==id));
     setXP(xp+2);
+    setBossCountdown(bossCountdown+1);
+    if(bossCountdown+1>=7){
+      addPunishment({type:'boss',text:`Mini Boss Fight! Revise recent topics NOW!`,deathMode:false});
+      setBossCountdown(0);
+    }
+  }
+
+  function completeHabit(id){
+    const updated=habits.map(h=>h.id===id?{...h,done:true}:h);
+    setHabits(updated);
+    setXP(xp+1);
+  }
+
+  function deleteHabit(id){ setHabits(habits.filter(h=>h.id!==id)); }
+
+  function addPunishment(p){ setPunishments([...punishments,p]); }
+
+  function completePunishment(){
+    const[first,...rest]=punishments;
+    if(first.deathMode){
+      const reward=rewards[Math.floor(Math.random()*rewards.length)];
+      alert(`Reward Unlocked: ${reward}`);
+    }
+    setPunishments(rest);
   }
 
   return React.createElement('div',{className:"p-4 max-w-3xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg "+(showLevelUp?'flash':'')},
@@ -166,7 +176,15 @@ function App(){
       React.createElement('div',{className:"w-full bg-gray-700 rounded h-4 mt-2 overflow-hidden"},
         React.createElement('div',{className:"bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded",style:{width:`${(xp/getXPForLevel(level))*100}%`}})),
       React.createElement('p',{className:"text-sm mt-1"},`${xp} / ${getXPForLevel(level)} XP`),
-      React.createElement('p',{className:"mt-2"},"Rival XP: "+rivalXP)
+      React.createElement('img',{src:characterImages[Math.min(level-1,characterImages.length-1)],alt:"Character",className:"mx-auto w-32 mt-4"})
+    ),
+    punishments.length>0&&React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"},
+      React.createElement('div',{className:"bg-gray-800 p-6 rounded text-center max-w-md"},
+        React.createElement('h2',{className:"text-2xl font-bold mb-4"},"Punishment"),
+        React.createElement('pre',{className:"mb-4 whitespace-pre-wrap text-left"},punishments[0].text),
+        React.createElement('button',{onClick:completePunishment,className:"bg-red-500 px-4 py-2 rounded text-white font-bold"},"Punishment Completed"),
+        React.createElement('p',{className:"mt-2 text-sm"},`Remaining: ${punishments.length-1}`)
+      )
     ),
     React.createElement('div',{className:"mt-6"},
       React.createElement('h2',{className:"text-xl mb-2 font-semibold"},"Daily & Timed Tasks"),
@@ -180,12 +198,18 @@ function App(){
             React.createElement('p',{className:"font-bold"},task.title),
             React.createElement('p',{className:"text-sm text-gray-400"},task.type==='daily'?`Time: ${task.start}-${task.end}`:`Deadline: ${task.days} days`)
           ),
+          React.createElement('button',{onClick:()=>completeTask(task.id),className:"bg-green-500 px-3 py-1 rounded"},"Done")
+        ))
+    ),
+    React.createElement('div',{className:"mt-8"},
+      React.createElement('h2',{className:"text-xl mb-2 font-semibold"},"Habit Tasks"),
+      habits.length===0?
+        React.createElement('p',{className:"text-center text-gray-300"},"No habits yet."):
+        habits.map(h=>React.createElement('div',{key:h.id,className:"bg-gray-800 p-4 rounded mb-2 flex justify-between items-center"},
+          React.createElement('p',{className:"font-bold"},h.title),
           React.createElement('div',null,
-            React.createElement('label',{className:"text-xs mr-2"}, "🔔"),
-            React.createElement('input',{type:"checkbox",checked:task.alarm,onChange:e=>{
-              setTasks(tasks.map(t=>t.id===task.id?{...t,alarm:e.target.checked}:t));
-            }}),
-            React.createElement('button',{onClick:()=>completeTask(task.id),className:"ml-2 bg-green-500 px-3 py-1 rounded"},"Done")
+            React.createElement('button',{onClick:()=>completeHabit(h.id),disabled:h.done,className:`px-3 py-1 rounded ${h.done?"bg-gray-500":"bg-green-500"}`},h.done?"Done":"Mark Done"),
+            React.createElement('button',{onClick:()=>deleteHabit(h.id),className:"bg-red-500 px-3 py-1 ml-2 rounded"},"Delete")
           )
         ))
     ),
@@ -201,12 +225,9 @@ function App(){
         newTask.type==='daily'?
           React.createElement(React.Fragment,null,
             React.createElement('input',{type:"time",className:"w-full mb-2 p-2 text-black rounded",onChange:e=>setNewTask({...newTask,start:e.target.value})}),
-            React.createElement('input',{type:"time",className:"w-full mb-4 p-2 text-black rounded",onChange:e=>setNewTask({...newTask,end:e.target.value})}),
-            React.createElement('label',null,
-              React.createElement('input',{type:"checkbox",checked:newTask.alarm,onChange:e=>setNewTask({...newTask,alarm:e.target.checked})}),
-              " Enable Alarm"
-            )
-          ):newTask.type==='timed'?
+            React.createElement('input',{type:"time",className:"w-full mb-4 p-2 text-black rounded",onChange:e=>setNewTask({...newTask,end:e.target.value})})
+          ):
+          newTask.type==='timed'?
             React.createElement('input',{type:"number",placeholder:"Days",className:"w-full mb-4 p-2 text-black rounded",onChange:e=>setNewTask({...newTask,days:e.target.value})}):null,
         React.createElement('div',{className:"flex justify-end"},
           React.createElement('button',{onClick:addTask,className:"bg-blue-600 px-4 py-2 rounded"},"Add"),
@@ -216,7 +237,13 @@ function App(){
     )
   );
 }
+
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/service-worker.js').then(()=>console.log('SW Registered'));
+}
 </script>
 </body>
 </html>
