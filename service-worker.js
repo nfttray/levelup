@@ -1,17 +1,17 @@
-self.addEventListener('install', e => {
-  console.log("Service Worker Installed");
-  e.waitUntil(caches.open('solo-cache').then(cache => cache.addAll([
-    '/',
-    '/index.html',
-    '/manifest.json'
-  ])));
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open('solo-cache').then((cache) => {
+      return cache.addAll(['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png']);
+    })
+  );
 });
 
-self.addEventListener('fetch', e => {
-  e.respondWith(caches.match(e.request).then(response => response || fetch(e.request)));
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
 });
 
-self.addEventListener('notificationclick', e => {
-  e.notification.close();
-  e.waitUntil(clients.openWindow('/'));
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((resp) => resp || fetch(event.request))
+  );
 });
