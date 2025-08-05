@@ -1,24 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Solo Leveling Study Grind</title>
-  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png" type="image/png">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;
-      background-size: cover;
-    }
-    .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); z-index: -1; }
-    .flash { animation: flashEffect 1s ease-in-out; }
-    @keyframes flashEffect { 0% { background-color: rgba(255,255,255,0.4); } 100% { background-color: transparent; } }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solo Leveling Study Grind</title>
+  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png" type="image/png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;
+      background-size: cover;
+      position: relative;  /* ADD THIS */
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: -1;  /* stays behind */
+    }
+    .flash { animation: flashEffect 1s ease-in-out; }
+    @keyframes flashEffect { 
+      0% { background-color: rgba(255,255,255,0.4); } 
+      100% { background-color: transparent; } 
+    }
+  </style>
 </head>
 <body class="text-white">
 <div class="overlay"></div>
