@@ -78,7 +78,26 @@ function getRank(level){
   const [behindDays,setBehindDays]=useState(parseInt(localStorage.getItem('behindDays'))||0);
   const [showLevelUp,setShowLevelUp]=useState(false);
   const [lockdown,setLockdown]=useState(false);
+  const [timer, setTimer] = useState(getRemainingBossTime());
 
+   function startBossTimer(hours) {
+  const endTime = Date.now() + hours * 60 * 60 * 1000; // Convert hours to milliseconds
+  localStorage.setItem('bossEndTime', endTime);
+}
+
+function getRemainingBossTime() {
+  const endTime = parseInt(localStorage.getItem('bossEndTime')) || 0;
+  const now = Date.now();
+  return Math.max(0, endTime - now); // Remaining time in ms
+}
+
+function formatTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hrs = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+  return `${hrs}h ${mins}m ${secs}s`;
+}
   // === SAVE TO LOCALSTORAGE ===
   useEffect(()=>{
     localStorage.setItem('xp',xp);
@@ -170,6 +189,22 @@ function getRank(level){
     }
   },[]);
 
+   useEffect(() => {
+  if (punishments.length > 0 && ['boss','weeklyBoss','dungeon'].includes(punishments[0].type)) {
+    const interval = setInterval(() => {
+      const remaining = getRemainingBossTime();
+      setTimer(remaining);
+      if (remaining <= 0) {
+        alert("Boss Timer Expired! Heavy XP Penalty!");
+        setXP(Math.max(0, xp - 50)); // Penalty
+        completePunishment(); // Remove punishment
+        clearInterval(interval);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }
+}, [punishments]);
+
   // === AUTO PUNISHMENT FOR MISSED TASKS ===
   useEffect(()=>{
     const checkMissed=()=>{
@@ -203,7 +238,17 @@ function getRank(level){
     setXP(xp-(isDeath?25:10));
   }
 
-  function addPunishment(p){ setPunishments([...punishments,p]); setLockdown(true); }
+  function addPunishment(p) {
+  if (p.type === 'boss') {
+    startBossTimer(3); // Small Boss 3 hrs
+  } else if (p.type === 'weeklyBoss') {
+    startBossTimer(10); // Weekly Boss 10 hrs
+  } else if (p.type === 'dungeon') {
+    startBossTimer(24); // Dungeon Boss 24 hrs
+  }
+  setPunishments([...punishments, p]);
+  setLockdown(true);
+}
   function completePunishment() {
     const [first, ...rest] = punishments;
 
@@ -323,6 +368,11 @@ function getRank(level){
           <div className="bg-gray-800 p-6 rounded text-center max-w-md">
             <h2 className="text-2xl font-bold mb-4">Punishment</h2>
             <pre className="mb-4 whitespace-pre-wrap text-left">{punishments[0].text}</pre>
+            {['boss','weeklyBoss','dungeon'].includes(punishments[0].type) && (
+  <p className="mt-2 text-red-400 text-lg font-bold">
+    Time Left: {formatTime(timer)}
+  </p>
+)}
             <div className="flex justify-center gap-2">
               <button onClick={completePunishment} className="bg-green-500 px-4 py-2 rounded text-white font-bold">Complete</button>
               <button onClick={forgivePunishment} className="bg-yellow-500 px-4 py-2 rounded text-black font-bold">Forgive (-15 XP)</button>
