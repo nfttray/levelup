@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Solo Leveling Study Grind</title>
+  <title>Solo Leveling Grind</title>
   <link rel="icon" href="https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png" type="image/png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -15,6 +15,7 @@
       font-family: 'Poppins', sans-serif;
       background: url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;
       background-size: cover;
+      position: relative;
     }
     .overlay {
       position: fixed;
@@ -27,20 +28,18 @@
       0% { background-color: rgba(255,255,255,0.4); }
       100% { background-color: transparent; }
     }
-    .lockdown { filter: grayscale(100%) brightness(0.6); pointer-events: none; }
   </style>
 </head>
 <body class="text-white">
 <div class="overlay"></div>
 <div id="root"></div>
-
 <script type="text/babel">
-
 const { useState, useEffect } = React;
 
+// === CONSTANTS ===
 const normalPunishments = [
-  "Do 20 push-ups", "Solve 50 GK questions",
-  "Revise 2 topics", "No social media 6 hrs", "Read 30 pages"
+  "Do 20 push-ups", "Solve 50 GK questions", "Revise 2 topics",
+  "No social media 6 hrs", "Read 30 pages"
 ];
 const deathModePunishments = [
   "Study 6 hrs straight + summary", "200 questions + 50 push-ups",
@@ -56,7 +55,6 @@ const characterImages = [
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/68.png',
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/21.png'
 ];
-
 function getXPForLevel(level){ return level*level*100; }
 function getRank(level){
   if(level<5)return rankTitles[0];
@@ -66,8 +64,7 @@ function getRank(level){
   if(level<25)return rankTitles[4];
   return rankTitles[5];
 }
-
-function App(){
+ function App(){
   const [xp,setXP]=useState(parseInt(localStorage.getItem('xp'))||0);
   const [level,setLevel]=useState(parseInt(localStorage.getItem('level'))||1);
   const [tasks,setTasks]=useState(JSON.parse(localStorage.getItem('tasks'))||[]);
@@ -77,25 +74,198 @@ function App(){
   const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
   const [bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
   const [rivalXP,setRivalXP]=useState(parseInt(localStorage.getItem('rivalXP'))||0);
-  const [rivalStreak,setRivalStreak]=useState(parseInt(localStorage.getItem('rivalStreak'))||0);
+  const [rivalLevel,setRivalLevel]=useState(parseInt(localStorage.getItem('rivalLevel'))||1);
+  const [behindDays,setBehindDays]=useState(parseInt(localStorage.getItem('behindDays'))||0);
   const [showLevelUp,setShowLevelUp]=useState(false);
-  const [lockdown,setLockdown]=useState(JSON.parse(localStorage.getItem('lockdown'))||false);
+  const [lockdown,setLockdown]=useState(false);
 
-  useEffect(()=>{ localStorage.setItem('xp',xp); localStorage.setItem('level',level); localStorage.setItem('tasks',JSON.stringify(tasks)); localStorage.setItem('habits',JSON.stringify(habits)); localStorage.setItem('punishments',JSON.stringify(punishments)); localStorage.setItem('bossCountdown',bossCountdown); localStorage.setItem('rivalXP',rivalXP); localStorage.setItem('rivalStreak',rivalStreak); localStorage.setItem('lockdown',JSON.stringify(lockdown));},[xp,level,tasks,habits,punishments,bossCountdown,rivalXP,rivalStreak,lockdown]);
+  // === SAVE TO LOCALSTORAGE ===
+  useEffect(()=>{
+    localStorage.setItem('xp',xp);
+    localStorage.setItem('level',level);
+    localStorage.setItem('tasks',JSON.stringify(tasks));
+    localStorage.setItem('habits',JSON.stringify(habits));
+    localStorage.setItem('punishments',JSON.stringify(punishments));
+    localStorage.setItem('bossCountdown',bossCountdown);
+    localStorage.setItem('rivalXP',rivalXP);
+    localStorage.setItem('rivalLevel',rivalLevel);
+    localStorage.setItem('behindDays',behindDays);
+  },[xp,level,tasks,habits,punishments,bossCountdown,rivalXP,rivalLevel,behindDays]);
 
-  useEffect(()=>{ if(xp>=getXPForLevel(level)){ setXP(xp-getXPForLevel(level)); setLevel(level+1); setShowLevelUp(true); setTimeout(()=>setShowLevelUp(false),2000);} },[xp]);
+  // === LEVEL UP ===
+  useEffect(()=>{
+    if(xp>=getXPForLevel(level)){
+      setXP(xp-getXPForLevel(level));
+      setLevel(level+1);
+      setShowLevelUp(true);
+      setTimeout(()=>setShowLevelUp(false),2000);
+    }
+  },[xp]);
 
-  function addTask(){ if(!newTask.title)return; const id=Date.now(); const task={...newTask,id,done:false,created:new Date().toISOString()}; if(newTask.type==='habit'){setHabits([...habits,task]);} else{setTasks([...tasks,task]);} setShowAddModal(false); setNewTask({type:'daily',title:'',start:'',end:'',days:''});}
-  function completeTask(id){ setTasks(tasks.filter(t=>t.id!==id)); setXP(xp+2); setBossCountdown(bossCountdown+1);}
-  function completeHabit(id){ setHabits(habits.map(h=>h.id===id?{...h,done:true}:h)); setXP(xp+1);}
-  function deleteHabit(id){ setHabits(habits.filter(h=>h.id!==id));}
+  // === RESET HABITS DAILY ===
+  useEffect(()=>{
+    const today=new Date().toDateString();
+    const lastReset=localStorage.getItem('lastReset');
+    if(lastReset!==today){
+      const resetHabits=habits.map(h=>({...h,done:false}));
+      setHabits(resetHabits);
+      localStorage.setItem('lastReset',today);
 
-  function addPunishment(p){ setPunishments([...punishments,p]); setLockdown(true);}
-  function completePunishment(){ const[first,...rest]=punishments; if(first.deathMode){ alert(`Reward: ${rewards[Math.floor(Math.random()*rewards.length)]}`);} setPunishments(rest); if(rest.length===0)setLockdown(false);}
-  function forgive(){ if(xp>=20){ setXP(xp-20); completePunishment();} else{ alert("Not enough XP to forgive!");}}
+      // Rival check for behind XP
+      if(xp<rivalXP){
+        setBehindDays(behindDays+1);
+        if(behindDays+1>=3){
+          addPunishment({type:'mega',text:`You were behind rival 3 days! Complete 2 mock tests and revise 5 topics NOW!`,deathMode:true});
+          setBehindDays(0);
+        }
+      }else{
+        setBehindDays(0);
+      }
+    }
+  },[]);
+
+  // === RIVAL PROGRESSION ===
+  useEffect(()=>{
+    const interval=setInterval(()=>{
+      const gain=Math.floor(Math.random()*2);
+      setRivalXP(prev=>{
+        let newXP=prev+gain;
+        if(newXP>=getXPForLevel(rivalLevel)){
+          newXP=newXP-getXPForLevel(rivalLevel);
+          setRivalLevel(rivalLevel+1);
+        }
+        return newXP;
+      });
+    },3600000); // every hour
+    return()=>clearInterval(interval);
+  },[rivalLevel]);
+
+  // === BOSS SYSTEM ===
+  useEffect(()=>{
+    if(bossCountdown>=7){
+      const topics=getTopics(30,7);
+      const message=topics.length>0?`Boss Fight: Revise these topics:\n- ${topics.join('\n- ')}`:"Boss Fight: No recent topics!";
+      addPunishment({type:'boss',text:message,deathMode:false});
+      setBossCountdown(0);
+    }
+  },[bossCountdown]);
+
+  useEffect(()=>{
+    const today=new Date();
+    const day=today.getDay();
+    const lastWeekly=localStorage.getItem('lastWeeklyBoss');
+    if(day===1 && lastWeekly!==today.toDateString()){
+      const topics=getTopics(7,12);
+      const message=topics.length>0?`Weekly Boss: Revise these topics:\n- ${topics.join('\n- ')}`:"Weekly Boss: Nothing to revise!";
+      addPunishment({type:'weeklyBoss',text:message,deathMode:true});
+      localStorage.setItem('lastWeeklyBoss',today.toDateString());
+    }
+  },[]);
+
+  // === DUNGEON ===
+  useEffect(()=>{
+    const dayCount=Math.floor(Date.now()/86400000);
+    if(dayCount%10===0){
+      addPunishment({type:'dungeon',text:`Dungeon Raid: Complete 15 tasks in 24 hours for +50 XP!`,deathMode:false});
+    }
+  },[]);
+
+  // === AUTO PUNISHMENT FOR MISSED TASKS ===
+  useEffect(()=>{
+    const checkMissed=()=>{
+      const now=new Date();
+      let updatedTasks=[];
+      tasks.forEach(task=>{
+        if(task.type==='daily'){
+          if(task.end){
+            const[endH,endM]=task.end.split(':').map(Number);
+            const endTime=new Date();endTime.setHours(endH,endM,0);
+            if(now>endTime){assignMissed(task.title);return;}
+          }
+        }else if(task.type==='timed'){
+          const created=new Date(task.created);
+          const deadline=new Date(created);
+          deadline.setDate(created.getDate()+parseInt(task.days));
+          if(now>deadline){assignMissed(task.title);return;}
+        }
+        updatedTasks.push(task);
+      });
+      setTasks(updatedTasks);
+    };
+    const interval=setInterval(checkMissed,5000);
+    return()=>clearInterval(interval);
+  },[tasks]);
+
+  function assignMissed(title){
+    const isDeath=Math.random()<0.5;
+    const punishment=isDeath?deathModePunishments[Math.floor(Math.random()*deathModePunishments.length)]:normalPunishments[Math.floor(Math.random()*normalPunishments.length)];
+    addPunishment({type:'punishment',text:`${title} missed! ${punishment}`,deathMode:isDeath});
+    setXP(xp-(isDeath?25:10));
+  }
+
+  function addPunishment(p){ setPunishments([...punishments,p]); setLockdown(true); }
+  function completePunishment(){
+    const[first,...rest]=punishments;
+    if(first.deathMode){
+      const reward=rewards[Math.floor(Math.random()*rewards.length)];
+      alert(`Reward Unlocked: ${reward}`);
+    }
+    setPunishments(rest);
+    if(rest.length===0)setLockdown(false);
+  }
+
+  function forgivePunishment(){
+    setXP(Math.max(0,xp-15)); // XP penalty
+    completePunishment();
+  }
+
+  function addTask(){
+    if(!newTask.title)return;
+    const id=Date.now();
+    const task={...newTask,id,done:false,created:new Date().toISOString()};
+    if(newTask.type==='habit'){setHabits([...habits,task]);}
+    else{setTasks([...tasks,task]);}
+    setShowAddModal(false);
+    setNewTask({type:'daily',title:'',start:'',end:'',days:''});
+  }
+
+  function completeTask(id){
+    const completedTask=tasks.find(t=>t.id===id);
+    setTasks(tasks.filter(t=>t.id!==id));
+    setXP(xp+2);
+    setBossCountdown(bossCountdown+1);
+    if(completedTask)saveToHistory(completedTask.title);
+  }
+
+  function completeHabit(id){
+    const updated=habits.map(h=>h.id===id?{...h,done:true}:h);
+    setHabits(updated);
+    setXP(xp+1);
+    const habit=habits.find(h=>h.id===id);
+    if(habit)saveToHistory(habit.title);
+  }
+
+  function deleteHabit(id){ setHabits(habits.filter(h=>h.id!==id)); }
+
+  function saveToHistory(title){
+    const history=JSON.parse(localStorage.getItem('completedHistory'))||[];
+    history.push({title,date:new Date().toISOString()});
+    localStorage.setItem('completedHistory',JSON.stringify(history));
+  }
+
+  function getTopics(daysBack=7,limit=10){
+    const history=JSON.parse(localStorage.getItem('completedHistory'))||[];
+    const now=new Date();
+    const cutoff=new Date();
+    cutoff.setDate(now.getDate()-daysBack);
+    const filtered=history.filter(item=>new Date(item.date)>=cutoff).map(item=>item.title);
+    return filtered.slice(-limit);
+  }
+
+  const showWeeklyAlert=new Date().getDay()===2 && punishments.some(p=>p.type==='weeklyBoss');
 
   return (
-    <div className={`p-4 max-w-3xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg ${(showLevelUp?'flash':'')} ${lockdown?'lockdown':''}`}>
+    <div className={"p-4 max-w-3xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg "+(showLevelUp?'flash':'')}>
       <header className="text-center mb-4">
         <h1 className="text-3xl font-bold">Solo Leveling Grind</h1>
         <p className="mt-2">Level {level} ({getRank(level)})</p>
@@ -104,44 +274,72 @@ function App(){
         </div>
         <p className="text-sm mt-1">{xp} / {getXPForLevel(level)} XP</p>
         <img src={characterImages[Math.min(level-1,characterImages.length-1)]} alt="Character" className="mx-auto w-32 mt-4"/>
-        <p className="mt-2">Rival XP: {rivalXP}</p>
+        <p className="mt-2">Rival: Level {rivalLevel} ({getRank(rivalLevel)}) | XP: {rivalXP}</p>
       </header>
+
+      {showWeeklyAlert && (
+        <div className="bg-red-600 text-center p-4 text-2xl font-bold mb-4 rounded">
+          ⚠ Weekly Boss is waiting! Complete now or lose massive XP!
+        </div>
+      )}
 
       {punishments.length>0 && (
         <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-6 rounded text-center max-w-md">
             <h2 className="text-2xl font-bold mb-4">Punishment</h2>
             <pre className="mb-4 whitespace-pre-wrap text-left">{punishments[0].text}</pre>
-            <button onClick={completePunishment} className="bg-red-500 px-4 py-2 rounded text-white font-bold mr-2">Completed</button>
-            <button onClick={forgive} className="bg-yellow-500 px-4 py-2 rounded text-black font-bold">Forgive (-20 XP)</button>
+            <div className="flex justify-center gap-2">
+              <button onClick={completePunishment} className="bg-green-500 px-4 py-2 rounded text-white font-bold">Complete</button>
+              <button onClick={forgivePunishment} className="bg-yellow-500 px-4 py-2 rounded text-black font-bold">Forgive (-15 XP)</button>
+            </div>
+            <p className="mt-2 text-sm">Remaining: {punishments.length-1}</p>
           </div>
         </div>
       )}
 
       <div className="mt-6">
-        <h2 className="text-xl mb-2 font-semibold">Tasks</h2>
+        <h2 className="text-xl mb-2 font-semibold">Daily & Timed Tasks</h2>
         <div className="mb-4 flex justify-end">
-          <button onClick={()=>setShowAddModal(true)} className="bg-blue-500 px-4 py-2 rounded">+ Add Task</button>
+          {!lockdown && (
+            <button onClick={()=>setShowAddModal(true)} className="bg-blue-500 px-4 py-2 rounded">+ Add Task</button>
+          )}
         </div>
-        {tasks.length===0?<p className="text-center text-gray-300">No tasks yet.</p>:tasks.map(task=>(
-          <div key={task.id} className="bg-gray-800 p-4 rounded mb-2 flex justify-between items-center">
-            <p className="font-bold">{task.title}</p>
-            <button onClick={()=>completeTask(task.id)} className="bg-green-500 px-3 py-1 rounded">Done</button>
-          </div>
-        ))}
+        {tasks.length===0?(
+          <p className="text-center text-gray-300">No tasks yet.</p>
+        ):(
+          tasks.map(task=>(
+            <div key={task.id} className="bg-gray-800 p-4 rounded mb-2 flex justify-between items-center">
+              <div>
+                <p className="font-bold">{task.title}</p>
+                <p className="text-sm text-gray-400">{task.type==='daily'?`Time: ${task.start}-${task.end}`:`Deadline: ${task.days} days`}</p>
+              </div>
+              {!lockdown && (
+                <button onClick={()=>completeTask(task.id)} className="bg-green-500 px-3 py-1 rounded">Done</button>
+              )}
+            </div>
+          ))
+        )}
       </div>
 
       <div className="mt-8">
-        <h2 className="text-xl mb-2 font-semibold">Habits</h2>
-        {habits.length===0?<p className="text-center text-gray-300">No habits yet.</p>:habits.map(h=>(
-          <div key={h.id} className="bg-gray-800 p-4 rounded mb-2 flex justify-between items-center">
-            <p className="font-bold">{h.title}</p>
-            <div>
-              <button onClick={()=>completeHabit(h.id)} disabled={h.done} className={`px-3 py-1 rounded ${h.done?"bg-gray-500":"bg-green-500"}`}>{h.done?"Done":"Mark Done"}</button>
-              <button onClick={()=>deleteHabit(h.id)} className="bg-red-500 px-3 py-1 ml-2 rounded">Delete</button>
+        <h2 className="text-xl mb-2 font-semibold">Habit Tasks</h2>
+        {habits.length===0?(
+          <p className="text-center text-gray-300">No habits yet.</p>
+        ):(
+          habits.map(h=>(
+            <div key={h.id} className="bg-gray-800 p-4 rounded mb-2 flex justify-between items-center">
+              <p className="font-bold">{h.title}</p>
+              <div>
+                <button onClick={()=>completeHabit(h.id)} disabled={h.done||lockdown} className={`px-3 py-1 rounded ${h.done?"bg-gray-500":"bg-green-500"}`}>
+                  {h.done?"Done":"Mark Done"}
+                </button>
+                {!lockdown && (
+                  <button onClick={()=>deleteHabit(h.id)} className="bg-red-500 px-3 py-1 ml-2 rounded">Delete</button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {showAddModal && (
@@ -154,6 +352,15 @@ function App(){
               <option value="habit">Habit Task</option>
             </select>
             <input type="text" placeholder="Task title" value={newTask.title} onChange={e=>setNewTask({...newTask,title:e.target.value})} className="w-full mb-4 p-2 text-black rounded"/>
+            {newTask.type==='daily' && (
+              <>
+                <input type="time" className="w-full mb-2 p-2 text-black rounded" onChange={e=>setNewTask({...newTask,start:e.target.value})}/>
+                <input type="time" className="w-full mb-4 p-2 text-black rounded" onChange={e=>setNewTask({...newTask,end:e.target.value})}/>
+              </>
+            )}
+            {newTask.type==='timed' && (
+              <input type="number" placeholder="Days" className="w-full mb-4 p-2 text-black rounded" onChange={e=>setNewTask({...newTask,days:e.target.value})}/>
+            )}
             <div className="flex justify-end">
               <button onClick={addTask} className="bg-blue-600 px-4 py-2 rounded">Add</button>
               <button onClick={()=>setShowAddModal(false)} className="ml-2 bg-gray-600 px-4 py-2 rounded">Cancel</button>
@@ -165,8 +372,7 @@ function App(){
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-
-</script>
+ReactDOM.createRoot(document.getElementById("root")).render(<App />); 
+  </script>
 </body>
 </html>
