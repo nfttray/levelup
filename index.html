@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Solo Leveling Study Grind</title>
-  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png" type="image/png">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;
-      background-size: cover;
-    }
-    .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); z-index: -1; }
-    .flash { animation: flashEffect 1s ease-in-out; }
-    @keyframes flashEffect { 0% { background-color: rgba(255,255,255,0.4); } 100% { background-color: transparent; } }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Solo Leveling Study Grind</title>
+<link rel="icon" href="https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png" type="image/png">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;
+    background-size: cover;
+  }
+  .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); z-index: -1; }
+  .flash { animation: flashEffect 1s ease-in-out; }
+  @keyframes flashEffect { 0% { background-color: rgba(255,255,255,0.4); } 100% { background-color: transparent; } }
+</style>
 </head>
 <body class="text-white">
 <div class="overlay"></div>
@@ -65,11 +65,8 @@ function App(){
   const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
   const [bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
   const [rivalXP,setRivalXP]=useState(parseInt(localStorage.getItem('rivalXP'))||0);
-  const [rivalStreak,setRivalStreak]=useState(parseInt(localStorage.getItem('rivalStreak'))||0);
-  const [rivalLeadDays,setRivalLeadDays]=useState(parseInt(localStorage.getItem('rivalLeadDays'))||0);
   const [showLevelUp,setShowLevelUp]=useState(false);
 
-  // Save to localStorage
   useEffect(()=>{
     localStorage.setItem('xp',xp);
     localStorage.setItem('level',level);
@@ -78,11 +75,8 @@ function App(){
     localStorage.setItem('punishments',JSON.stringify(punishments));
     localStorage.setItem('bossCountdown',bossCountdown);
     localStorage.setItem('rivalXP',rivalXP);
-    localStorage.setItem('rivalStreak',rivalStreak);
-    localStorage.setItem('rivalLeadDays',rivalLeadDays);
-  },[xp,level,tasks,habits,punishments,bossCountdown,rivalXP,rivalStreak,rivalLeadDays]);
+  },[xp,level,tasks,habits,punishments,bossCountdown,rivalXP]);
 
-  // Level up check
   useEffect(()=>{
     if(xp>=getXPForLevel(level)){
       setXP(xp-getXPForLevel(level));
@@ -92,7 +86,6 @@ function App(){
     }
   },[xp]);
 
-  // Daily reset for habits
   useEffect(()=>{
     const today=new Date().toDateString();
     const lastReset=localStorage.getItem('lastReset');
@@ -103,7 +96,6 @@ function App(){
     }
   },[]);
 
-  // Save completed history
   function saveToHistory(title){
     const history=JSON.parse(localStorage.getItem('completedHistory'))||[];
     history.push({title,date:new Date().toISOString()});
@@ -119,18 +111,18 @@ function App(){
     return filtered.slice(-limit);
   }
 
-  // Boss system
+  // Boss system with XP rewards
   useEffect(()=>{
     if(bossCountdown>=7){
       const topics=getTopics(30,7);
       const message=topics.length>0?`Boss Fight: Revise these topics:\n- ${topics.join('\n- ')}`:"Boss Fight: No recent topics! Complete tasks to fight bosses.";
       addPunishment({type:'boss',text:message,deathMode:false});
-      setXP(prevXP=>prevXP+4); // ✅ Small Boss reward +4 XP
       setBossCountdown(0);
+      setXP(prev=>prev+4); // Small boss reward
     }
   },[bossCountdown]);
 
-  // Weekly boss
+  // Weekly Boss with XP reward
   useEffect(()=>{
     const today=new Date();
     const day=today.getDay();
@@ -139,7 +131,7 @@ function App(){
       const topics=getTopics(7,12);
       const message=topics.length>0?`Weekly Boss: Revise these topics:\n- ${topics.join('\n- ')}`:"Weekly Boss: Nothing to revise this week! Do better next time.";
       addPunishment({type:'weeklyBoss',text:message,deathMode:true});
-      setXP(prevXP=>prevXP+10); // ✅ Weekly Boss reward +10 XP
+      setXP(prev=>prev+10); // Weekly boss reward
       localStorage.setItem('lastWeeklyBoss',today.toDateString());
     }
   },[]);
@@ -153,37 +145,50 @@ function App(){
     }
   },[]);
 
-  // Rival XP system
+  // Rival XP Hybrid System
   useEffect(()=>{
-    const interval = setInterval(()=>{
-      setRivalXP(prev => prev + Math.floor(Math.random() * 2)); 
-    }, 3600000);
-    return ()=>clearInterval(interval);
+    // Hourly gain: 0–1 XP
+    const interval=setInterval(()=>{
+      setRivalXP(prev=>prev + Math.floor(Math.random()*2));
+    },3600000);
+    return()=>clearInterval(interval);
   },[]);
 
   useEffect(()=>{
-    const today = new Date().toDateString();
-    const lastUpdate = localStorage.getItem('lastRivalUpdate');
-    if(lastUpdate !== today){
-      const gain = 20 + Math.floor(Math.random() * 6); // 20–25 XP
-      setRivalXP(prev => prev + gain);
-      localStorage.setItem('lastRivalUpdate', today);
+    // Daily boost: +20–25 XP
+    const today=new Date().toDateString();
+    const lastUpdate=localStorage.getItem('lastRivalUpdate');
+    if(lastUpdate!==today){
+      const gain=20+Math.floor(Math.random()*6);
+      setRivalXP(prev=>prev+gain);
+      localStorage.setItem('lastRivalUpdate',today);
     }
   },[]);
 
-  // Check Rival lead
+  // Mega punishment if rival leads 3 days in a row
   useEffect(()=>{
-    if(rivalXP>xp){
-      setRivalLeadDays(d=>d+1);
-      if(rivalLeadDays>=3){ 
-        addPunishment({type:'mega',text:`Rival outperformed you for 3 days! Mega Punishment: Complete 3 Death Mode punishments in 24 hours or lose 100 XP!`,deathMode:true});
-        setRivalLeadDays(0);
+    const today=new Date().toDateString();
+    const lastCheck=localStorage.getItem('lastLeadCheck');
+    let streak=parseInt(localStorage.getItem('rivalLeadStreak'))||0;
+
+    if(lastCheck!==today){
+      if(rivalXP>xp){
+        streak+=1;
+      }else{
+        streak=0;
       }
-    }else{
-      setRivalLeadDays(0);
+      localStorage.setItem('rivalLeadStreak',streak);
+      localStorage.setItem('lastLeadCheck',today);
+
+      if(streak>=3){
+        addPunishment({type:'mega',text:"⚠ Mega Punishment! Rival dominated for 3 days. Do 8 hours study & 100 push-ups!",deathMode:true});
+        setXP(prev=>prev-50);
+        localStorage.setItem('rivalLeadStreak',0);
+      }
     }
-  },[rivalXP,xp]);
-  // Missed Task Check
+  },[xp,rivalXP]);
+
+  // Check missed tasks
   useEffect(()=>{
     const checkMissed=()=>{
       const now=new Date();
@@ -243,9 +248,7 @@ function App(){
   }
 
   function deleteHabit(id){ setHabits(habits.filter(h=>h.id!==id)); }
-
   function addPunishment(p){ setPunishments([...punishments,p]); }
-
   function completePunishment(){
     const[first,...rest]=punishments;
     if(first.deathMode){
@@ -258,6 +261,7 @@ function App(){
   const today=new Date();
   const showWeeklyAlert=today.getDay()===2 && punishments.some(p=>p.type==='weeklyBoss');
 
+  // UI
   return React.createElement('div',{className:"p-4 max-w-3xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg "+(showLevelUp?'flash':'')},
     React.createElement('header',{className:"text-center mb-4"},
       React.createElement('h1',{className:"text-3xl font-bold"},"Solo Leveling Grind"),
@@ -330,7 +334,6 @@ function App(){
     )
   );
 }
-
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
 </script>
 </body>
