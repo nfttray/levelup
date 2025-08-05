@@ -9,43 +9,28 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <style>
-  body {
-    margin: 0;
-    font-family: 'Poppins', sans-serif;
-    background: url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;
-    background-size: cover;
-  }
-  .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); z-index: -1; }
-  .flash { animation: flashEffect 1s ease-in-out; }
-  @keyframes flashEffect { 0% { background-color: rgba(255,255,255,0.4); } 100% { background-color: transparent; } }
+  body {margin:0;font-family:'Poppins',sans-serif;background:url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;background-size:cover;}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:-1;}
+  .flash{animation:flashEffect 1s ease-in-out;}
+  @keyframes flashEffect{0%{background-color:rgba(255,255,255,0.4);}100%{background-color:transparent;}}
+  .widget-mode{max-width:400px;margin:auto;}
 </style>
 </head>
 <body class="text-white">
 <div class="overlay"></div>
 <div id="root"></div>
+<audio id="alarmSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
+
 <script>
-const { useState, useEffect } = React;
+const {useState,useEffect}=React;
 
-const normalPunishments = [
-  "Do 20 push-ups", "Solve 50 GK questions",
-  "Revise 2 topics", "No social media 6 hrs", "Read 30 pages"
-];
-const deathModePunishments = [
-  "Study 6 hrs straight + summary", "200 questions + 50 push-ups",
-  "Write all formulas twice", "Full mock test now + No phone 8 hrs", "Revise 5 topics + Cold shower"
-];
-const rewards = [
-  "Watch 1 anime episode", "Eat favorite snack", "Listen to music", "Take a relaxing bath", "Play a game for 20 mins"
-];
-const rankTitles = ['E-Rank Hunter','D-Rank','C-Rank','B-Rank','A-Rank','S-Rank'];
-const characterImages = [
-  'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/45.png',
-  'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/20.png',
-  'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/68.png',
-  'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/21.png'
-];
+const normalPunishments=["Do 20 push-ups","Solve 50 GK questions","Revise 2 topics","No social media 6 hrs","Read 30 pages"];
+const deathModePunishments=["Study 6 hrs straight + summary","200 questions + 50 push-ups","Write all formulas twice","Full mock test now + No phone 8 hrs","Revise 5 topics + Cold shower"];
+const rewards=["Watch 1 anime episode","Eat favorite snack","Listen to music","Take a relaxing bath","Play a game for 20 mins"];
+const rankTitles=['E-Rank Hunter','D-Rank','C-Rank','B-Rank','A-Rank','S-Rank'];
+const characterImages=['https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/45.png','https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/20.png','https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/68.png','https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/21.png'];
 
-function getXPForLevel(level){ return level*level*100; }
+function getXPForLevel(level){return level*level*100;}
 function getRank(level){
   if(level<5)return rankTitles[0];
   if(level<10)return rankTitles[1];
@@ -56,16 +41,17 @@ function getRank(level){
 }
 
 function App(){
-  const [xp,setXP]=useState(parseInt(localStorage.getItem('xp'))||0);
-  const [level,setLevel]=useState(parseInt(localStorage.getItem('level'))||1);
-  const [tasks,setTasks]=useState(JSON.parse(localStorage.getItem('tasks'))||[]);
-  const [habits,setHabits]=useState(JSON.parse(localStorage.getItem('habits'))||[]);
-  const [punishments,setPunishments]=useState(JSON.parse(localStorage.getItem('punishments'))||[]);
-  const [showAddModal,setShowAddModal]=useState(false);
-  const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
-  const [bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
-  const [rivalXP,setRivalXP]=useState(parseInt(localStorage.getItem('rivalXP'))||0);
-  const [showLevelUp,setShowLevelUp]=useState(false);
+  const[xp,setXP]=useState(parseInt(localStorage.getItem('xp'))||0);
+  const[level,setLevel]=useState(parseInt(localStorage.getItem('level'))||1);
+  const[tasks,setTasks]=useState(JSON.parse(localStorage.getItem('tasks'))||[]);
+  const[habits,setHabits]=useState(JSON.parse(localStorage.getItem('habits'))||[]);
+  const[punishments,setPunishments]=useState(JSON.parse(localStorage.getItem('punishments'))||[]);
+  const[showAddModal,setShowAddModal]=useState(false);
+  const[newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
+  const[bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
+  const[rivalXP,setRivalXP]=useState(parseInt(localStorage.getItem('rivalXP'))||0);
+  const[showLevelUp,setShowLevelUp]=useState(false);
+  const[widgetMode,setWidgetMode]=useState(JSON.parse(localStorage.getItem('widgetMode'))||false);
 
   useEffect(()=>{
     localStorage.setItem('xp',xp);
@@ -75,7 +61,8 @@ function App(){
     localStorage.setItem('punishments',JSON.stringify(punishments));
     localStorage.setItem('bossCountdown',bossCountdown);
     localStorage.setItem('rivalXP',rivalXP);
-  },[xp,level,tasks,habits,punishments,bossCountdown,rivalXP]);
+    localStorage.setItem('widgetMode',widgetMode);
+  },[xp,level,tasks,habits,punishments,bossCountdown,rivalXP,widgetMode]);
 
   useEffect(()=>{
     if(xp>=getXPForLevel(level)){
@@ -86,76 +73,12 @@ function App(){
     }
   },[xp]);
 
+  // Rival XP Simulation
   useEffect(()=>{
-    const today=new Date().toDateString();
-    const lastReset=localStorage.getItem('lastReset');
-    if(lastReset!==today){
-      const resetHabits=habits.map(h=>({...h,done:false}));
-      setHabits(resetHabits);
-      localStorage.setItem('lastReset',today);
-    }
-  },[]);
-
-  function saveToHistory(title){
-    const history=JSON.parse(localStorage.getItem('completedHistory'))||[];
-    history.push({title,date:new Date().toISOString()});
-    localStorage.setItem('completedHistory',JSON.stringify(history));
-  }
-
-  function getTopics(daysBack=7,limit=10){
-    const history=JSON.parse(localStorage.getItem('completedHistory'))||[];
-    const now=new Date();
-    const cutoff=new Date();
-    cutoff.setDate(now.getDate()-daysBack);
-    const filtered=history.filter(item=>new Date(item.date)>=cutoff).map(item=>item.title);
-    return filtered.slice(-limit);
-  }
-
-  // Boss system with XP rewards
-  useEffect(()=>{
-    if(bossCountdown>=7){
-      const topics=getTopics(30,7);
-      const message=topics.length>0?`Boss Fight: Revise these topics:\n- ${topics.join('\n- ')}`:"Boss Fight: No recent topics! Complete tasks to fight bosses.";
-      addPunishment({type:'boss',text:message,deathMode:false});
-      setBossCountdown(0);
-      setXP(prev=>prev+4); // Small boss reward
-    }
-  },[bossCountdown]);
-
-  // Weekly Boss with XP reward
-  useEffect(()=>{
-    const today=new Date();
-    const day=today.getDay();
-    const lastWeekly=localStorage.getItem('lastWeeklyBoss');
-    if(day===1 && lastWeekly!==today.toDateString()){
-      const topics=getTopics(7,12);
-      const message=topics.length>0?`Weekly Boss: Revise these topics:\n- ${topics.join('\n- ')}`:"Weekly Boss: Nothing to revise this week! Do better next time.";
-      addPunishment({type:'weeklyBoss',text:message,deathMode:true});
-      setXP(prev=>prev+10); // Weekly boss reward
-      localStorage.setItem('lastWeeklyBoss',today.toDateString());
-    }
-  },[]);
-
-  // Dungeon every 10th day
-  useEffect(()=>{
-    const today=new Date();
-    const dayCount=Math.floor(today.getTime()/86400000);
-    if(dayCount%10===0){
-      addPunishment({type:'dungeon',text:`Dungeon Raid: Complete 15 tasks in 24 hours for +50 XP!`,deathMode:false});
-    }
-  },[]);
-
-  // Rival XP Hybrid System
-  useEffect(()=>{
-    // Hourly gain: 0–1 XP
-    const interval=setInterval(()=>{
-      setRivalXP(prev=>prev + Math.floor(Math.random()*2));
-    },3600000);
+    const interval=setInterval(()=>{setRivalXP(prev=>prev+Math.floor(Math.random()*2));},3600000);
     return()=>clearInterval(interval);
   },[]);
-
   useEffect(()=>{
-    // Daily boost: +20–25 XP
     const today=new Date().toDateString();
     const lastUpdate=localStorage.getItem('lastRivalUpdate');
     if(lastUpdate!==today){
@@ -165,60 +88,29 @@ function App(){
     }
   },[]);
 
-  // Mega punishment if rival leads 3 days in a row
+  // Notifications + Alarm for Task Start
   useEffect(()=>{
-    const today=new Date().toDateString();
-    const lastCheck=localStorage.getItem('lastLeadCheck');
-    let streak=parseInt(localStorage.getItem('rivalLeadStreak'))||0;
-
-    if(lastCheck!==today){
-      if(rivalXP>xp){
-        streak+=1;
-      }else{
-        streak=0;
-      }
-      localStorage.setItem('rivalLeadStreak',streak);
-      localStorage.setItem('lastLeadCheck',today);
-
-      if(streak>=3){
-        addPunishment({type:'mega',text:"⚠ Mega Punishment! Rival dominated for 3 days. Do 8 hours study & 100 push-ups!",deathMode:true});
-        setXP(prev=>prev-50);
-        localStorage.setItem('rivalLeadStreak',0);
-      }
-    }
-  },[xp,rivalXP]);
-
-  // Check missed tasks
-  useEffect(()=>{
-    const checkMissed=()=>{
+    if(Notification.permission!=='granted'){Notification.requestPermission();}
+    const interval=setInterval(()=>{
       const now=new Date();
-      let updatedTasks=[];
       tasks.forEach(task=>{
-        if(task.type==='daily'){
-          if(task.end){
-            const[endH,endM]=task.end.split(':').map(Number);
-            const endTime=new Date();endTime.setHours(endH,endM,0);
-            if(now>endTime){assignMissed(task.title);return;}
+        if(task.start){
+          const[startH,startM]=task.start.split(':').map(Number);
+          if(now.getHours()===startH&&now.getMinutes()===startM){
+            notifyTask(task.title);
+            playAlarm();
           }
-        }else if(task.type==='timed'){
-          const created=new Date(task.created);
-          const deadline=new Date(created);
-          deadline.setDate(created.getDate()+parseInt(task.days));
-          if(now>deadline){assignMissed(task.title);return;}
         }
-        updatedTasks.push(task);
       });
-      setTasks(updatedTasks);
-    };
-    const interval=setInterval(checkMissed,5000);
+    },60000);
     return()=>clearInterval(interval);
   },[tasks]);
 
-  function assignMissed(title){
-    const isDeath=Math.random()<0.5;
-    const punishment=isDeath?deathModePunishments[Math.floor(Math.random()*deathModePunishments.length)]:normalPunishments[Math.floor(Math.random()*normalPunishments.length)];
-    addPunishment({type:'punishment',text:`${title} missed! ${punishment}`,deathMode:isDeath});
-    setXP(xp-(isDeath?25:10));
+  function notifyTask(title){
+    new Notification("Task Reminder",{body:`Start: ${title}`,icon:"https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png"});
+  }
+  function playAlarm(){
+    document.getElementById('alarmSound').play();
   }
 
   function addTask(){
@@ -230,85 +122,29 @@ function App(){
     setShowAddModal(false);
     setNewTask({type:'daily',title:'',start:'',end:'',days:''});
   }
+  function completeTask(id){setTasks(tasks.filter(t=>t.id!==id));setXP(xp+2);setBossCountdown(bossCountdown+1);}
+  function completeHabit(id){const updated=habits.map(h=>h.id===id?{...h,done:true}:h);setHabits(updated);setXP(xp+1);}
+  function deleteHabit(id){setHabits(habits.filter(h=>h.id!==id));}
 
-  function completeTask(id){
-    const completedTask=tasks.find(t=>t.id===id);
-    setTasks(tasks.filter(t=>t.id!==id));
-    setXP(xp+2);
-    setBossCountdown(bossCountdown+1);
-    if(completedTask)saveToHistory(completedTask.title);
-  }
-
-  function completeHabit(id){
-    const updated=habits.map(h=>h.id===id?{...h,done:true}:h);
-    setHabits(updated);
-    setXP(xp+1);
-    const habit=habits.find(h=>h.id===id);
-    if(habit)saveToHistory(habit.title);
-  }
-
-  function deleteHabit(id){ setHabits(habits.filter(h=>h.id!==id)); }
-  function addPunishment(p){ setPunishments([...punishments,p]); }
-  function completePunishment(){
-    const[first,...rest]=punishments;
-    if(first.deathMode){
-      const reward=rewards[Math.floor(Math.random()*rewards.length)];
-      alert(`Reward Unlocked: ${reward}`);
-    }
-    setPunishments(rest);
-  }
-
-  const today=new Date();
-  const showWeeklyAlert=today.getDay()===2 && punishments.some(p=>p.type==='weeklyBoss');
-
-  // UI
-  return React.createElement('div',{className:"p-4 max-w-3xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg "+(showLevelUp?'flash':'')},
+  return React.createElement('div',{className:`p-4 mx-auto mt-6 bg-black bg-opacity-70 rounded-lg shadow-lg ${widgetMode?'widget-mode':''} ${(showLevelUp?'flash':'')}`},
     React.createElement('header',{className:"text-center mb-4"},
       React.createElement('h1',{className:"text-3xl font-bold"},"Solo Leveling Grind"),
+      React.createElement('button',{onClick:()=>setWidgetMode(!widgetMode),className:"bg-purple-600 px-4 py-2 rounded mt-2"},widgetMode?"Switch Full View":"Switch Widget"),
       React.createElement('p',{className:"mt-2"},`Level ${level} (${getRank(level)})`),
       React.createElement('div',{className:"w-full bg-gray-700 rounded h-4 mt-2 overflow-hidden"},
         React.createElement('div',{className:"bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded",style:{width:`${(xp/getXPForLevel(level))*100}%`}})),
       React.createElement('p',{className:"text-sm mt-1"},`${xp} / ${getXPForLevel(level)} XP`),
-      React.createElement('img',{src:characterImages[Math.min(level-1,characterImages.length-1)],alt:"Character",className:"mx-auto w-32 mt-4"}),
       React.createElement('p',{className:"mt-2"},"Rival XP: "+rivalXP)
     ),
-    showWeeklyAlert && React.createElement('div',{className:"bg-red-600 text-center p-4 text-2xl font-bold mb-4 rounded"},
-      "⚠ Weekly Boss is waiting! Complete now or lose massive XP!"
-    ),
-    punishments.length>0&&React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"},
-      React.createElement('div',{className:"bg-gray-800 p-6 rounded text-center max-w-md"},
-        React.createElement('h2',{className:"text-2xl font-bold mb-4"},"Punishment"),
-        React.createElement('pre',{className:"mb-4 whitespace-pre-wrap text-left"},punishments[0].text),
-        React.createElement('button',{onClick:completePunishment,className:"bg-red-500 px-4 py-2 rounded text-white font-bold"},"Punishment Completed"),
-        React.createElement('p',{className:"mt-2 text-sm"},`Remaining: ${punishments.length-1}`)
-      )
-    ),
-    React.createElement('div',{className:"mt-6"},
-      React.createElement('h2',{className:"text-xl mb-2 font-semibold"},"Daily & Timed Tasks"),
+    !widgetMode && React.createElement('div',{className:"mt-6"},
+      React.createElement('h2',{className:"text-xl mb-2 font-semibold"},"Tasks"),
       React.createElement('div',{className:"mb-4 flex justify-end"},
         React.createElement('button',{onClick:()=>setShowAddModal(true),className:"bg-blue-500 px-4 py-2 rounded"},"+ Add Task")
       ),
-      tasks.length===0?
-        React.createElement('p',{className:"text-center text-gray-300"},"No tasks yet."):
-        tasks.map(task=>React.createElement('div',{key:task.id,className:"bg-gray-800 p-4 rounded mb-2 flex justify-between items-center"},
-          React.createElement('div',null,
-            React.createElement('p',{className:"font-bold"},task.title),
-            React.createElement('p',{className:"text-sm text-gray-400"},task.type==='daily'?`Time: ${task.start}-${task.end}`:`Deadline: ${task.days} days`)
-          ),
-          React.createElement('button',{onClick:()=>completeTask(task.id),className:"bg-green-500 px-3 py-1 rounded"},"Done")
-        ))
-    ),
-    React.createElement('div',{className:"mt-8"},
-      React.createElement('h2',{className:"text-xl mb-2 font-semibold"},"Habit Tasks"),
-      habits.length===0?
-        React.createElement('p',{className:"text-center text-gray-300"},"No habits yet."):
-        habits.map(h=>React.createElement('div',{key:h.id,className:"bg-gray-800 p-4 rounded mb-2 flex justify-between items-center"},
-          React.createElement('p',{className:"font-bold"},h.title),
-          React.createElement('div',null,
-            React.createElement('button',{onClick:()=>completeHabit(h.id),disabled:h.done,className:`px-3 py-1 rounded ${h.done?"bg-gray-500":"bg-green-500"}`},h.done?"Done":"Mark Done"),
-            React.createElement('button',{onClick:()=>deleteHabit(h.id),className:"bg-red-500 px-3 py-1 ml-2 rounded"},"Delete")
-          )
-        ))
+      tasks.map(task=>React.createElement('div',{key:task.id,className:"bg-gray-800 p-4 rounded mb-2 flex justify-between items-center"},
+        React.createElement('p',{className:"font-bold"},task.title),
+        React.createElement('button',{onClick:()=>completeTask(task.id),className:"bg-green-500 px-3 py-1 rounded"},"Done")
+      ))
     ),
     showAddModal&&React.createElement('div',{className:"fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"},
       React.createElement('div',{className:"bg-gray-900 p-6 rounded max-w-md w-full"},
@@ -334,7 +170,13 @@ function App(){
     )
   );
 }
+
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+
+// Register Service Worker for PWA
+if('serviceWorker'in navigator){
+  navigator.serviceWorker.register('service-worker.js').catch(err=>console.log('SW fail:',err));
+}
 </script>
 </body>
 </html>
