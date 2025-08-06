@@ -103,7 +103,38 @@ function App(){
   const [dailyQuestList,setDailyQuestList]=useState([]);
   const [dopamineActive, setDopamineActive] = useState(JSON.parse(localStorage.getItem('dopamineActive')) || false);
   const [dopamineLevel, setDopamineLevel] = useState(parseFloat(localStorage.getItem('dopamineLevel')) || 100);
+  const [showUrgeModal, setShowUrgeModal] = useState(false);
+const [urgeTask, setUrgeTask] = useState('');
+const urgeTasks = [
+  "Do 10 push-ups now!",
+  "sleep on left side.",
+  "Take 10 deep breaths.",
+  "Drink a glass of water.",
+  "Do 10 squat."
+];
 
+
+  function triggerUrgeRedirect() {
+  setUrgeTask(urgeTasks[Math.floor(Math.random() * urgeTasks.length)]);
+  setShowUrgeModal(true);
+
+  // Auto complete after 10 sec
+  setTimeout(() => {
+    if (showUrgeModal) {
+      handleUrgeComplete();
+    }
+  }, 10000);
+  }
+  function handleUrgeComplete() {
+  setShowUrgeModal(false);
+  setXP(prevXP => prevXP + 3); // Reward +3 XP
+}
+
+function handleUrgeSkip() {
+  setShowUrgeModal(false);
+  setXP(prevXP => Math.max(0, prevXP - 5)); // -5 XP
+  setRivalXP(prev => prev + 5); // Rival +5 XP
+    }
   // === RELAPSE ===
   function handleRelapse(){
     if(confirm("Are you sure? Relapse will cost 50 XP!")){
@@ -503,6 +534,38 @@ useEffect(() => {
     : "✅ You are ahead of your rival"}
 </p>
         <button onClick={handleRelapse} className="bg-red-500 mt-3 px-4 py-2 rounded w-full">Relapse (-50 XP)</button>
+        {/* Urge Redirect Button */}
+<button
+  onClick={triggerUrgeRedirect}
+  className="bg-purple-500 mt-3 px-4 py-2 rounded w-full"
+>
+  I Have an Urge
+</button>
+
+{/* Urge Modal */}
+{showUrgeModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+    <div className="bg-gray-800 p-5 rounded text-center max-w-sm">
+      <h2 className="text-xl font-bold mb-3">Redirect Your Urge</h2>
+      <p className="mb-4">{urgeTask}</p>
+      <p className="text-red-400 mb-3">Wait for 10 seconds...</p>
+      <div className="flex gap-3 justify-center">
+        <button
+          onClick={handleUrgeComplete}
+          className="bg-green-500 px-4 py-2 rounded"
+        >
+          Done (+3 XP)
+        </button>
+        <button
+          onClick={handleUrgeSkip}
+          className="bg-red-500 px-4 py-2 rounded"
+        >
+          Skip (-5 XP)
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       </header>
 
       {/* Dopamine Detox Section */}
