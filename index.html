@@ -396,18 +396,19 @@ useEffect(() => {
   setTasks(tasks.filter(t => t.id !== id));
   setXP(xp + 2);
 
-  // Log only if dungeon boss active
-  if (punishments.some(p => p.type === 'dungeon')) {
-    const updatedLog = [...taskLog, Date.now()];
-    setTaskLog(updatedLog);
+  // Add to task log (for small boss reference)
+  const updatedLog = [...taskLog, completedTask.title].slice(-7); // Keep only last 7
+  setTaskLog(updatedLog);
 
+  // If Dungeon Boss active, still track separately for 20-task logic
+  if (punishments.some(p => p.type === 'dungeon')) {
     if (updatedLog.length >= 20) {
       completePunishment(); // Dungeon Boss Cleared
     }
   }
 
   setBossCountdown(bossCountdown + 1);
-  }
+    }
 
   function completeHabit(id){
     const updated=habits.map(h=>h.id===id?{...h,done:true}:h);
@@ -438,6 +439,17 @@ useEffect(() => {
           <div className="bg-gray-800 p-5 rounded w-full max-w-sm text-center">
             <h2 className="text-xl font-bold mb-3">Punishment</h2>
             <pre className="mb-3 whitespace-pre-wrap text-left">{punishments[0].text}</pre>
+            {/* Show last 7 tasks for Small Boss */}
+{punishments[0].type === 'boss' && taskLog.length > 0 && (
+  <div className="text-left mb-3">
+    <h3 className="font-semibold mb-1">Last 7 Tasks:</h3>
+    <ul className="list-disc list-inside text-sm">
+      {taskLog.slice(-7).map((t, i) => (
+        <li key={i}>{t}</li>
+      ))}
+    </ul>
+  </div>
+)}
             {['boss','weeklyBoss','dungeon'].includes(punishments[0].type) && (
               <p className="mt-2 text-red-400 text-lg font-bold">Time Left: {formatTime(timer)}</p>
             )}
