@@ -242,13 +242,14 @@ useEffect(() => {
   // === Weekly Boss every Sunday ===
   const today = new Date().getDay();
   if (today === 0 && localStorage.getItem('weeklyBossTriggered') !== 'true') {
-    addPunishment({
-      type: 'weeklyBoss',
-      text: "Weekly Revision Boss! Complete within 10 hrs!",
-      deathMode: true
-    });
-    startBossTimer(10);
-    localStorage.setItem('weeklyBossTriggered', 'true');
+  const randomDeathPunishment = deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)];
+  addPunishment({
+    type: 'weeklyBoss',
+    text: `Dont die until its Complete within 10 hrs!\nPunishment: ${randomDeathPunishment}`,
+    deathMode: true
+  });
+  startBossTimer(10); // 10 hrs timer
+  localStorage.setItem('weeklyBossTriggered', 'true');
   }
   if (today !== 0) {
     localStorage.setItem('weeklyBossTriggered', 'false');
