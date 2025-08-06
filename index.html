@@ -37,15 +37,15 @@ const { useState, useEffect } = React;
 
 // === CONSTANTS ===
 const normalPunishments = [
-  "Do 20 push-ups", "Solve 50 GK questions", "Revise 2 topics",
-  "No social media 6 hrs", "Read 30 pages"
+  "Solve 50 maths questions", "Solve 100 GK questions", "Revise 2 topics",
+  "No social media 6 hrs", "Full mock analysis"
 ];
 const deathModePunishments = [
   "Study 6 hrs straight + summary", "200 questions + 50 push-ups",
-  "Write all formulas twice", "Full mock test now + No phone 8 hrs", "Revise 5 topics + Cold shower"
+  "Write all formulas twice", "2 Full mock test now + No phone 8 hrs + analysis", "Revise 8 topics + Cold shower"
 ];
 const rewards = [
-  "Watch 1 anime episode", "Eat favorite snack", "Listen to music", "Take a relaxing bath", "Play a game for 20 mins"
+  "Watch 1 anime episode", "Eat favorite snack", "Listen to music", "Take a relaxing walk", "watch insta for 20 mins"
 ];
 
 // === DAILY QUEST EXERCISES (7 Days) ===
@@ -338,9 +338,14 @@ useEffect(() => {
   }
 
   function failDailyQuest(){
-    setShowDailyQuest(false);
-    addPunishment({type:'questFail',text:"Daily Quest Failed! Lockdown until cleared!",deathMode:false});
-       }
+  setShowDailyQuest(false);
+  const randomDeathPunishment = deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)];
+  addPunishment({
+    type: 'questFail',
+    text: `Daily Quest Failed! Punishment: ${randomDeathPunishment}`,
+    deathMode: true
+  });
+  }
 
   // === Add / Complete Tasks ===
   function addPunishment(p){
