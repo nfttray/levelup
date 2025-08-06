@@ -15,6 +15,7 @@
       font-family: 'Poppins', sans-serif;
       background: url('https://wallpapercave.com/wp/wp9420280.jpg') no-repeat center center fixed;
       background-size: cover;
+      position: relative;
     }
     .overlay {
       position: fixed;
@@ -33,7 +34,6 @@
 <div class="overlay"></div>
 <div id="root"></div>
 <script type="text/babel">
-
 const { useState, useEffect } = React;
 
 // === CONSTANTS ===
@@ -55,7 +55,6 @@ const characterImages = [
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/68.png',
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/21.png'
 ];
-
 function getXPForLevel(level){ return level*level*100; }
 function getRank(level){
   if(level<5)return rankTitles[0];
@@ -64,33 +63,6 @@ function getRank(level){
   if(level<20)return rankTitles[3];
   if(level<25)return rankTitles[4];
   return rankTitles[5];
-}
-
-// === Helper for Boss Timer ===
-function startBossTimer(hours) {
-  const endTime = Date.now() + hours * 60 * 60 * 1000; 
-  localStorage.setItem('bossEndTime', endTime);
-}
-function getRemainingBossTime() {
-  const endTime = parseInt(localStorage.getItem('bossEndTime')) || 0;
-  const now = Date.now();
-  return Math.max(0, endTime - now);
-}
-function formatTime(ms) {
-  const totalSeconds = Math.floor(ms / 1000);
-  const hrs = Math.floor(totalSeconds / 3600);
-  const mins = Math.floor((totalSeconds % 3600) / 60);
-  const secs = totalSeconds % 60;
-  return `${hrs}h ${mins}m ${secs}s`;
-}
-
-// === Daily Quest Generator ===
-function getNewDailyQuest() {
-  return {
-    title: "Daily Quest: Train Your Body",
-    exercises: ["20 push-ups", "Read 10 pages", "Solve 30 questions"],
-    reward: 15
-  };
 }
 
 function App(){
@@ -107,11 +79,17 @@ function App(){
   const [behindDays,setBehindDays]=useState(parseInt(localStorage.getItem('behindDays'))||0);
   const [showLevelUp,setShowLevelUp]=useState(false);
   const [lockdown,setLockdown]=useState(false);
-  const [timer,setTimer]=useState(getRemainingBossTime());
+  const [timer,setTimer]=useState(0);
+  const [showRelapseModal,setShowRelapseModal]=useState(false); // ✅ Relapse Modal
   const [showQuestModal,setShowQuestModal]=useState(false);
-  const [dailyQuest,setDailyQuest]=useState(getNewDailyQuest());
+  const [dailyQuest,setDailyQuest]=useState({title:'',exercises:[],reward:0});
 
-  // === Persist State ===
+  // === Boss Timer Helpers ===
+  function startBossTimer(hours){ localStorage.setItem('bossEndTime',Date.now()+hours*60*60*1000); }
+  function getRemainingBossTime(){ return Math.max(0,(parseInt(localStorage.getItem('bossEndTime'))||0)-Date.now()); }
+  function formatTime(ms){const s=Math.floor(ms/1000);const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);return`${h}h ${m}m ${s%60}s`; }
+
+  // === SAVE TO STORAGE ===
   useEffect(()=>{
     localStorage.setItem('xp',xp);
     localStorage.setItem('level',level);
@@ -124,7 +102,7 @@ function App(){
     localStorage.setItem('behindDays',behindDays);
   },[xp,level,tasks,habits,punishments,bossCountdown,rivalXP,rivalLevel,behindDays]);
 
-  // === Level Up ===
+  // === Level Up Check ===
   useEffect(()=>{
     if(xp>=getXPForLevel(level)){
       setXP(xp-getXPForLevel(level));
@@ -134,22 +112,7 @@ function App(){
     }
   },[xp]);
 
-  // === Rival Progression ===
-  useEffect(()=>{
-    const interval=setInterval(()=>{
-      setRivalXP(prev=>{
-        let newXP=prev+Math.floor(Math.random()*3);
-        if(newXP>=getXPForLevel(rivalLevel)){
-          newXP-=getXPForLevel(rivalLevel);
-          setRivalLevel(rivalLevel+1);
-        }
-        return newXP;
-      });
-    },3600000);
-    return()=>clearInterval(interval);
-  },[rivalLevel]);
-
-  // === Daily Reset ===
+  // === Daily Quest Reset ===
   useEffect(()=>{
     const today=new Date().toDateString();
     const lastReset=localStorage.getItem('lastReset');
@@ -157,17 +120,9 @@ function App(){
       const resetHabits=habits.map(h=>({...h,done:false}));
       setHabits(resetHabits);
       localStorage.setItem('lastReset',today);
+      const quest={title:'Daily Quest',exercises:['50 push-ups','Read 20 pages','Revise 1 topic'],reward:10};
+      setDailyQuest(quest);
       setShowQuestModal(true);
-      // Rival check for behind XP
-      if(xp<rivalXP){
-        setBehindDays(behindDays+1);
-        if(behindDays+1>=3){
-          addPunishment({type:'mega',text:`You were behind rival for 3 days! Complete 2 mock tests and revise 5 topics NOW!`,deathMode:true});
-          setBehindDays(0);
-        }
-      }else{
-        setBehindDays(0);
-      }
     }
   },[]);
 
