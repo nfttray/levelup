@@ -42,7 +42,7 @@ const normalPunishments = [
 ];
 const deathModePunishments = [
   "Study 6 hrs straight + summary", "200 questions + 50 push-ups",
-  "Write all formulas twice", "2 Full mock test now + No phone 8 hrs + analysis", "Revise 8 topics + Cold shower"
+  "Watch 4-5 videos continue and learn", "2 Full mock test now + No phone 8 hrs + analysis", "Revise 8 topics + Cold shower"
 ];
 const rewards = [
   "Watch 1 anime episode", "Eat favorite snack", "Listen to music", "Take a relaxing walk", "watch insta for 20 mins"
@@ -79,7 +79,7 @@ function getRank(level){
 }
 
 // Rival XP constants
-const DAILY_RIVAL_XP = 35;
+const DAILY_RIVAL_XP = 30;
 const HOURLY_RIVAL_XP = DAILY_RIVAL_XP / 24;
 
   // === MAIN APP ===
@@ -308,6 +308,29 @@ useEffect(() => {
     return () => clearInterval(interval);
   }, [rivalLevel]);
 
+  useEffect(() => {
+  const now = Date.now();
+  const lastCheck = parseInt(localStorage.getItem('last3DayCheck')) || 0;
+  const diffDays = Math.floor((now - lastCheck) / (1000 * 60 * 60 * 24));
+
+  if (diffDays >= 3) {
+    // Update last check date
+    localStorage.setItem('last3DayCheck', now);
+
+    // Check if rival is ahead
+    const rivalAhead = rivalLevel > level || (rivalLevel === level && rivalXP > xp);
+
+    if (rivalAhead) {
+      const randomDeathPunishment = deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)];
+      addPunishment({
+        type: 'deathRival',
+        text: `Rival is ahead after 3 days! Punishment: ${randomDeathPunishment}`,
+        deathMode: true
+      });
+    }
+  }
+}, [xp, level, rivalXP, rivalLevel]);
+
   // === Daily Quest System ===
   useEffect(() => {
     const today = new Date().toDateString();
@@ -438,6 +461,11 @@ useEffect(() => {
         <p className="text-sm mt-1">{xp} / {getXPForLevel(level)} XP</p>
         <img src={characterImages[Math.min(level-1,characterImages.length-1)]} className="mx-auto w-24 mt-3 rounded-full border-2 border-purple-400"/>
         <p className="mt-2 text-sm">Rival: Level {rivalLevel} | XP: {Math.floor(rivalXP)}</p>
+        <p className="mt-1 text-sm font-bold">
+  {rivalLevel > level || (rivalLevel === level && rivalXP > xp)
+    ? "🔥 Rival is ahead of you!"
+    : "✅ You are ahead of your rival"}
+</p>
         <button onClick={handleRelapse} className="bg-red-500 mt-3 px-4 py-2 rounded w-full">Relapse (-50 XP)</button>
       </header>
 
