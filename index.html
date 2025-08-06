@@ -34,36 +34,17 @@
 <div class="overlay"></div>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect } = React;
 
-// === CONSTANTS ===
-const normalPunishments = [
-  "Do 20 push-ups", "Solve 50 GK questions", "Revise 2 topics",
-  "No social media 6 hrs", "Read 30 pages"
-];
-const deathModePunishments = [
-  "Study 6 hrs straight + summary", "200 questions + 50 push-ups",
-  "Write all formulas twice", "Full mock test now + No phone 8 hrs", "Revise 5 topics + Cold shower"
-];
-const rewards = [
-  "Watch 1 anime episode", "Eat favorite snack", "Listen to music", "Take a relaxing bath", "Play a game for 20 mins"
-];
-const rankTitles = ['E-Rank Hunter','D-Rank','C-Rank','B-Rank','A-Rank','S-Rank'];
-const characterImages = [
-  'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/45.png',
-  'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/20.png',
-  'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/68.png',
-  'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/21.png'
-];
-function getXPForLevel(level){ return level*level*100; }
-function getRank(level){
-  if(level<5)return rankTitles[0];
-  if(level<10)return rankTitles[1];
-  if(level<15)return rankTitles[2];
-  if(level<20)return rankTitles[3];
-  if(level<25)return rankTitles[4];
-  return rankTitles[5];
-}
+const {useState,useEffect}=React;
+
+const normalPunishments=["Do 20 push-ups","Solve 50 GK questions","Revise 2 topics","No social media 6 hrs","Read 30 pages"];
+const deathModePunishments=["Study 6 hrs straight + summary","200 questions + 50 push-ups","Write all formulas twice","Full mock test now + No phone 8 hrs","Revise 5 topics + Cold shower"];
+const rewards=["Watch 1 anime episode","Eat favorite snack","Listen to music","Take a relaxing bath","Play a game for 20 mins"];
+const rankTitles=['E-Rank Hunter','D-Rank','C-Rank','B-Rank','A-Rank','S-Rank'];
+const characterImages=['https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/45.png','https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/20.png','https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/68.png','https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/21.png'];
+
+function getXPForLevel(level){return level*level*100;}
+function getRank(level){if(level<5)return rankTitles[0];if(level<10)return rankTitles[1];if(level<15)return rankTitles[2];if(level<20)return rankTitles[3];if(level<25)return rankTitles[4];return rankTitles[5];}
 
 function App(){
   const [xp,setXP]=useState(parseInt(localStorage.getItem('xp'))||0);
@@ -72,24 +53,32 @@ function App(){
   const [habits,setHabits]=useState(JSON.parse(localStorage.getItem('habits'))||[]);
   const [punishments,setPunishments]=useState(JSON.parse(localStorage.getItem('punishments'))||[]);
   const [showAddModal,setShowAddModal]=useState(false);
+  const [showRelapseModal,setShowRelapseModal]=useState(false);
   const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
   const [bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
   const [rivalXP,setRivalXP]=useState(parseInt(localStorage.getItem('rivalXP'))||0);
   const [rivalLevel,setRivalLevel]=useState(parseInt(localStorage.getItem('rivalLevel'))||1);
-  const [behindDays,setBehindDays]=useState(parseInt(localStorage.getItem('behindDays'))||0);
   const [showLevelUp,setShowLevelUp]=useState(false);
   const [lockdown,setLockdown]=useState(false);
   const [timer,setTimer]=useState(0);
-  const [showRelapseModal,setShowRelapseModal]=useState(false); // ✅ Relapse Modal
-  const [showQuestModal,setShowQuestModal]=useState(false);
-  const [dailyQuest,setDailyQuest]=useState({title:'',exercises:[],reward:0});
 
-  // === Boss Timer Helpers ===
-  function startBossTimer(hours){ localStorage.setItem('bossEndTime',Date.now()+hours*60*60*1000); }
-  function getRemainingBossTime(){ return Math.max(0,(parseInt(localStorage.getItem('bossEndTime'))||0)-Date.now()); }
-  function formatTime(ms){const s=Math.floor(ms/1000);const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);return`${h}h ${m}m ${s%60}s`; }
+  function startBossTimer(hours){
+    const endTime=Date.now()+hours*60*60*1000;
+    localStorage.setItem('bossEndTime',endTime);
+  }
+  function getRemainingBossTime(){
+    const endTime=parseInt(localStorage.getItem('bossEndTime'))||0;
+    const now=Date.now();
+    return Math.max(0,endTime-now);
+  }
+  function formatTime(ms){
+    const totalSeconds=Math.floor(ms/1000);
+    const hrs=Math.floor(totalSeconds/3600);
+    const mins=Math.floor((totalSeconds%3600)/60);
+    const secs=totalSeconds%60;
+    return `${hrs}h ${mins}m ${secs}s`;
+  }
 
-  // === SAVE TO STORAGE ===
   useEffect(()=>{
     localStorage.setItem('xp',xp);
     localStorage.setItem('level',level);
@@ -99,10 +88,8 @@ function App(){
     localStorage.setItem('bossCountdown',bossCountdown);
     localStorage.setItem('rivalXP',rivalXP);
     localStorage.setItem('rivalLevel',rivalLevel);
-    localStorage.setItem('behindDays',behindDays);
-  },[xp,level,tasks,habits,punishments,bossCountdown,rivalXP,rivalLevel,behindDays]);
+  },[xp,level,tasks,habits,punishments,bossCountdown,rivalXP,rivalLevel]);
 
-  // === Level Up Check ===
   useEffect(()=>{
     if(xp>=getXPForLevel(level)){
       setXP(xp-getXPForLevel(level));
@@ -112,45 +99,35 @@ function App(){
     }
   },[xp]);
 
-  // === Daily Quest Reset ===
+  // Rival Progression
   useEffect(()=>{
-    const today=new Date().toDateString();
-    const lastReset=localStorage.getItem('lastReset');
-    if(lastReset!==today){
-      const resetHabits=habits.map(h=>({...h,done:false}));
-      setHabits(resetHabits);
-      localStorage.setItem('lastReset',today);
-      const quest={title:'Daily Quest',exercises:['50 push-ups','Read 20 pages','Revise 1 topic'],reward:10};
-      setDailyQuest(quest);
-      setShowQuestModal(true);
-    }
-  },[]);
+    const interval=setInterval(()=>{
+      const gain=Math.floor(Math.random()*2);
+      setRivalXP(prev=>{
+        let newXP=prev+gain;
+        if(newXP>=getXPForLevel(rivalLevel)){
+          newXP-=getXPForLevel(rivalLevel);
+          setRivalLevel(rivalLevel+1);
+        }
+        return newXP;
+      });
+    },3600000);
+    return()=>clearInterval(interval);
+  },[rivalLevel]);
 
-  // === Boss System ===
+  // Boss Trigger
   useEffect(()=>{
     if(bossCountdown>=7){
       const topics=getTopics(30,7);
       const message=topics.length>0?`Boss Fight: Revise these topics:\n- ${topics.join('\n- ')}`:"Boss Fight: No recent topics!";
       addPunishment({type:'boss',text:message,deathMode:false});
+      startBossTimer(3);
       setBossCountdown(0);
     }
   },[bossCountdown]);
 
   useEffect(()=>{
-    const today=new Date();
-    const day=today.getDay();
-    const lastWeekly=localStorage.getItem('lastWeeklyBoss');
-    if(day===1 && lastWeekly!==today.toDateString()){
-      const topics=getTopics(7,12);
-      const message=topics.length>0?`Weekly Boss: Revise these topics:\n- ${topics.join('\n- ')}`:"Weekly Boss: Nothing to revise!";
-      addPunishment({type:'weeklyBoss',text:message,deathMode:true});
-      localStorage.setItem('lastWeeklyBoss',today.toDateString());
-    }
-  },[]);
-
-  // Boss Timer Update
-  useEffect(()=>{
-    if(punishments.length>0 && ['boss','weeklyBoss','dungeon'].includes(punishments[0].type)){
+    if(punishments.length>0&&['boss','weeklyBoss','dungeon'].includes(punishments[0].type)){
       const interval=setInterval(()=>{
         const remaining=getRemainingBossTime();
         setTimer(remaining);
@@ -165,18 +142,17 @@ function App(){
     }
   },[punishments]);
 
-  // === Auto Punishment for Missed Tasks ===
+  // Auto Punishment
   useEffect(()=>{
     const checkMissed=()=>{
       const now=new Date();
       let updatedTasks=[];
       tasks.forEach(task=>{
-        if(task.type==='daily'){
-          if(task.end){
-            const[endH,endM]=task.end.split(':').map(Number);
-            const endTime=new Date();endTime.setHours(endH,endM,0);
-            if(now>endTime){assignMissed(task.title);return;}
-          }
+        if(task.type==='daily'&&task.end){
+          const[endH,endM]=task.end.split(':').map(Number);
+          const endTime=new Date();
+          endTime.setHours(endH,endM,0);
+          if(now>endTime){assignMissed(task.title);return;}
         }else if(task.type==='timed'){
           const created=new Date(task.created);
           const deadline=new Date(created);
@@ -198,81 +174,45 @@ function App(){
     setXP(xp-(isDeath?25:10));
   }
 
-  function addPunishment(p){
-    if(p.type==='boss') startBossTimer(3);
-    else if(p.type==='weeklyBoss') startBossTimer(10);
-    else if(p.type==='dungeon') startBossTimer(24);
-    setPunishments([...punishments,p]);
-    setLockdown(true);
-  }
-
+  function addPunishment(p){setPunishments([...punishments,p]);setLockdown(true);}
   function completePunishment(){
     const[first,...rest]=punishments;
-    let userGain=0;
-    if(first.type==='boss'){userGain=4;alert(`Boss Defeated! +${userGain} XP`);}
-    else if(first.type==='weeklyBoss'){userGain=10;alert(`Weekly Boss Defeated! +${userGain} XP`);}
-    else if(first.type==='dungeon'){userGain=20;alert(`Dungeon Cleared! +${userGain} XP`);}
+    let userGain=0,rivalGain=0;
+    if(first.type==='boss'){userGain=4;rivalGain=2;}
+    else if(first.type==='weeklyBoss'){userGain=10;rivalGain=5;}
+    else if(first.type==='dungeon'){userGain=20;rivalGain=10;}
     setXP(xp+userGain);
-    if(first.deathMode){
-      const reward=rewards[Math.floor(Math.random()*rewards.length)];
-      alert(`Reward Unlocked: ${reward}`);
-    }
+    setRivalXP(prev=>{
+      let newXP=prev+rivalGain;
+      if(newXP>=getXPForLevel(rivalLevel)){newXP-=getXPForLevel(rivalLevel);setRivalLevel(rivalLevel+1);}
+      return newXP;
+    });
+    if(first.deathMode){alert(`Reward Unlocked: ${rewards[Math.floor(Math.random()*rewards.length)]}`);}
     setPunishments(rest);
     if(rest.length===0)setLockdown(false);
   }
-
-  function forgivePunishment(){
-    setXP(Math.max(0,xp-15));
-    completePunishment();
+  function forgivePunishment(){setXP(Math.max(0,xp-15));completePunishment();}
+  function handleRelapseConfirm(){
+    setXP(Math.max(0,xp-50));
+    const punishment=deathModePunishments[Math.floor(Math.random()*deathModePunishments.length)];
+    addPunishment({type:'relapse',text:`Relapse! ${punishment}`,deathMode:true});
+    setShowRelapseModal(false);
   }
 
   function addTask(){
     if(!newTask.title)return;
     const id=Date.now();
     const task={...newTask,id,done:false,created:new Date().toISOString()};
-    if(newTask.type==='habit')setHabits([...habits,task]);
-    else setTasks([...tasks,task]);
+    if(newTask.type==='habit'){setHabits([...habits,task]);}
+    else{setTasks([...tasks,task]);}
     setShowAddModal(false);
     setNewTask({type:'daily',title:'',start:'',end:'',days:''});
   }
-
-  function completeTask(id){
-    const completedTask=tasks.find(t=>t.id===id);
-    setTasks(tasks.filter(t=>t.id!==id));
-    setXP(xp+2);
-    setBossCountdown(bossCountdown+1);
-    if(completedTask)saveToHistory(completedTask.title);
-  }
-
-  function completeHabit(id){
-    const updated=habits.map(h=>h.id===id?{...h,done:true}:h);
-    setHabits(updated);
-    setXP(xp+1);
-    const habit=habits.find(h=>h.id===id);
-    if(habit)saveToHistory(habit.title);
-  }
-
-  function deleteHabit(id){ setHabits(habits.filter(h=>h.id!==id)); }
-
-  function saveToHistory(title){
-    const history=JSON.parse(localStorage.getItem('completedHistory'))||[];
-    history.push({title,date:new Date().toISOString()});
-    localStorage.setItem('completedHistory',JSON.stringify(history));
-  }
-
-  function getTopics(daysBack=7,limit=10){
-    const history=JSON.parse(localStorage.getItem('completedHistory'))||[];
-    const now=new Date();
-    const cutoff=new Date();
-    cutoff.setDate(now.getDate()-daysBack);
-    const filtered=history.filter(item=>new Date(item.date)>=cutoff).map(item=>item.title);
-    return filtered.slice(-limit);
-  }
-
-  function markQuestDone(){
-    setXP(xp+dailyQuest.reward);
-    setShowQuestModal(false);
-  }
+  function completeTask(id){const completedTask=tasks.find(t=>t.id===id);setTasks(tasks.filter(t=>t.id!==id));setXP(xp+2);setBossCountdown(bossCountdown+1);if(completedTask)saveToHistory(completedTask.title);}
+  function completeHabit(id){const updated=habits.map(h=>h.id===id?{...h,done:true}:h);setHabits(updated);setXP(xp+1);}
+  function deleteHabit(id){setHabits(habits.filter(h=>h.id!==id));}
+  function saveToHistory(title){const history=JSON.parse(localStorage.getItem('completedHistory'))||[];history.push({title,date:new Date().toISOString()});localStorage.setItem('completedHistory',JSON.stringify(history));}
+  function getTopics(daysBack=7,limit=10){const history=JSON.parse(localStorage.getItem('completedHistory'))||[];const now=new Date();const cutoff=new Date();cutoff.setDate(now.getDate()-daysBack);const filtered=history.filter(item=>new Date(item.date)>=cutoff).map(item=>item.title);return filtered.slice(-limit);}
 
   return(
     <div className={"p-4 max-w-3xl mx-auto bg-black bg-opacity-70 rounded-lg mt-6 shadow-lg "+(showLevelUp?'flash':'')}>
@@ -285,10 +225,10 @@ function App(){
         <p className="text-sm mt-1">{xp} / {getXPForLevel(level)} XP</p>
         <img src={characterImages[Math.min(level-1,characterImages.length-1)]} alt="Character" className="mx-auto w-32 mt-4"/>
         <p className="mt-2">Rival: Level {rivalLevel} ({getRank(rivalLevel)}) | XP: {rivalXP}</p>
+        <button onClick={()=>setShowRelapseModal(true)} className="mt-3 bg-red-600 px-4 py-2 rounded">Relapse</button>
       </header>
 
-      {/* Punishment Modal */}
-      {punishments.length>0 && (
+      {punishments.length>0&&(
         <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-6 rounded text-center max-w-md">
             <h2 className="text-2xl font-bold mb-4">Punishment</h2>
@@ -297,92 +237,21 @@ function App(){
               <p className="mt-2 text-red-400 text-lg font-bold">Time Left: {formatTime(timer)}</p>
             )}
             <div className="flex justify-center gap-2">
-              <button onClick={completePunishment} className="bg-green-500 px-4 py-2 rounded">Complete</button>
-              <button onClick={forgivePunishment} className="bg-yellow-500 px-4 py-2 rounded text-black">Forgive (-15 XP)</button>
-            </div>
-            <p className="mt-2 text-sm">Remaining: {punishments.length-1}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Daily Quest Modal */}
-      {showQuestModal&&(
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded max-w-md w-full">
-            <h2 className="text-xl mb-4 font-semibold">{dailyQuest.title}</h2>
-            <ul className="mb-4 list-disc list-inside">
-              {dailyQuest.exercises.map((ex,i)=>(<li key={i}>{ex}</li>))}
-            </ul>
-            <p className="mb-4">Reward: {dailyQuest.reward} XP</p>
-            <div className="flex justify-end">
-              <button onClick={markQuestDone} className="bg-green-600 px-4 py-2 rounded">Done</button>
+              <button onClick={completePunishment} className="bg-green-500 px-4 py-2 rounded text-white font-bold">Complete</button>
+              <button onClick={forgivePunishment} className="bg-yellow-500 px-4 py-2 rounded text-black font-bold">Forgive (-15 XP)</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Task Section */}
-      <div className="mt-6">
-        <h2 className="text-xl mb-2 font-semibold">Daily & Timed Tasks</h2>
-        <div className="mb-4 flex justify-end">
-          {!lockdown&&(
-            <button onClick={()=>setShowAddModal(true)} className="bg-blue-500 px-4 py-2 rounded">+ Add Task</button>
-          )}
-        </div>
-        {tasks.length===0?(<p className="text-center text-gray-300">No tasks yet.</p>):(
-          tasks.map(task=>(
-            <div key={task.id} className="bg-gray-800 p-4 rounded mb-2 flex justify-between items-center">
-              <div>
-                <p className="font-bold">{task.title}</p>
-                <p className="text-sm text-gray-400">{task.type==='daily'?`Time: ${task.start}-${task.end}`:`Deadline: ${task.days} days`}</p>
-              </div>
-              {!lockdown&&(
-                <button onClick={()=>completeTask(task.id)} className="bg-green-500 px-3 py-1 rounded">Done</button>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Habits */}
-      <div className="mt-8">
-        <h2 className="text-xl mb-2 font-semibold">Habit Tasks</h2>
-        {habits.length===0?(<p className="text-center text-gray-300">No habits yet.</p>):(
-          habits.map(h=>(
-            <div key={h.id} className="bg-gray-800 p-4 rounded mb-2 flex justify-between items-center">
-              <p className="font-bold">{h.title}</p>
-              <div>
-                <button onClick={()=>completeHabit(h.id)} disabled={h.done||lockdown} className={`px-3 py-1 rounded ${h.done?"bg-gray-500":"bg-green-500"}`}>{h.done?"Done":"Mark Done"}</button>
-                {!lockdown&&(<button onClick={()=>deleteHabit(h.id)} className="bg-red-500 px-3 py-1 ml-2 rounded">Delete</button>)}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Add Task Modal */}
-      {showAddModal&&(
+      {showRelapseModal&&(
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded max-w-md w-full">
-            <h2 className="text-xl mb-4 font-semibold">Add Task</h2>
-            <select value={newTask.type} onChange={e=>setNewTask({...newTask,type:e.target.value})} className="mb-4 w-full p-2 text-black rounded">
-              <option value="daily">Daily Task</option>
-              <option value="timed">Timed Task</option>
-              <option value="habit">Habit Task</option>
-            </select>
-            <input type="text" placeholder="Task title" value={newTask.title} onChange={e=>setNewTask({...newTask,title:e.target.value})} className="w-full mb-4 p-2 text-black rounded"/>
-            {newTask.type==='daily'&&(
-              <>
-                <input type="time" className="w-full mb-2 p-2 text-black rounded" onChange={e=>setNewTask({...newTask,start:e.target.value})}/>
-                <input type="time" className="w-full mb-4 p-2 text-black rounded" onChange={e=>setNewTask({...newTask,end:e.target.value})}/>
-              </>
-            )}
-            {newTask.type==='timed'&&(
-              <input type="number" placeholder="Days" className="w-full mb-4 p-2 text-black rounded" onChange={e=>setNewTask({...newTask,days:e.target.value})}/>
-            )}
-            <div className="flex justify-end">
-              <button onClick={addTask} className="bg-blue-600 px-4 py-2 rounded">Add</button>
-              <button onClick={()=>setShowAddModal(false)} className="ml-2 bg-gray-600 px-4 py-2 rounded">Cancel</button>
+          <div className="bg-gray-900 p-6 rounded max-w-md text-center">
+            <h2 className="text-2xl font-bold mb-4">Relapse?</h2>
+            <p className="mb-4">Are you sure? You will lose 50 XP and get a Death Punishment.</p>
+            <div className="flex justify-center gap-2">
+              <button onClick={handleRelapseConfirm} className="bg-red-600 px-4 py-2 rounded">Confirm</button>
+              <button onClick={()=>setShowRelapseModal(false)} className="bg-gray-600 px-4 py-2 rounded">Cancel</button>
             </div>
           </div>
         </div>
@@ -390,7 +259,6 @@ function App(){
     </div>
   );
 }
-
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
