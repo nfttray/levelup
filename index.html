@@ -176,6 +176,22 @@ function App(){
   return () => clearInterval(interval);
 }, [tasks]);
 
+  useEffect(() => {
+  const today = new Date();
+  const lastDungeonDate = localStorage.getItem('lastDungeonDate');
+  const diffDays = lastDungeonDate ? Math.floor((today - new Date(lastDungeonDate)) / (1000 * 60 * 60 * 24)) : 10;
+
+  if (diffDays >= 10 && !punishments.some(p => p.type === 'dungeon')) {
+    addPunishment({
+      type: 'dungeon',
+      text: "Dungeon Boss! Complete 20 tasks within 24 hrs!",
+      deathMode: true
+    });
+    startBossTimer(24); // 24 hrs for challenge
+    localStorage.setItem('lastDungeonDate', today);
+    setTaskLog([]); // Reset log to track new 20 tasks
+  }
+}, [punishments]);
   // === SAVE DATA ===
   useEffect(()=>{
     localStorage.setItem('xp',xp);
@@ -355,15 +371,20 @@ useEffect(() => {
     setNewTask({type:'daily',title:'',start:'',end:'',days:''});
   }
 
-  function completeTask(id){
+  function completeTask(id) {
   const completedTask = tasks.find(t => t.id === id);
   setTasks(tasks.filter(t => t.id !== id));
   setXP(xp + 2);
 
-  // Log task completion
-  const now = Date.now();
-  const updatedLog = [...taskLog, now].filter(t => now - t <= 24 * 60 * 60 * 1000); // keep last 24 hrs
-  setTaskLog(updatedLog);
+  // Log only if dungeon boss active
+  if (punishments.some(p => p.type === 'dungeon')) {
+    const updatedLog = [...taskLog, Date.now()];
+    setTaskLog(updatedLog);
+
+    if (updatedLog.length >= 20) {
+      completePunishment(); // Dungeon Boss Cleared
+    }
+  }
 
   setBossCountdown(bossCountdown + 1);
   }
