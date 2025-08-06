@@ -114,21 +114,18 @@ function App(){
   let missedTasks = [];
 
   updatedTasks.forEach(task => {
-    if (task.type === 'daily') {
-      const endTime = new Date();
-      const [endH, endM] = task.end.split(':');
-      endTime.setHours(endH, endM, 0, 0);
+    if (!task.done) {  // Ensure we only check incomplete tasks
+      if (task.type === 'daily') {
+        const [endH, endM] = task.end.split(':');
+        const endTime = new Date();
+        endTime.setHours(endH, endM, 0, 0);
 
-      if (now > endTime) {
-        missedTasks.push(task);
-      }
-    } else if (task.type === 'timed') {
-      const createdDate = new Date(task.created);
-      const deadline = new Date(createdDate);
-      deadline.setDate(createdDate.getDate() + parseInt(task.days || 0));
-
-      if (now > deadline) {
-        missedTasks.push(task);
+        if (now > endTime) missedTasks.push(task);
+      } else if (task.type === 'timed') {
+        const createdDate = new Date(task.created);
+        const deadline = new Date(createdDate);
+        deadline.setDate(createdDate.getDate() + parseInt(task.days || 0));
+        if (now > deadline) missedTasks.push(task);
       }
     }
   });
@@ -138,11 +135,11 @@ function App(){
     updatedTasks = updatedTasks.filter(t => !missedTasks.includes(t));
     setTasks(updatedTasks);
 
-    // Add punishment for each missed task
-    missedTasks.forEach(() => {
+    // Lockdown and punishment
+    missedTasks.forEach(task => {
       addPunishment({
         type: 'taskMissed',
-        text: "You missed a task! Complete this punishment before adding new tasks.",
+        text: `You missed: ${task.title}. Complete a punishment!`,
         deathMode: false
       });
     });
