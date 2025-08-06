@@ -48,9 +48,63 @@ const deathModePunishments = [
 const rewards = [
   "Watch 1 anime episode", "Eat favorite snack", "Listen to music", "Take a relaxing bath", "Play a game for 20 mins"
 ];
-const dailyQuestExercises = [
-  "100 Jumping Jacks", "50 Push-ups", "10 min Meditation",
-  "Read 20 pages", "Solve 30 questions"
+const weeklyQuestExercises = [
+  // DAY 1 – Shoulder Width + Posture
+  [
+    "Curl Bar Overhead Press – 4 × 12",
+    "Dumbbell Lateral Raise – 4 × 15",
+    "Dumbbell Shrugs – 3 × 20",
+    "Reverse Fly (Dumbbells) – 3 × 15",
+    "Yoga: Bhujangasana – 2 × 30 sec"
+  ],
+  // DAY 2 – Arms & Chest
+  [
+    "Curl Bar Bicep Curl – 4 × 12",
+    "Hammer Curl (Dumbbell) – 3 × 15",
+    "Overhead Dumbbell Tricep Extension – 3 × 12",
+    "Push-Ups (Normal or Incline) – 3 × max",
+    "Yoga: Tadasana – 1 min"
+  ],
+  // DAY 3 – Core + Rib Fill
+  [
+    "Dumbbell Side Bend – 4 × 20 each side",
+    "Russian Twist (with Dumbbell) – 3 × 30 sec",
+    "Dumbbell Pullover – 4 × 12",
+    "Plank Hold – 3 × 40 sec",
+    "Yoga: Setu Bandhasana – 2 × 30 sec"
+  ],
+  // DAY 4 – Posture + Breathing
+  [
+    "Scapular Retraction – 3 × 12",
+    "Reverse Fly – 3 × 15",
+    "Dumbbell Front Raise – 3 × 12",
+    "Dumbbell Shrugs – 3 × 20",
+    "Yoga: Anulom Vilom – 2 min"
+  ],
+  // DAY 5 – Full Shoulder + Arms Pump
+  [
+    "Curl Bar Overhead Press + Curl (Superset) – 3 × 12",
+    "Lateral Raise + Shrugs (Superset) – 3 rounds",
+    "Close-Grip Push-Ups – 3 × max",
+    "Hammer Curl – 3 × 15",
+    "Yoga: Surya Namaskar – 3 rounds"
+  ],
+  // DAY 6 – Yoga + Flexibility + Core
+  [
+    "Surya Namaskar – 4 rounds",
+    "Bhujangasana + Shalabhasana combo – 3 × 30 sec each",
+    "Vrikshasana – 2 × 30 sec each side",
+    "Bridge Pose – 3 × 30 sec",
+    "Kapalbhati Breathing – 1 min"
+  ],
+  // DAY 7 – Active Recovery
+  [
+    "Cat-Cow Stretch – 2 min",
+    "Wall Angel / Scapula Slides – 3 × 10",
+    "Anulom Vilom – 2 min",
+    "Forward Bend Stretch – 2 × 20 sec",
+    "Child’s Pose – 2 × 30 sec"
+  ]
 ];
 const rankTitles = ['E-Rank Hunter','D-Rank','C-Rank','B-Rank','A-Rank','S-Rank'];
 const characterImages = [
@@ -132,6 +186,7 @@ function App(){
     localStorage.setItem('xp',xp);
     localStorage.setItem('level',level);
     localStorage.setItem('tasks',JSON.stringify(tasks));
+    localStorage.setItem('dailyQuestList', JSON.stringify(resetQuests));
     localStorage.setItem('habits',JSON.stringify(habits));
     localStorage.setItem('punishments',JSON.stringify(punishments));
     localStorage.setItem('bossCountdown',bossCountdown);
@@ -262,13 +317,16 @@ useEffect(() => {
   const lastReset = localStorage.getItem('lastQuestReset');
 
   if (lastReset !== today) {
-    const resetQuests = dailyQuestExercises.map(e => ({ title: e, done: false }));
+    const todayIndex = new Date().getDay(); // 0 = Sunday, 6 = Saturday
+const resetQuests = (weeklyQuestExercises[todayIndex] || weeklyQuestExercises[0])
+  .map(e => ({ title: e, done: false }));
     setDailyQuestList(resetQuests);
     localStorage.setItem('dailyQuestList', JSON.stringify(resetQuests));
     localStorage.setItem('lastQuestReset', today);
     setShowDailyQuest(true);
   } else {
-    const savedQuests = JSON.parse(localStorage.getItem('dailyQuestList')) || dailyQuestExercises.map(e => ({ title: e, done: false }));
+    const savedQuests = JSON.parse(localStorage.getItem('dailyQuestList')) 
+  || (weeklyQuestExercises[todayIndex] || weeklyQuestExercises[0]).map(e => ({ title: e, done: false }));
     setDailyQuestList(savedQuests);
     const allDone = savedQuests.every(q => q.done);
     setShowDailyQuest(!allDone);
