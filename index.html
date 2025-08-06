@@ -59,6 +59,7 @@ const characterImages = [
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/68.png',
   'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/21.png'
 ];
+
 function getXPForLevel(level){ return level*level*100; }
 function getRank(level){
   if(level<5)return rankTitles[0];
@@ -68,6 +69,10 @@ function getRank(level){
   if(level<25)return rankTitles[4];
   return rankTitles[5];
 }
+
+// Rival XP constants
+const DAILY_RIVAL_XP = 35;
+const HOURLY_RIVAL_XP = DAILY_RIVAL_XP / 24; // ~1.45 XP/hour
 
 // === MAIN APP ===
 function App(){
@@ -79,7 +84,7 @@ function App(){
   const [showAddModal,setShowAddModal]=useState(false);
   const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
   const [bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
-  const [rivalXP,setRivalXP]=useState(parseInt(localStorage.getItem('rivalXP'))||0);
+  const [rivalXP,setRivalXP]=useState(parseFloat(localStorage.getItem('rivalXP'))||0);
   const [rivalLevel,setRivalLevel]=useState(parseInt(localStorage.getItem('rivalLevel'))||1);
   const [behindDays,setBehindDays]=useState(parseInt(localStorage.getItem('behindDays'))||0);
   const [showLevelUp,setShowLevelUp]=useState(false);
@@ -95,9 +100,11 @@ function App(){
     }
   }
 
+  // === BOSS TIMER FUNCTIONS ===
   function startBossTimer(hours){
     const endTime=Date.now()+hours*60*60*1000;
     localStorage.setItem('bossEndTime',endTime);
+    setTimer(endTime-Date.now());
   }
   function getRemainingBossTime(){
     const endTime=parseInt(localStorage.getItem('bossEndTime'))||0;
@@ -111,6 +118,14 @@ function App(){
     const secs=totalSeconds%60;
     return `${hrs}h ${mins}m ${secs}s`;
   }
+
+  // === LIVE TIMER UPDATE ===
+  useEffect(()=>{
+    const interval=setInterval(()=>{
+      setTimer(getRemainingBossTime());
+    },1000);
+    return()=>clearInterval(interval);
+  },[]);
 
   // === LOCAL STORAGE SAVE ===
   useEffect(()=>{
@@ -135,35 +150,22 @@ function App(){
     }
   },[xp]);
 
-  // === DAILY QUEST RESET ===
-  useEffect(()=>{
-    const today=new Date().toDateString();
-    const lastReset=localStorage.getItem('lastQuestReset');
-    if(lastReset!==today){
-      setDailyQuestList(dailyQuestExercises.map(e=>({title:e,done:false})));
-      localStorage.setItem('lastQuestReset',today);
-      setShowDailyQuest(true);
-    }
-  },[]);
-
-// (PART 2 will continue from here)
-  // === RIVAL PROGRESSION ===
+  // === RIVAL XP UPDATE EVERY HOUR ===
   useEffect(()=>{
     const interval=setInterval(()=>{
-      const gain=Math.floor(Math.random()*3); // Rival gains 0-2 XP hourly
       setRivalXP(prev=>{
-        let newXP=prev+gain;
-        if(newXP>=getXPForLevel(rivalLevel)){
-          newXP=newXP-getXPForLevel(rivalLevel);
+        let updated=prev+HOURLY_RIVAL_XP;
+        if(updated>=getXPForLevel(rivalLevel)){
+          updated-=getXPForLevel(rivalLevel);
           setRivalLevel(rivalLevel+1);
         }
-        return newXP;
+        return updated;
       });
-    },3600000); // every hour
+    },3600000); // hourly
     return()=>clearInterval(interval);
   },[rivalLevel]);
 
-  // === CHECK BEHIND DAYS ===
+  // === XP CHECK VS RIVAL (Mega Punishment after 3 days) ===
   useEffect(()=>{
     const today=new Date().toDateString();
     const lastCheck=localStorage.getItem('lastRivalCheck');
@@ -171,7 +173,7 @@ function App(){
       if(xp<rivalXP){
         setBehindDays(behindDays+1);
         if(behindDays+1>=3){
-          addPunishment({type:'mega',text:"You lost 3 days to rival! Mega punishment: 2 mock tests + revise 5 topics!",deathMode:true});
+          addPunishment({type:'mega',text:"Lost 3 days to rival! Mega punishment: 2 mocks + 5 topic revision!",deathMode:true});
           setBehindDays(0);
         }
       } else { setBehindDays(0); }
@@ -199,7 +201,7 @@ function App(){
       });
       setTasks(updatedTasks);
     };
-    const interval=setInterval(checkMissed,5000);
+    const interval=setInterval(checkMissed,10000);
     return()=>clearInterval(interval);
   },[tasks]);
 
@@ -216,6 +218,7 @@ function App(){
       const topics=getTopics(30,7);
       const message=topics.length>0?`Boss Fight: Revise these topics:\n- ${topics.join('\n- ')}`:"Boss Fight: No recent topics!";
       addPunishment({type:'boss',text:message,deathMode:false});
+      startBossTimer(3); // 3 hours to defeat
       setBossCountdown(0);
     }
   },[bossCountdown]);
@@ -227,6 +230,7 @@ function App(){
     const lastWeekly=localStorage.getItem('lastWeeklyBoss');
     if(day===1 && lastWeekly!==today.toDateString()){
       addPunishment({type:'weeklyBoss',text:"Weekly Boss: Revise 12 topics NOW!",deathMode:true});
+      startBossTimer(10);
       localStorage.setItem('lastWeeklyBoss',today.toDateString());
     }
   },[]);
@@ -236,6 +240,7 @@ function App(){
     const dayCount=Math.floor(Date.now()/86400000);
     if(dayCount%10===0){
       addPunishment({type:'dungeon',text:"Dungeon Raid: Complete 15 tasks in 24 hrs for +50 XP!",deathMode:false});
+      startBossTimer(24);
     }
   },[]);
 
@@ -256,24 +261,24 @@ function App(){
 
   // === ADD / COMPLETE TASKS ===
   function addPunishment(p){
-    if(p.type==='boss')startBossTimer(3);
-    else if(p.type==='weeklyBoss')startBossTimer(10);
-    else if(p.type==='dungeon')startBossTimer(24);
     setPunishments([...punishments,p]);
     setLockdown(true);
   }
   function completePunishment(){
     const [first,...rest]=punishments;
     let gain=0;
-    if(first.type==='boss'){gain=4;alert(`Boss Defeated! +${gain} XP`);}
-    if(first.type==='weeklyBoss'){gain=10;alert(`Weekly Boss Defeated! +${gain} XP`);}
-    if(first.type==='dungeon'){gain=20;alert(`Dungeon Cleared! +${gain} XP`);}
+    if(first.type==='boss'){gain=4;rivalBonusXP();}
+    if(first.type==='weeklyBoss'){gain=10;rivalBonusXP();}
+    if(first.type==='dungeon'){gain=20;rivalBonusXP();}
     setXP(xp+gain);
     if(first.deathMode){
       alert(`Reward: ${rewards[Math.floor(Math.random()*rewards.length)]}`);
     }
     setPunishments(rest);
     if(rest.length===0)setLockdown(false);
+  }
+  function rivalBonusXP(){
+    setRivalXP(rivalXP+(HOURLY_RIVAL_XP*12)); // Half-day worth XP
   }
   function forgivePunishment(){
     setXP(Math.max(0,xp-15));
@@ -324,7 +329,7 @@ function App(){
         </div>
         <p className="text-sm mt-1">{xp} / {getXPForLevel(level)} XP</p>
         <img src={characterImages[Math.min(level-1,characterImages.length-1)]} className="mx-auto w-32 mt-4"/>
-        <p className="mt-2">Rival: Level {rivalLevel} | XP: {rivalXP}</p>
+        <p className="mt-2">Rival: Level {rivalLevel} | XP: {Math.floor(rivalXP)}</p>
         <button onClick={handleRelapse} className="bg-red-500 mt-4 px-4 py-2 rounded">Relapse (-50 XP)</button>
       </header>
 
@@ -363,7 +368,7 @@ function App(){
         </div>
       )}
 
-      {/* Task & Habit Sections */}
+      {/* Tasks Section */}
       <div className="mt-6">
         <h2 className="text-xl mb-2 font-semibold">Daily & Timed Tasks</h2>
         <div className="mb-4 flex justify-end">
@@ -388,6 +393,7 @@ function App(){
         )}
       </div>
 
+      {/* Habits Section */}
       <div className="mt-8">
         <h2 className="text-xl mb-2 font-semibold">Habit Tasks</h2>
         {habits.length===0?(
