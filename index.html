@@ -176,10 +176,17 @@ function App(){
   return () => clearInterval(interval);
 }, [tasks]);
 
-  useEffect(() => {
+  
+ useEffect(() => {
   const today = new Date();
-  const lastDungeonDate = localStorage.getItem('lastDungeonDate');
-  const diffDays = lastDungeonDate ? Math.floor((today - new Date(lastDungeonDate)) / (1000 * 60 * 60 * 24)) : 10;
+  let lastDungeonDate = localStorage.getItem('lastDungeonDate');
+
+  if (!lastDungeonDate) {
+    localStorage.setItem('lastDungeonDate', today);
+    lastDungeonDate = today;
+  }
+
+  const diffDays = Math.floor((today - new Date(lastDungeonDate)) / (1000 * 60 * 60 * 24));
 
   if (diffDays >= 10 && !punishments.some(p => p.type === 'dungeon')) {
     addPunishment({
@@ -189,7 +196,7 @@ function App(){
     });
     startBossTimer(24); // 24 hrs for challenge
     localStorage.setItem('lastDungeonDate', today);
-    setTaskLog([]); // Reset log to track new 20 tasks
+    setTaskLog([]); // Reset log for tracking new tasks
   }
 }, [punishments]);
   // === SAVE DATA ===
