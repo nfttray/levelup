@@ -87,6 +87,7 @@ function App(){
   const [xp,setXP]=useState(parseInt(localStorage.getItem('xp'))||0);
   const [level,setLevel]=useState(parseInt(localStorage.getItem('level'))||1);
   const [tasks,setTasks]=useState(JSON.parse(localStorage.getItem('tasks'))||[]);
+  const [taskLog, setTaskLog] = useState(JSON.parse(localStorage.getItem('taskLog')) || []);
   const [habits,setHabits]=useState(JSON.parse(localStorage.getItem('habits'))||[]);
   const [punishments,setPunishments]=useState(JSON.parse(localStorage.getItem('punishments'))||[]);
   const [showAddModal,setShowAddModal]=useState(false);
@@ -185,6 +186,7 @@ function App(){
     localStorage.setItem('bossCountdown',bossCountdown);
     localStorage.setItem('rivalXP',rivalXP);
     localStorage.setItem('rivalLevel',rivalLevel);
+    localStorage.setItem('taskLog', JSON.stringify(taskLog));
     localStorage.setItem('behindDays',behindDays);
     localStorage.setItem('dailyQuestList',JSON.stringify(dailyQuestList));
   },[xp,level,tasks,habits,punishments,bossCountdown,rivalXP,rivalLevel,behindDays,dailyQuestList]);
@@ -198,6 +200,64 @@ function App(){
       setTimeout(()=>setShowLevelUp(false),2000);
     }
   },[xp]);
+
+  // Boss Fight Check
+useEffect(() => {
+  // === Small Boss after 7 tasks ===
+  if (bossCountdown >= 7 && !punishments.some(p => p.type === 'boss')) {
+    addPunishment({
+      type: 'boss',
+      text: "Revision Boss Fight! Complete within 3 hrs!",
+      deathMode: true
+    });
+    startBossTimer(3); // 3 hrs
+    setBossCountdown(0);
+  }
+
+  // === Weekly Boss every Sunday ===
+  const today = new Date().getDay();
+  if (today === 0 && localStorage.getItem('weeklyBossTriggered') !== 'true') {
+    addPunishment({
+      type: 'weeklyBoss',
+      text: "Weekly Revision Boss! Complete within 10 hrs!",
+      deathMode: true
+    });
+    startBossTimer(10);
+    localStorage.setItem('weeklyBossTriggered', 'true');
+  }
+  if (today !== 0) {
+    localStorage.setItem('weeklyBossTriggered', 'false');
+  }
+
+  // === Dungeon Boss if 20 tasks in 24 hrs ===
+  if (taskLog.length >= 20 && !punishments.some(p => p.type === 'dungeon')) {
+    addPunishment({
+      type: 'dungeon',
+      text: "Dungeon Boss! Complete within 24 hrs!",
+      deathMode: true
+    });
+    startBossTimer(24);
+    setTaskLog([]); // reset dungeon log
+  }
+}, [bossCountdown, taskLog]);
+
+  useEffect(() => {
+  const interval = setInterval(() => {
+    const remaining = getRemainingBossTime();
+    setTimer(remaining);
+
+    if (remaining <= 0 && punishments.length > 0) {
+      const current = punishments[0];
+      if (['boss', 'weeklyBoss', 'dungeon'].includes(current.type)) {
+        // Boss failed
+        setXP(Math.max(0, xp - 30)); // Penalty
+        setRivalXP(prev => prev + 20); // Rival advantage
+        completePunishment(); // Remove boss punishment
+      }
+    }
+  }, 1000);
+  return () => clearInterval(interval);
+}, [punishments]);
 
   // === Rival XP Auto Update ===
   useEffect(() => {
@@ -296,10 +356,16 @@ function App(){
   }
 
   function completeTask(id){
-    const completedTask=tasks.find(t=>t.id===id);
-    setTasks(tasks.filter(t=>t.id!==id));
-    setXP(xp+2);
-    setBossCountdown(bossCountdown+1);
+  const completedTask = tasks.find(t => t.id === id);
+  setTasks(tasks.filter(t => t.id !== id));
+  setXP(xp + 2);
+
+  // Log task completion
+  const now = Date.now();
+  const updatedLog = [...taskLog, now].filter(t => now - t <= 24 * 60 * 60 * 1000); // keep last 24 hrs
+  setTaskLog(updatedLog);
+
+  setBossCountdown(bossCountdown + 1);
   }
 
   function completeHabit(id){
