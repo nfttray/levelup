@@ -101,6 +101,8 @@ function App(){
   const [timer,setTimer]=useState(getRemainingBossTime());
   const [showDailyQuest,setShowDailyQuest]=useState(false);
   const [dailyQuestList,setDailyQuestList]=useState([]);
+  const [dopamineActive, setDopamineActive] = useState(JSON.parse(localStorage.getItem('dopamineActive')) || false);
+  const [dopamineLevel, setDopamineLevel] = useState(parseFloat(localStorage.getItem('dopamineLevel')) || 100);
 
   // === RELAPSE ===
   function handleRelapse(){
@@ -225,6 +227,40 @@ addPunishment({
       setTimeout(()=>setShowLevelUp(false),2000);
     }
   },[xp]);
+
+  // Dopamine Detox System
+useEffect(() => {
+  let interval;
+  if (dopamineActive && dopamineLevel > 0) {
+    interval = setInterval(() => {
+      setDopamineLevel(prev => {
+        const newLevel = Math.max(prev - (100 / (2 * 60 * 60)), 0);
+        localStorage.setItem('dopamineLevel', newLevel);
+        return newLevel;
+      });
+    }, 1000);
+  }
+  return () => clearInterval(interval);
+}, [dopamineActive]);
+
+// Save toggle state
+useEffect(() => {
+  localStorage.setItem('dopamineActive', JSON.stringify(dopamineActive));
+}, [dopamineActive]);
+
+// Penalty when dopamine hits 0
+useEffect(() => {
+  if (dopamineLevel === 0) {
+    alert("⚠️ Dopamine depleted! Apply punishment now!");
+    setDopamineActive(false);
+    // Optional: Trigger punishment system
+    addPunishment({
+      type: 'dopamineFail',
+      text: "Dopamine Bar Empty! Punishment: Solve 100 questions + No social media 6 hrs",
+      deathMode: true
+    });
+  }
+}, [dopamineLevel]);
 
   // Boss Fight Check
 useEffect(() => {
@@ -468,6 +504,29 @@ useEffect(() => {
 </p>
         <button onClick={handleRelapse} className="bg-red-500 mt-3 px-4 py-2 rounded w-full">Relapse (-50 XP)</button>
       </header>
+
+      {/* Dopamine Detox Section */}
+<div className="mt-5">
+  <h2 className="text-lg mb-2 font-semibold">Dopamine Detox</h2>
+  <div className="flex justify-between items-center mb-2">
+    <span>Detox Mode</span>
+    <label className="switch">
+      <input
+        type="checkbox"
+        checked={dopamineActive}
+        onChange={() => setDopamineActive(!dopamineActive)}
+      />
+      <span className="slider round"></span>
+    </label>
+  </div>
+  <div className="w-full bg-gray-700 rounded h-3 mt-2 overflow-hidden">
+    <div
+      className="bg-green-500 h-3"
+      style={{ width: `${dopamineLevel}%` }}
+    ></div>
+  </div>
+  <p className="text-sm mt-1">Dopamine Level: {dopamineLevel.toFixed(1)}%</p>
+</div>
 
       {/* Punishment Modal */}
       {punishments.length>0 && (
