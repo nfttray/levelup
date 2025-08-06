@@ -363,10 +363,23 @@ useEffect(() => {
     if(rest.length===0)setLockdown(false);
   }
 
-  function forgivePunishment(){
-    setXP(Math.max(0,xp-15));
-    completePunishment();
-  }
+  function forgivePunishment() {
+  const current = punishments[0];
+  let penalty = current.deathMode ? 25 : 10; // DeathMode = 25 XP, Normal = 10 XP
+
+  // Subtract XP but not below 0
+  setXP(prevXP => Math.max(0, prevXP - penalty));
+
+  // Rival gains XP equal to penalty
+  setRivalXP(prev => prev + penalty);
+
+  // Remove punishment without giving reward
+  const [, ...rest] = punishments;
+  setPunishments(rest);
+
+  // If no punishments left, disable lockdown
+  if (rest.length === 0) setLockdown(false);
+}
 
   function addTask(){
     if(!newTask.title)return;
@@ -430,7 +443,12 @@ useEffect(() => {
             )}
             <div className="flex flex-col gap-2 mt-4">
               <button onClick={completePunishment} className="bg-green-500 py-2 rounded">Complete</button>
-              <button onClick={forgivePunishment} className="bg-yellow-500 py-2 rounded">Forgive (-15 XP)</button>
+              <button 
+  onClick={forgivePunishment} 
+  className="bg-yellow-500 py-2 rounded"
+>
+  Forgive (-{punishments[0].deathMode ? 25 : 10} XP)
+</button>
             </div>
           </div>
         </div>
