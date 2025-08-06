@@ -151,19 +151,30 @@ function App(){
   },[xp]);
 
   // === RIVAL XP UPDATE EVERY HOUR ===
-  useEffect(()=>{
-    const interval=setInterval(()=>{
-      setRivalXP(prev=>{
-        let updated=prev+HOURLY_RIVAL_XP;
-        if(updated>=getXPForLevel(rivalLevel)){
-          updated-=getXPForLevel(rivalLevel);
-          setRivalLevel(rivalLevel+1);
+  // Rival XP update (persistent hourly calculation)
+useEffect(() => {
+  const updateRivalXP = () => {
+    const now = Date.now();
+    const lastUpdate = parseInt(localStorage.getItem('lastRivalUpdate')) || now;
+    const hoursPassed = Math.floor((now - lastUpdate) / 3600000);
+
+    if (hoursPassed > 0) {
+      setRivalXP(prev => {
+        let newXP = prev + (HOURLY_RIVAL_XP * hoursPassed);
+        while (newXP >= getXPForLevel(rivalLevel)) {
+          newXP -= getXPForLevel(rivalLevel);
+          setRivalLevel(lvl => lvl + 1);
         }
-        return updated;
+        return newXP;
       });
-    },3600000); // hourly
-    return()=>clearInterval(interval);
-  },[rivalLevel]);
+      localStorage.setItem('lastRivalUpdate', now);
+    }
+  };
+
+  updateRivalXP();
+  const interval = setInterval(updateRivalXP, 3600000);
+  return () => clearInterval(interval);
+}, [rivalLevel]);
 
   // === XP CHECK VS RIVAL (Mega Punishment after 3 days) ===
   useEffect(()=>{
@@ -286,23 +297,29 @@ function failDailyQuest() {
   function addPunishment(p){
     setPunishments([...punishments,p]);
     setLockdown(true);
+  } 
+  function completePunishment() {
+  const [first, ...rest] = punishments;
+  let gain = 0;
+  if (first.type === 'boss') gain = 4;
+  if (first.type === 'weeklyBoss') gain = 10;
+  if (first.type === 'dungeon') gain = 20;
+
+  setXP(xp + gain);
+
+  // Rival gets half XP from boss completion
+  if (['boss','weeklyBoss','dungeon'].includes(first.type)) {
+    setRivalXP(prev => prev + Math.floor(gain / 2));
   }
-  function completePunishment(){
-    const [first,...rest]=punishments;
-    let gain=0;
-    if(first.type==='boss'){gain=4;rivalBonusXP();}
-    if(first.type==='weeklyBoss'){gain=10;rivalBonusXP();}
-    if(first.type==='dungeon'){gain=20;rivalBonusXP();}
-    setXP(xp+gain);
-    if(first.deathMode){
-      alert(`Reward: ${rewards[Math.floor(Math.random()*rewards.length)]}`);
-    }
-    setPunishments(rest);
-    if(rest.length===0)setLockdown(false);
+
+  if (first.deathMode) {
+    alert(`Reward: ${rewards[Math.floor(Math.random() * rewards.length)]}`);
   }
-  function rivalBonusXP(){
-    setRivalXP(rivalXP+(HOURLY_RIVAL_XP*12)); // Half-day worth XP
-  }
+  setPunishments(rest);
+  if (rest.length === 0) setLockdown(false);
+}
+  
+  
   function forgivePunishment(){
     setXP(Math.max(0,xp-15));
     completePunishment();
