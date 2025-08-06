@@ -108,6 +108,46 @@ function App(){
     }
   }
 
+  function checkTaskDeadlines() {
+  const now = new Date();
+  let updatedTasks = [...tasks];
+  let missedTasks = [];
+
+  updatedTasks.forEach(task => {
+    if (task.type === 'daily') {
+      const endTime = new Date();
+      const [endH, endM] = task.end.split(':');
+      endTime.setHours(endH, endM, 0, 0);
+
+      if (now > endTime) {
+        missedTasks.push(task);
+      }
+    } else if (task.type === 'timed') {
+      const createdDate = new Date(task.created);
+      const deadline = new Date(createdDate);
+      deadline.setDate(createdDate.getDate() + parseInt(task.days || 0));
+
+      if (now > deadline) {
+        missedTasks.push(task);
+      }
+    }
+  });
+
+  if (missedTasks.length > 0) {
+    // Remove missed tasks
+    updatedTasks = updatedTasks.filter(t => !missedTasks.includes(t));
+    setTasks(updatedTasks);
+
+    // Add punishment for each missed task
+    missedTasks.forEach(() => {
+      addPunishment({
+        type: 'taskMissed',
+        text: "You missed a task! Complete this punishment before adding new tasks.",
+        deathMode: false
+      });
+    });
+  }
+  }
   // === BOSS TIMER ===
   function startBossTimer(hours){
     const endTime=Date.now()+hours*60*60*1000;
@@ -132,6 +172,11 @@ function App(){
     const interval=setInterval(()=>{ setTimer(getRemainingBossTime()); },1000);
     return()=>clearInterval(interval);
   },[]);
+
+  useEffect(() => {
+  const interval = setInterval(checkTaskDeadlines, 30000); // check every 30 sec
+  return () => clearInterval(interval);
+}, [tasks]);
 
   // === SAVE DATA ===
   useEffect(()=>{
