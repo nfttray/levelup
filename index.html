@@ -244,20 +244,43 @@ function App(){
     }
   },[]);
 
-  // === DAILY QUEST LOCKDOWN ===
-  function toggleQuestDone(index){
-    const updated=[...dailyQuestList];
-    updated[index].done=!updated[index].done;
-    setDailyQuestList(updated);
-    if(updated.every(q=>q.done)){
-      setShowDailyQuest(false);
-      setXP(xp+10); // Reward for completing all
-    }
+  
+  // === DAILY QUEST SYSTEM ===
+useEffect(() => {
+  const today = new Date().toDateString();
+  const lastReset = localStorage.getItem('lastQuestReset');
+
+  if (lastReset !== today) {
+    const resetQuests = dailyQuestExercises.map(e => ({ title: e, done: false }));
+    setDailyQuestList(resetQuests);
+    localStorage.setItem('dailyQuestList', JSON.stringify(resetQuests));
+    localStorage.setItem('lastQuestReset', today);
+    setShowDailyQuest(true);
+  } else {
+    const savedQuests = JSON.parse(localStorage.getItem('dailyQuestList')) || dailyQuestExercises.map(e => ({ title: e, done: false }));
+    setDailyQuestList(savedQuests);
+    const allDone = savedQuests.every(q => q.done);
+    setShowDailyQuest(!allDone);
   }
-  function failDailyQuest(){
+}, []);
+
+function toggleQuestDone(index) {
+  const updated = [...dailyQuestList];
+  updated[index].done = !updated[index].done;
+  setDailyQuestList(updated);
+  localStorage.setItem('dailyQuestList', JSON.stringify(updated));
+
+  if (updated.every(q => q.done)) {
     setShowDailyQuest(false);
-    addPunishment({type:'questFail',text:"Daily Quest Failed! Lockdown until cleared!",deathMode:false});
+    setXP(xp + 10); // Reward for completing all
   }
+}
+
+function failDailyQuest() {
+  setShowDailyQuest(false);
+  addPunishment({ type: 'questFail', text: "Daily Quest Failed! Lockdown until cleared!", deathMode: false });
+}
+  
 
   // === ADD / COMPLETE TASKS ===
   function addPunishment(p){
