@@ -140,7 +140,7 @@ function App(){
   "Drink a glass of water.",
   "Do 10 squat."
    ];
-  const [fogLevel, setFogLevel] = useState(50); // Starts at 50%
+  const [fogLevel, setFogLevel] = useState(20); // Starts at 20%
   const [fogReason, setFogReason] = useState('');
 
 
@@ -322,6 +322,16 @@ useEffect(() => {
     });
   }
 }, [dopamineLevel]);
+
+  useEffect(() => {
+  const today = new Date().toLocaleDateString();
+  const lastFogReset = localStorage.getItem("fogReset");
+
+  if (lastFogReset !== today) {
+    setFogLevel(20);
+    localStorage.setItem("fogReset", today);
+  }
+}, []);
 
   useEffect(() => {
   // Fog level penalty/reward at end of day
