@@ -649,27 +649,46 @@ useEffect(() => {
   </div>
 )}
       </header>
-        {showDecay && (
-  <div className="flex items-center gap-3 mt-4 p-3 bg-red-100 rounded-xl shadow-md animate-pulse">
-    <span className="text-3xl">🧠</span>
-    <div className="flex flex-col">
-      <p className="text-red-600 font-bold">Brain Decay Detected!</p>
-      <p className="text-sm">Low XP today. Penalties applied.</p>
-    </div>
-  </div>
-)}
+        <script type="text/babel">
+  function App() {
+    const [showDecay, setShowDecay] = React.useState(true);
+    const [brainDamageLevel, setBrainDamageLevel] = React.useState(1);
 
-<div className="mt-4">
-  <p className="text-xl font-semibold mb-2">🧠 Brain Damage Level</p>
-  <div className="flex gap-2">
-    {[...Array(2)].map((_, i) => (
-      <div
-        key={i}
-        className={`w-6 h-6 rounded-full ${brainDamageLevel > i ? "bg-red-500 animate-ping" : "bg-gray-300"}`}
-      ></div>
-    ))}
-  </div>
-</div>
+    return (
+      <div className="p-4">
+        <h1 className="text-2xl font-bold">🧠 Solo Grind</h1>
+
+        <>
+          {showDecay && (
+            <div className="flex items-center gap-3 mt-4 p-3 bg-red-100 rounded-xl shadow-md animate-pulse">
+              <span className="text-3xl">🧠</span>
+              <div className="flex flex-col">
+                <p className="text-red-600 font-bold">Brain Decay Detected!</p>
+                <p className="text-sm">Low XP today. Penalties applied.</p>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4">
+            <p className="text-xl font-semibold mb-2">🧠 Brain Damage Level</p>
+            <div className="flex gap-2">
+              {[...Array(2)].map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-6 h-6 rounded-full ${
+                    brainDamageLevel > i ? "bg-red-500 animate-ping" : "bg-gray-300"
+                  }`}
+                ></div>
+              ))}
+            </div>
+          </div>
+        </>
+      </div>
+    );
+  }
+
+  ReactDOM.render(<App />, document.getElementById("root"));
+</script>
       {/* Dopamine Detox Section */}
 <div className="mt-5">
   <h2 className="text-lg mb-2 font-semibold">Dopamine Detox</h2>
