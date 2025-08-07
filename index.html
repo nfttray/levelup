@@ -142,7 +142,8 @@ function App(){
    ];
   const [fogLevel, setFogLevel] = useState(20); // Starts at 20%
   const [fogReason, setFogReason] = useState('');
-
+const [brainDamageLevel, setBrainDamageLevel] = useState(parseInt(localStorage.getItem("brainDamageLevel")) || 0);
+const [showDecay, setShowDecay] = useState(false);
 
   function triggerUrgeRedirect() {
   setUrgeTask(urgeTasks[Math.floor(Math.random() * urgeTasks.length)]);
@@ -230,6 +231,33 @@ addPunishment({
     return `${hrs}h ${mins}m ${secs}s`;
   }
 
+  useEffect(() => {
+  const today = new Date().toISOString().split("T")[0];
+  const lastChecked = localStorage.getItem("xpDecayChecked");
+
+  if (lastChecked !== today) {
+    const todayXP = getXPForDate(today);
+
+    if (todayXP < 20) {
+      // Apply decay
+      setXP(prev => Math.max(0, prev - 5)); // -5 XP
+      setFogLevel(prev => Math.min(prev + 15, 100)); // +15 Fog
+
+      // Brain damage
+      setBrainDamageLevel(prev => {
+        const updated = Math.min(prev + 1, 2);
+        localStorage.setItem("brainDamageLevel", updated);
+        return updated;
+      });
+
+      // Show decay alert temporarily
+      setShowDecay(true);
+      setTimeout(() => setShowDecay(false), 5000);
+    }
+
+    localStorage.setItem("xpDecayChecked", today);
+  }
+}, []);
   // === Timer Update ===
   useEffect(()=>{
     const interval=setInterval(()=>{ setTimer(getRemainingBossTime()); },1000);
@@ -594,6 +622,27 @@ useEffect(() => {
 >
   I Have an Urge
 </button>
+        {showDecay && (
+  <div className="flex items-center gap-3 mt-4 p-3 bg-red-100 rounded-xl shadow-md animate-pulse">
+    <span className="text-3xl">🧠</span>
+    <div className="flex flex-col">
+      <p className="text-red-600 font-bold">Brain Decay Detected!</p>
+      <p className="text-sm">Low XP today. Penalties applied.</p>
+    </div>
+  </div>
+)}
+
+<div className="mt-4">
+  <p className="text-xl font-semibold mb-2">🧠 Brain Damage Level</p>
+  <div className="flex gap-2">
+    {[...Array(2)].map((_, i) => (
+      <div
+        key={i}
+        className={`w-6 h-6 rounded-full ${brainDamageLevel > i ? "bg-red-500 animate-ping" : "bg-gray-300"}`}
+      ></div>
+    ))}
+  </div>
+</div>
 
 {/* Urge Modal */}
 {showUrgeModal && (
