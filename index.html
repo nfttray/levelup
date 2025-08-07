@@ -772,53 +772,65 @@ useEffect(() => {
 }
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
-  <script>
-  function getUserStats() {
-    return {
-      tasksDone: Number(localStorage.getItem("completedTasks") || 0),
-      fog: Number(localStorage.getItem("fogLevel") || 0),
-      streak: Number(localStorage.getItem("streak") || 0),
-      rivalXP: Number(localStorage.getItem("rivalXP") || 1000),
-      myXP: Number(localStorage.getItem("myXP") || 950),
-      relapses: Number(localStorage.getItem("relapsesToday") || 0),
-      mood: localStorage.getItem("lastMood") || "😐 Neutral",
-    };
-  }
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    try {
+      // Ensure mentor-message element exists
+      const mentorEl = document.getElementById("mentor-message");
+      if (!mentorEl) {
+        console.warn("Mentor element not found.");
+        return;
+      }
 
-  function generateStaticMentorMessage(stats) {
-    const { tasksDone, fog, streak, rivalXP, myXP, relapses } = stats;
+      function getUserStats() {
+        return {
+          tasksDone: Number(localStorage.getItem("completedTasks") || 0),
+          fog: Number(localStorage.getItem("fogLevel") || 0),
+          streak: Number(localStorage.getItem("streak") || 0),
+          rivalXP: Number(localStorage.getItem("rivalXP") || 1000),
+          myXP: Number(localStorage.getItem("myXP") || 950),
+          relapses: Number(localStorage.getItem("relapsesToday") || 0),
+          mood: localStorage.getItem("lastMood") || "😐 Neutral",
+        };
+      }
 
-    if (fog > 80) return "⚠️ Fog level dangerously high. Do a detox activity now.";
-    if (relapses >= 2) return "You've relapsed twice today. Get back on track—reclaim control.";
-    if (tasksDone === 0) return "One small task is all it takes to start momentum. Begin now.";
-    if (myXP < rivalXP - 100) return "Your rival is pulling ahead. Let’s push back!";
-    if (myXP > rivalXP + 100) return "You're leading! Don’t lose the edge.";
-    if (streak >= 5) return `🔥 You're on a ${streak}-day streak! Insane consistency!`;
-    if (tasksDone >= 5) return "You're on fire today! Go for a bonus task?";
+      function generateStaticMentorMessage(stats) {
+        const { tasksDone, fog, streak, rivalXP, myXP, relapses } = stats;
 
-    return "Stay calm. Attack the fog one step at a time.";
-  }
+        if (fog > 80) return "⚠️ Fog level dangerously high. Do a detox activity now.";
+        if (relapses >= 2) return "You've relapsed twice today. Get back on track—reclaim control.";
+        if (tasksDone === 0) return "One small task is all it takes to start momentum. Begin now.";
+        if (myXP < rivalXP - 100) return "Your rival is pulling ahead. Let’s push back!";
+        if (myXP > rivalXP + 100) return "You're leading! Don’t lose the edge.";
+        if (streak >= 5) return `🔥 You're on a ${streak}-day streak! Insane consistency!`;
+        if (tasksDone >= 5) return "You're on fire today! Go for a bonus task?";
+        return "Stay calm. Attack the fog one step at a time.";
+      }
 
-  function showMentorMessage() {
-    const today = new Date().toISOString().slice(0, 10);
-    const lastDate = localStorage.getItem("lastMentorDate");
+      function showMentorMessage() {
+        const today = new Date().toISOString().slice(0, 10);
+        const lastDate = localStorage.getItem("lastMentorDate");
 
-    if (lastDate === today) {
-      const cached = localStorage.getItem("mentorMessage") || "Welcome back!";
-      document.getElementById("mentor-message").innerText = cached;
-      return;
+        if (lastDate === today) {
+          const cached = localStorage.getItem("mentorMessage") || "Welcome back!";
+          mentorEl.innerText = cached;
+          return;
+        }
+
+        const stats = getUserStats();
+        const msg = generateStaticMentorMessage(stats);
+
+        localStorage.setItem("mentorMessage", msg);
+        localStorage.setItem("lastMentorDate", today);
+        mentorEl.innerText = msg;
+      }
+
+      showMentorMessage();
+
+    } catch (err) {
+      console.error("Mentor script error:", err);
     }
-
-    const stats = getUserStats();
-    const msg = generateStaticMentorMessage(stats);
-
-    localStorage.setItem("mentorMessage", msg);
-    localStorage.setItem("lastMentorDate", today);
-    document.getElementById("mentor-message").innerText = msg;
-  }
-
-  // Make sure DOM is loaded before running
-  window.addEventListener("DOMContentLoaded", showMentorMessage);
+  });
 </script>
 </body>
 </html>
