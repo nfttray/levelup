@@ -231,7 +231,7 @@ addPunishment({
     localStorage.setItem('lastDungeonDate', today);
     lastDungeonDate = today;
   }
-  const diffDays = Math.floor((today - new Date(lastDungeonDate)) / (1000 * 60 * 60 * 24));
+  const diffDays = Math.floor((today - new Date(lastDungeonDate)) / (1000  60  60 * 24));
   if (diffDays >= 10 && !punishments.some(p => p.type === 'dungeon')) {
     addPunishment({
       type: 'dungeon',
@@ -272,7 +272,7 @@ useEffect(() => {
   if (dopamineActive && dopamineLevel > 0) {
     interval = setInterval(() => {
       setDopamineLevel(prev => {
-        const newLevel = Math.max(prev - (100 / (2 * 60 * 60)), 0);
+        const newLevel = Math.max(prev - (100 / (2  60  60)), 0);
         localStorage.setItem('dopamineLevel', newLevel);
         return newLevel;
       });
@@ -397,7 +397,7 @@ useEffect(() => {
   useEffect(() => {
   const now = Date.now();
   const lastCheck = parseInt(localStorage.getItem('last3DayCheck')) || 0;
-  const diffDays = Math.floor((now - lastCheck) / (1000 * 60 * 60 * 24));
+  const diffDays = Math.floor((now - lastCheck) / (1000  60  60 * 24));
   if (diffDays >= 3) {
     // Update last check date
     localStorage.setItem('last3DayCheck', now);
@@ -519,7 +519,6 @@ useEffect(() => {
       {/* Header */}
       <header className="text-center mb-4">
         <h1 className="text-2xl font-bold">SHADOW ARISE</h1>
-
         <p className="mt-1">Level {level} ({getRank(level)})</p>
         <div className="w-full bg-gray-700 rounded h-3 mt-2 overflow-hidden">
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded" style={{width:`${(xp/getXPForLevel(level))*100}%`}}></div>
@@ -760,6 +759,3 @@ useEffect(() => {
 }
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
-
-</body>
-</html>
