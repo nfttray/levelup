@@ -519,13 +519,7 @@ useEffect(() => {
       {/* Header */}
       <header className="text-center mb-4">
         <h1 className="text-2xl font-bold">SHADOW ARISE</h1>
-    <div class="bg-gray-900 text-white rounded-xl p-4 mx-4 my-4 shadow-lg border border-gray-700">
-  <div class="flex items-center gap-2 mb-2">
-    <span class="text-pink-400 text-xl">🧠</span>
-    <h2 class="text-lg font-semibold">AI Mentor</h2>
-  </div>
-  <p id="mentor-message" class="text-sm text-gray-300 italic">Loading advice...</p>
-</div>
+
         <p className="mt-1">Level {level} ({getRank(level)})</p>
         <div className="w-full bg-gray-700 rounded h-3 mt-2 overflow-hidden">
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded" style={{width:`${(xp/getXPForLevel(level))*100}%`}}></div>
@@ -766,63 +760,6 @@ useEffect(() => {
 }
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
-<script>
-  function getMentorAdvice() {
-    const xp = parseInt(localStorage.getItem("xp")) || 0;
-    const lastRelapse = parseInt(localStorage.getItem("lastRelapse")) || 0;
-    const dopamineLevel = parseInt(localStorage.getItem("dopamineLevel")) || 100;
-    const now = Date.now();
-    const timeSinceRelapse = now - lastRelapse;
 
-    // Advice Bank
-    const adviceBank = {
-      relapse_recent: [
-        "You just relapsed. Reset, don’t regret. Start again stronger.",
-        "Relapse isn't failure — it's feedback. Adjust and keep climbing.",
-        "This is not the end. Take a breath, refocus, rise again."
-      ],
-      new_user: [
-        "Welcome to the grind. First 100 XP will test your will!",
-        "You're starting your journey. Small wins matter now.",
-        "Level 1 is lonely, but every master was once a beginner."
-      ],
-      dopamine_low: [
-        "You're grinding hard. Recharge your mind — walk, read, or breathe.",
-        "Low dopamine = time for rest. Don’t burn out, balance it.",
-        "Breaks aren’t weakness. They’re fuel. Go reset a bit."
-      ],
-      high_xp: [
-        "Over 200 XP? You're a beast in the making!",
-        "You’re rising faster than rivals. Keep this fire alive!",
-        "You’ve leveled up massively. Stay humble, stay deadly."
-      ],
-      default: [
-        "Each urge resisted is EXP earned. Shadow grow stronger.",
-        "Mentally strong. You're becoming the real deal.",
-        "No urge can match your focus. Keep crushing."
-      ]
-    };
-
-    // Pick category
-    let selected = "default";
-    if (timeSinceRelapse < 1000 * 60 * 60 * 6) selected = "relapse_recent";
-    else if (xp < 20) selected = "new_user";
-    else if (xp > 100 && dopamineLevel < 50) selected = "dopamine_low";
-    else if (xp > 200) selected = "high_xp";
-
-    // Pick random from selected
-    const options = adviceBank[selected];
-    const randomIndex = Math.floor(Math.random() * options.length);
-    return options[randomIndex];
-  }
-
-  function showMentorMessage() {
-    const message = getMentorAdvice();
-    document.getElementById("mentor-message").textContent = message;
-  }
-
-  showMentorMessage();
-  setInterval(showMentorMessage, 30000); // Change every 30 seconds
-</script>
 </body>
 </html>
