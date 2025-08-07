@@ -59,6 +59,34 @@ const weeklyQuestExercises = [
   ["Cat-Cow Stretch – 2 min","Wall Angel – 3 × 10","Anulom Vilom – 2 min","Forward Bend Stretch – 2 × 20 sec","Child’s Pose – 2 × 30 sec"]
 ];
 
+  const fogIncreaseOptions = [
+  "Mindless scrolling",
+  "Negative self-talk",
+  "Skipping exercise",
+  "Poor sleep",
+  "Porn or instant gratification",
+  "Avoiding tasks",
+  "Unhealthy food",
+  "Watching drama/TV",
+  "Overthinking",
+  "Unclear goals",
+  "Too much comfort"
+];
+
+const fogReduceOptions = [
+  "Cold shower",
+  "Breathing exercise",
+  "Meditation",
+  "Shadow work",
+  "Reading spiritual book",
+  "Walking outdoors",
+  "Doing deep work",
+  "Helping others",
+  "Waking early",
+  "Writing journal",
+  "Sunlight"
+];
+
 // === XP SYSTEM ===
 const rankTitles = ['E-Rank Hunter','D-Rank','C-Rank','B-Rank','A-Rank','S-Rank'];
 const characterImages = [
@@ -104,14 +132,16 @@ function App(){
   const [dopamineActive, setDopamineActive] = useState(JSON.parse(localStorage.getItem('dopamineActive')) || false);
   const [dopamineLevel, setDopamineLevel] = useState(parseFloat(localStorage.getItem('dopamineLevel')) || 100);
   const [showUrgeModal, setShowUrgeModal] = useState(false);
-const [urgeTask, setUrgeTask] = useState('');
-const urgeTasks = [
+  const [urgeTask, setUrgeTask] = useState('');
+  const urgeTasks = [
   "Do 10 push-ups now!",
   "sleep on left side.",
   "Take 10 deep breaths.",
   "Drink a glass of water.",
   "Do 10 squat."
-];
+   ];
+  const [fogLevel, setFogLevel] = useState(50); // Starts at 50%
+  const [fogReason, setFogReason] = useState('');
 
 
   function triggerUrgeRedirect() {
@@ -293,6 +323,19 @@ useEffect(() => {
   }
 }, [dopamineLevel]);
 
+  useEffect(() => {
+  // Fog level penalty/reward at end of day
+  const today = new Date().toLocaleDateString();
+  const lastCheck = localStorage.getItem("fogDate");
+  if (lastCheck !== today) {
+    if (fogLevel > 70) {
+      setXP(prev => Math.max(0, prev - 5));
+    } else if (fogLevel < 30) {
+      setXP(prev => prev + 5);
+    }
+    localStorage.setItem("fogDate", today);
+  }
+}, []);
   // Boss Fight Check
 useEffect(() => {
   // === Small Boss after 7 tasks ===
@@ -591,6 +634,54 @@ useEffect(() => {
   <p className="text-sm mt-1">Dopamine Level: {dopamineLevel.toFixed(1)}%</p>
 </div>
 
+      <div className="mt-5">
+  <h2 className="text-lg mb-2 font-semibold">Fog Meter</h2>
+  <div className="w-full bg-gray-700 rounded h-3 mt-2 overflow-hidden">
+    <div
+      className={`h-3 ${fogLevel < 40 ? 'bg-green-500' : fogLevel < 70 ? 'bg-yellow-500' : 'bg-red-500'}`}
+      style={{ width: `${fogLevel}%` }}
+    ></div>
+  </div>
+  <p className="text-sm mt-1">Fog Level: {fogLevel.toFixed(0)}%</p>
+
+  {/* Fog Reason Dropdown */}
+  <div className="mt-3">
+    <p className="text-sm font-semibold mb-1">Adjust Fog Level</p>
+    <select
+      onChange={(e) => setFogReason(e.target.value)}
+      className="w-full text-black p-2 rounded"
+      value={fogReason}
+    >
+      <option value="">-- Select a reason --</option>
+      <optgroup label="Increase Fog">
+        {fogIncreaseOptions.map((item, index) => (
+          <option key={`inc-${index}`} value={`inc-${item}`}>{item}</option>
+        ))}
+      </optgroup>
+      <optgroup label="Reduce Fog">
+        {fogReduceOptions.map((item, index) => (
+          <option key={`dec-${index}`} value={`dec-${item}`}>{item}</option>
+        ))}
+      </optgroup>
+    </select>
+
+    {fogReason && (
+      <button
+        className="bg-blue-500 mt-2 px-4 py-2 rounded w-full"
+        onClick={() => {
+          if (fogReason.startsWith("inc-")) {
+            setFogLevel(Math.min(100, fogLevel + 5));
+          } else {
+            setFogLevel(Math.max(0, fogLevel - 5));
+          }
+          setFogReason('');
+        }}
+      >
+        Confirm
+      </button>
+    )}
+  </div>
+</div>
       {/* Punishment Modal */}
       {punishments.length>0 && (
         <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
