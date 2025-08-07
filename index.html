@@ -231,7 +231,7 @@ addPunishment({
     localStorage.setItem('lastDungeonDate', today);
     lastDungeonDate = today;
   }
-  const diffDays = Math.floor((today - new Date(lastDungeonDate)) / (1000  60  60 * 24));
+  const diffDays = Math.floor((today - new Date(lastDungeonDate)) / (1000 * 60 * 60 * 24));
   if (diffDays >= 10 && !punishments.some(p => p.type === 'dungeon')) {
     addPunishment({
       type: 'dungeon',
@@ -519,18 +519,9 @@ useEffect(() => {
       {/* Header */}
       <header className="text-center mb-4">
         <h1 className="text-2xl font-bold">SHADOW ARISE</h1>
-        <div id="mentor-box" style="
-  background: #111;
-  color: white;
-  padding: 12px 16px;
-  border-radius: 12px;
-  margin: 20px auto;
-  max-width: 500px;
-  box-shadow: 0 4px 12px rgba(255,255,255,0.1);
-  font-family: sans-serif;
-">
-  <h3 style="font-weight: bold; margin-bottom: 6px;">🧠 AI Mentor Says:</h3>
-  <p id="mentor-message" style="font-style: italic;">Loading message...</p>
+        <div class="bg-gray-800 text-white p-4 rounded-lg shadow-md my-4">
+  <h2 class="text-lg font-semibold mb-2">🧠 AI Mentor Says:</h2>
+  <p id="mentor-message">Loading advice...</p>
 </div>
         <p className="mt-1">Level {level} ({getRank(level)})</p>
         <div className="w-full bg-gray-700 rounded h-3 mt-2 overflow-hidden">
