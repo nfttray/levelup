@@ -519,9 +519,12 @@ useEffect(() => {
       {/* Header */}
       <header className="text-center mb-4">
         <h1 className="text-2xl font-bold">SHADOW ARISE</h1>
-        <div class="bg-gray-800 text-white p-4 rounded-lg shadow-md my-4">
-  <h2 class="text-lg font-semibold mb-2">🧠 AI Mentor Says:</h2>
-  <p id="mentor-message">Loading advice...</p>
+    <div class="bg-gray-900 text-white rounded-xl p-4 mx-4 my-4 shadow-lg border border-gray-700">
+  <div class="flex items-center gap-2 mb-2">
+    <span class="text-pink-400 text-xl">🧠</span>
+    <h2 class="text-lg font-semibold">AI Mentor</h2>
+  </div>
+  <p id="mentor-message" class="text-sm text-gray-300 italic">Loading advice...</p>
 </div>
         <p className="mt-1">Level {level} ({getRank(level)})</p>
         <div className="w-full bg-gray-700 rounded h-3 mt-2 overflow-hidden">
@@ -764,64 +767,62 @@ useEffect(() => {
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 <script>
-  window.addEventListener("DOMContentLoaded", () => {
-    try {
-      // Ensure mentor-message element exists
-      const mentorEl = document.getElementById("mentor-message");
-      if (!mentorEl) {
-        console.warn("Mentor element not found.");
-        return;
-      }
+  function getMentorAdvice() {
+    const xp = parseInt(localStorage.getItem("xp")) || 0;
+    const lastRelapse = parseInt(localStorage.getItem("lastRelapse")) || 0;
+    const dopamineLevel = parseInt(localStorage.getItem("dopamineLevel")) || 100;
+    const now = Date.now();
+    const timeSinceRelapse = now - lastRelapse;
 
-      function getUserStats() {
-        return {
-          tasksDone: Number(localStorage.getItem("completedTasks") || 0),
-          fog: Number(localStorage.getItem("fogLevel") || 0),
-          streak: Number(localStorage.getItem("streak") || 0),
-          rivalXP: Number(localStorage.getItem("rivalXP") || 1000),
-          myXP: Number(localStorage.getItem("myXP") || 950),
-          relapses: Number(localStorage.getItem("relapsesToday") || 0),
-          mood: localStorage.getItem("lastMood") || "😐 Neutral",
-        };
-      }
+    // Advice Bank
+    const adviceBank = {
+      relapse_recent: [
+        "You just relapsed. Reset, don’t regret. Start again stronger.",
+        "Relapse isn't failure — it's feedback. Adjust and keep climbing.",
+        "This is not the end. Take a breath, refocus, rise again."
+      ],
+      new_user: [
+        "Welcome to the grind. First 100 XP will test your will!",
+        "You're starting your journey. Small wins matter now.",
+        "Level 1 is lonely, but every master was once a beginner."
+      ],
+      dopamine_low: [
+        "You're grinding hard. Recharge your mind — walk, read, or breathe.",
+        "Low dopamine = time for rest. Don’t burn out, balance it.",
+        "Breaks aren’t weakness. They’re fuel. Go reset a bit."
+      ],
+      high_xp: [
+        "Over 200 XP? You're a beast in the making!",
+        "You’re rising faster than rivals. Keep this fire alive!",
+        "You’ve leveled up massively. Stay humble, stay deadly."
+      ],
+      default: [
+        "Each urge resisted is EXP earned. Shadow grow stronger.",
+        "Mentally strong. You're becoming the real deal.",
+        "No urge can match your focus. Keep crushing."
+      ]
+    };
 
-      function generateStaticMentorMessage(stats) {
-        const { tasksDone, fog, streak, rivalXP, myXP, relapses } = stats;
+    // Pick category
+    let selected = "default";
+    if (timeSinceRelapse < 1000 * 60 * 60 * 6) selected = "relapse_recent";
+    else if (xp < 20) selected = "new_user";
+    else if (xp > 100 && dopamineLevel < 50) selected = "dopamine_low";
+    else if (xp > 200) selected = "high_xp";
 
-        if (fog > 80) return "⚠️ Fog level dangerously high. Do a detox activity now.";
-        if (relapses >= 2) return "You've relapsed twice today. Get back on track—reclaim control.";
-        if (tasksDone === 0) return "One small task is all it takes to start momentum. Begin now.";
-        if (myXP < rivalXP - 100) return "Your rival is pulling ahead. Let’s push back!";
-        if (myXP > rivalXP + 100) return "You're leading! Don’t lose the edge.";
-        if (streak >= 5) return `🔥 You're on a ${streak}-day streak! Insane consistency!`;
-        if (tasksDone >= 5) return "You're on fire today! Go for a bonus task?";
-        return "Stay calm. Attack the fog one step at a time.";
-      }
+    // Pick random from selected
+    const options = adviceBank[selected];
+    const randomIndex = Math.floor(Math.random() * options.length);
+    return options[randomIndex];
+  }
 
-      function showMentorMessage() {
-        const today = new Date().toISOString().slice(0, 10);
-        const lastDate = localStorage.getItem("lastMentorDate");
+  function showMentorMessage() {
+    const message = getMentorAdvice();
+    document.getElementById("mentor-message").textContent = message;
+  }
 
-        if (lastDate === today) {
-          const cached = localStorage.getItem("mentorMessage") || "Welcome back!";
-          mentorEl.innerText = cached;
-          return;
-        }
-
-        const stats = getUserStats();
-        const msg = generateStaticMentorMessage(stats);
-
-        localStorage.setItem("mentorMessage", msg);
-        localStorage.setItem("lastMentorDate", today);
-        mentorEl.innerText = msg;
-      }
-
-      showMentorMessage();
-
-    } catch (err) {
-      console.error("Mentor script error:", err);
-    }
-  });
+  showMentorMessage();
+  setInterval(showMentorMessage, 30000); // Change every 30 seconds
 </script>
 </body>
 </html>
