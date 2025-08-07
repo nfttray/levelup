@@ -397,7 +397,7 @@ useEffect(() => {
   useEffect(() => {
   const now = Date.now();
   const lastCheck = parseInt(localStorage.getItem('last3DayCheck')) || 0;
-  const diffDays = Math.floor((now - lastCheck) / (1000  60  60 * 24));
+  const diffDays = Math.floor((now - lastCheck) / (1000 * 60 * 60 * 24));
   if (diffDays >= 3) {
     // Update last check date
     localStorage.setItem('last3DayCheck', now);
