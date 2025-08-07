@@ -86,22 +86,7 @@ const fogReduceOptions = [
   "Writing journal",
   "Sunlight"
 ];
-/ === Add these to your CONSTANTS section ===
-const decayMessages = [
-  "Neural pathways weakening!",
-  "Cognitive fog detected!",
-  "Synaptic decay in progress...",
-  "Brain atrophy risk!",
-  "Mental rust accumulating!"
-];
 
-const antiDecayMessages = [
-  "Neural growth detected!",
-  "Dendritic branches strengthening!",
-  "Neuroplasticity active!",
-  "Cognitive reserves increasing!",
-  "Brain in maintenance mode!"
-];
 // === XP SYSTEM ===
 const rankTitles = ['E-Rank Hunter','D-Rank','C-Rank','B-Rank','A-Rank','S-Rank'];
 const characterImages = [
@@ -157,11 +142,6 @@ function App(){
    ];
   const [fogLevel, setFogLevel] = useState(20); // Starts at 20%
   const [fogReason, setFogReason] = useState('');
-// === Add to your React component ===
-const [decayLevel, setDecayLevel] = useState(0);
-const [lastXPCheck, setLastXPCheck] = useState(localStorage.getItem('lastXPCheck') || 0);
-const [showDecayAlert, setShowDecayAlert] = useState(false);
-const [decayMessage, setDecayMessage] = useState("");
 
   function triggerUrgeRedirect() {
   setUrgeTask(urgeTasks[Math.floor(Math.random() * urgeTasks.length)]);
@@ -249,44 +229,7 @@ addPunishment({
     return `${hrs}h ${mins}m ${secs}s`;
   }
 // === Decay System Effect ===
-useEffect(() => {
-  const checkDailyXP = () => {
-    const now = Date.now();
-    const lastCheckDate = new Date(parseInt(lastXPCheck));
-    const today = new Date();
-    
-    // Reset at midnight
-    if (lastCheckDate.getDate() !== today.getDate() || 
-        lastCheckDate.getMonth() !== today.getMonth()) {
-        
-      const yesterdayXP = parseInt(localStorage.getItem('yesterdayXP')) || 0;
-      
-      // DECAY CHECK
-      if (yesterdayXP < 20) {
-        setDecayLevel(prev => Math.min(100, prev + 15));
-        setXP(prev => Math.max(0, prev - 5));
-        setFogLevel(prev => Math.min(100, prev + 15));
-        setDecayMessage(decayMessages[Math.floor(Math.random() * decayMessages.length)]);
-        setShowDecayAlert(true);
-        setTimeout(() => setShowDecayAlert(false), 3000);
-      } 
-      // ANTI-DECAY (if XP > 30)
-      else if (yesterdayXP > 30) {
-        setDecayLevel(prev => Math.max(0, prev - 10));
-        setDecayMessage(antiDecayMessages[Math.floor(Math.random() * antiDecayMessages.length)]);
-        setShowDecayAlert(true);
-        setTimeout(() => setShowDecayAlert(false), 3000);
-      }
-      
-      localStorage.setItem('yesterdayXP', xp);
-      setLastXPCheck(now);
-      localStorage.setItem('lastXPCheck', now);
-    }
-  };
 
-  const interval = setInterval(checkDailyXP, 60000); // Check every minute
-  return () => clearInterval(interval);
-}, [xp, lastXPCheck]);
   
   // === Timer Update ===
   useEffect(()=>{
@@ -679,55 +622,7 @@ useEffect(() => {
   </div>
 )}
       </header>
-        // === Add this to your render section ===
-{/* Brain Decay Meter */}
-<div className="mt-5 relative">
-  <h2 className="text-lg mb-2 font-semibold flex items-center">
-    <span className="mr-2">🧠 Brain Integrity</span>
-    {showDecayAlert && (
-      <span className={`text-sm animate-pulse ${decayLevel > 50 ? 'text-red-400' : 'text-green-400'}`}>
-        {decayMessage}
-      </span>
-    )}
-  </h2>
-  
-  {/* Visual Meter - Brain Cell Concept */}
-  <div className="relative h-8 bg-gray-800 rounded-full overflow-hidden">
-    <div 
-      className={`absolute inset-0 flex items-center justify-center transition-all duration-500 
-        ${decayLevel < 30 ? 'bg-green-500' : 
-          decayLevel < 70 ? 'bg-yellow-500' : 'bg-red-500'}`}
-      style={{ width: `${100 - decayLevel}%` }}
-    >
-      <div className="absolute inset-0 flex items-center justify-center">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div 
-            key={i}
-            className={`w-2 h-2 mx-1 rounded-full ${i * 20 < decayLevel ? 'bg-gray-800' : 'bg-white bg-opacity-70'}`}
-          />
-        ))}
-      </div>
-    </div>
-  </div>
-  
-  <div className="flex justify-between text-xs mt-1">
-    <span>Optimal</span>
-    <span className={`font-bold ${
-      decayLevel < 30 ? 'text-green-400' : 
-      decayLevel < 70 ? 'text-yellow-400' : 'text-red-400'
-    }`}>
-      {decayLevel}% Decay
-    </span>
-    <span>Critical</span>
-  </div>
-  
-  <p className="text-xs mt-1 text-gray-400">
-    {decayLevel < 30 ? "Neural networks intact" :
-     decayLevel < 50 ? "Minor cognitive fatigue" :
-     decayLevel < 70 ? "Warning: Mental fog detected" :
-     "DANGER: Severe decay"}
-  </p>
-</div>
+        
       {/* Dopamine Detox Section */}
 <div className="mt-5">
   <h2 className="text-lg mb-2 font-semibold">Dopamine Detox</h2>
