@@ -272,7 +272,7 @@ useEffect(() => {
   if (dopamineActive && dopamineLevel > 0) {
     interval = setInterval(() => {
       setDopamineLevel(prev => {
-        const newLevel = Math.max(prev - (100 / (2  60  60)), 0);
+        const newLevel = Math.max(prev - (100 / (2 * 60 * 60)), 0);
         localStorage.setItem('dopamineLevel', newLevel);
         return newLevel;
       });
