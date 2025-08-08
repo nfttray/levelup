@@ -415,6 +415,8 @@ useEffect(() => {
       if (hoursPassed > 0) {
         setRivalXP(prev => {
           let newXP = prev + (HOURLY_RIVAL_XP * hoursPassed);
+          newXP = Math.min(newXP, prev + DAILY_RIVAL_XP);
+          
           while (newXP >= getXPForLevel(rivalLevel)) {
             newXP -= getXPForLevel(rivalLevel);
             setRivalLevel(lvl => lvl + 1);
@@ -427,7 +429,7 @@ useEffect(() => {
     updateRivalXP();
     const interval = setInterval(updateRivalXP, 3600000);
     return () => clearInterval(interval);
-  }, [rivalLevel]);
+  }, []);
 
   useEffect(() => {
   const now = Date.now();
