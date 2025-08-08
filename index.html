@@ -390,49 +390,15 @@
 
                 // === Rival XP Auto Update ===
                 useEffect(() => {
-                    const updateRivalXP = () => {
-                        const now = Date.now();
-                        const lastUpdate = parseInt(localStorage.getItem("lastRivalUpdate")) || now;
-                        const hoursPassed = Math.floor((now - lastUpdate) / 3600000);
-                        if (hoursPassed > 0) {
-                            setRivalXP((prev) => {
-                                let newXP = prev + HOURLY_RIVAL_XP * hoursPassed;
-                                while (newXP >= getXPForLevel(rivalLevel)) {
-                                    newXP -= getXPForLevel(rivalLevel);
-                                    setRivalLevel((lvl) => lvl + 1);
-                                }
-                                return newXP;
-                            });
-                            localStorage.setItem("lastRivalUpdate", now);
-                        }
-                    };
-                    updateRivalXP();
-                    const interval = setInterval(updateRivalXP, 3600000);
-                    return () => clearInterval(interval);
-                }, [rivalLevel]);
+  const today = new Date().toDateString();
+  const lastUpdate = localStorage.getItem("lastRivalXPUpdate");
 
-                useEffect(() => {
-                    const now = Date.now();
-                    const lastCheck = parseInt(localStorage.getItem("last3DayCheck")) || 0;
-                    const diffDays = Math.floor((now - lastCheck) / (1000 * 60 * 60 * 24));
-
-                    if (diffDays >= 3) {
-                        // Update last check date
-                        localStorage.setItem("last3DayCheck", now);
-
-                        // Check if rival is ahead
-                        const rivalAhead = rivalLevel > level || (rivalLevel === level && rivalXP > xp);
-
-                        if (rivalAhead) {
-                            const randomDeathPunishment = deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)];
-                            addPunishment({
-                                type: "deathRival",
-                                text: `Rival is ahead after 3 days! Punishment: ${randomDeathPunishment}`,
-                                deathMode: true,
-                            });
-                        }
-                    }
-                }, [xp, level, rivalXP, rivalLevel]);
+  // Agar aaj update nahi hua to hi XP badhao
+  if (lastUpdate !== today) {
+    setRivalXP(prev => prev + 30);
+    localStorage.setItem("lastRivalXPUpdate", today);
+  }
+}, []);
 
                 // === Daily Quest System ===
                 useEffect(() => {
