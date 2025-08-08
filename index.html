@@ -407,29 +407,40 @@ useEffect(() => {
 }, [punishments]);
 
   // === Rival XP Auto Update ===
-  useEffect(() => {
-    const updateRivalXP = () => {
-      const now = Date.now();
-      const lastUpdate = parseInt(localStorage.getItem('lastRivalUpdate')) || now;
-      const hoursPassed = Math.floor((now - lastUpdate) / 3600000);
-      if (hoursPassed > 0) {
-        setRivalXP(prev => {
-          let newXP = prev + (HOURLY_RIVAL_XP * hoursPassed);
-          newXP = Math.min(newXP, prev + DAILY_RIVAL_XP);
-          
-          while (newXP >= getXPForLevel(rivalLevel)) {
-            newXP -= getXPForLevel(rivalLevel);
-            setRivalLevel(lvl => lvl + 1);
-          }
-          return newXP;
-        });
-        localStorage.setItem('lastRivalUpdate', now);
-      }
-    };
-    updateRivalXP();
-    const interval = setInterval(updateRivalXP, 3600000);
-    return () => clearInterval(interval);
-  }, []);
+useEffect(() => {
+  const updateRivalXP = () => {
+    const now = Date.now();
+    const lastUpdate = parseInt(localStorage.getItem('lastRivalUpdate')) || now;
+    const hoursPassed = Math.floor((now - lastUpdate) / 3600000);
+
+    if (hoursPassed > 0) {
+      const daysPassed = Math.floor(hoursPassed / 24);
+      const extraHours = hoursPassed % 24;
+
+      const gainedXP = (daysPassed * DAILY_RIVAL_XP) + (extraHours * HOURLY_RIVAL_XP);
+
+      setRivalXP(prevXP => {
+        let newXP = prevXP + gainedXP;
+        let level = rivalLevel;
+
+        while (newXP >= getXPForLevel(level)) {
+          newXP -= getXPForLevel(level);
+          level++;
+        }
+
+        setRivalLevel(level);
+        return newXP;
+      });
+
+      localStorage.setItem('lastRivalUpdate', now);
+    }
+  };
+
+  updateRivalXP();
+  const interval = setInterval(updateRivalXP, 3600000);
+  return () => clearInterval(interval);
+}, []);
+  
 
   useEffect(() => {
   const now = Date.now();
