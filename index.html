@@ -231,7 +231,7 @@ addPunishment({
     localStorage.setItem('lastDungeonDate', today);
     lastDungeonDate = today;
   }
-  const diffDays = Math.floor((today - new Date(lastDungeonDate)) / (1000  60  60 * 24));
+  const diffDays = Math.floor((today - new Date(lastDungeonDate)) / (1000 * 60 * 60 * 24));
   if (diffDays >= 10 && !punishments.some(p => p.type === 'dungeon')) {
     addPunishment({
       type: 'dungeon',
@@ -272,7 +272,7 @@ useEffect(() => {
   if (dopamineActive && dopamineLevel > 0) {
     interval = setInterval(() => {
       setDopamineLevel(prev => {
-        const newLevel = Math.max(prev - (100 / (2  60  60)), 0);
+        const newLevel = Math.max(prev - (100 / (2 * 60 * 60)), 0);
         localStorage.setItem('dopamineLevel', newLevel);
         return newLevel;
       });
@@ -397,7 +397,7 @@ useEffect(() => {
   useEffect(() => {
   const now = Date.now();
   const lastCheck = parseInt(localStorage.getItem('last3DayCheck')) || 0;
-  const diffDays = Math.floor((now - lastCheck) / (1000  60  60 * 24));
+  const diffDays = Math.floor((now - lastCheck) / (1000 * 60 * 60 * 24));
   if (diffDays >= 3) {
     // Update last check date
     localStorage.setItem('last3DayCheck', now);
