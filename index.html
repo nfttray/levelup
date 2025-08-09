@@ -281,23 +281,24 @@ addPunishment({
   }
 }, [punishments]);
   // === SAVE DATA ===
-  useEffect(()=>{
-    localStorage.setItem('xp',xp);
-    localStorage.setItem('level',level);
-    localStorage.setItem('tasks',JSON.stringify(tasks));
-    localStorage.setItem('habits',JSON.stringify(habits));
-    localStorage.setItem('punishments',JSON.stringify(punishments));
-    localStorage.setItem('bossCountdown',bossCountdown);
-    localStorage.setItem('rivalXP',rivalXP);
-    localStorage.setItem('rivalLevel',rivalLevel);
-    localStorage.setItem('taskLog', JSON.stringify(taskLog));
-    localStorage.setItem('behindDays',behindDays);
-    localStorage.setItem('dailyQuestList',JSON.stringify(dailyQuestList));
-  },[xp,level,tasks,habits,punishments,bossCountdown,rivalXP,rivalLevel,behindDays,dailyQuestList]);
-  // Architect persistence (added)
+  useEffect(() => {
+  localStorage.setItem('xp', xp);
+  localStorage.setItem('level', level);
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+  localStorage.setItem('habits', JSON.stringify(habits));
+  localStorage.setItem('punishments', JSON.stringify(punishments));
+  localStorage.setItem('bossCountdown', bossCountdown);
+  localStorage.setItem('rivalXP', rivalXP);
+  localStorage.setItem('rivalLevel', rivalLevel);
+  localStorage.setItem('taskLog', JSON.stringify(taskLog));
+  localStorage.setItem('behindDays', behindDays);
+  localStorage.setItem('dailyQuestList', JSON.stringify(dailyQuestList));
+
+  // Architect persistence
   localStorage.setItem('architectThreshold', String(architectThreshold));
   localStorage.setItem('architectPositiveStreak', String(architectPositiveStreak));
   localStorage.setItem('architectNegativeStreak', String(architectNegativeStreak));
+
   // XP start value (for daily XP calculation)
   if (!localStorage.getItem('xpStartValue')) {
     localStorage.setItem('xpStartValue', String(xp));
