@@ -1206,90 +1206,94 @@ const conditions = [
 
   {/* Add Task Modal */}
   {showAddModal && (
+  <div
+    className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 animate-fadeIn"
+  >
     <div
-      className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4
-        animate-fadeIn"
+      className="bg-gray-900 p-6 rounded-xl w-full max-w-sm shadow-lg transform animate-scaleIn"
     >
-      <div
-        className="bg-gray-900 p-6 rounded-xl w-full max-w-sm shadow-lg
-          transform animate-scaleIn"
-      >
-        <h2 className="text-lg mb-4 font-semibold">Add Task</h2>
-        <select
-          value={newTask.type}
-          onChange={(e) => setNewTask({ ...newTask, type: e.target.value })}
-          className="mb-3 w-full p-2 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-        >
-          <option value="daily">Daily</option>
-          <option value="timed">Timed</option>
-          <option value="habit">Habit</option>
-        </select>
-        <input
-          value={newTask.title}
-          onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-          placeholder="Task Title"
-          className="mb-3 w-full p-2 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-        />
-        {newTask.type === "daily" && (
-          <div className="flex gap-2 mb-3">
-            <input
-              type="time"
-              value={newTask.start}
-              onChange={(e) => setNewTask({ ...newTask, start: e.target.value })}
-              className="p-2 text-black rounded w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-            />
-            <input
-              type="time"
-              value={newTask.end}
-              onChange={(e) => setNewTask({ ...newTask, end: e.target.value })}
-              className="p-2 text-black rounded w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-            />
-          </div>
-        )}
-        {newTask.type === "timed" && (
-          <input
-            type="number"
-            placeholder="Days"
-            value={newTask.days}
-            onChange={(e) => setNewTask({ ...newTask, days: e.target.value })}
-            className="mb-3 w-full p-2 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-          />
-        )}
-        <div className="flex gap-2">
-          <button
-            onClick={addTask}
-            className="bg-blue-500 flex-1 py-2 rounded hover:bg-blue-600 transition-colors duration-200 font-semibold shadow"
-          >
-            Add
-          </button>
-          <button
-            onClick={() => setShowAddModal(false)}
-            className="bg-red-500 flex-1 py-2 rounded hover:bg-red-600 transition-colors duration-200 font-semibold shadow"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
+      <h2 className="text-xl mb-5 font-semibold text-white">Add Task</h2>
 
-      <style>{`
-        @keyframes fadeIn {
-          from {opacity: 0;}
-          to {opacity: 1;}
-        }
-        @keyframes scaleIn {
-          from {transform: scale(0.9); opacity: 0;}
-          to {transform: scale(1); opacity: 1;}
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease forwards;
-        }
-        .animate-scaleIn {
-          animation: scaleIn 0.3s ease forwards;
-        }
-      `}</style>
+      <select
+        value={newTask.type}
+        onChange={(e) => setNewTask({ ...newTask, type: e.target.value })}
+        className="mb-4 w-full p-3 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+      >
+        <option value="daily">Daily</option>
+        <option value="timed">Timed</option>
+        <option value="habit">Habit</option>
+      </select>
+
+      <input
+        type="text"
+        value={newTask.title}
+        onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+        placeholder="Task Title"
+        className="mb-4 w-full p-3 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+      />
+
+      {newTask.type === "daily" && (
+        <div className="flex gap-4 mb-4">
+          <input
+            type="time"
+            value={newTask.start}
+            onChange={(e) => setNewTask({ ...newTask, start: e.target.value })}
+            className="w-1/2 p-3 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+          />
+          <input
+            type="time"
+            value={newTask.end}
+            onChange={(e) => setNewTask({ ...newTask, end: e.target.value })}
+            className="w-1/2 p-3 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+          />
+        </div>
+      )}
+
+      {newTask.type === "timed" && (
+        <input
+          type="number"
+          min="1"
+          placeholder="Days"
+          value={newTask.days}
+          onChange={(e) => setNewTask({ ...newTask, days: e.target.value })}
+          className="mb-4 w-full p-3 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+        />
+      )}
+
+      <div className="flex gap-4">
+        <button
+          onClick={addTask}
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded font-semibold shadow transition-colors duration-200"
+        >
+          Add
+        </button>
+        <button
+          onClick={() => setShowAddModal(false)}
+          className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded font-semibold shadow transition-colors duration-200"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
-  )}
-</div>
+
+    <style>{`
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes scaleIn {
+        from { transform: scale(0.9); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.3s ease forwards;
+      }
+      .animate-scaleIn {
+        animation: scaleIn 0.3s ease forwards;
+      }
+    `}</style>
+  </div>
+)}
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
