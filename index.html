@@ -28,6 +28,16 @@
       100% { background-color: transparent; }
     }
   </style>
+  <style>
+@keyframes slowGlow {
+  0%, 100% { filter: drop-shadow(0 0 3px #ff0000); }
+  50% { filter: drop-shadow(0 0 15px #ff1a1a); }
+}
+
+.slow-glow {
+  animation: slowGlow 2.5s infinite;
+}
+  </style>
 </head>
 <body class="text-white">
 <div class="overlay"></div>
@@ -789,16 +799,7 @@ const conditions = [
       {/* Header */}
       <header className="text-center mb-4">
         <div className="max-w-sm mx-auto p-5 bg-gray-900 rounded-xl shadow-lg text-center text-white">
-<style>
-@keyframes slowGlow {
-  0%, 100% { filter: drop-shadow(0 0 3px #ff0000); }
-  50% { filter: drop-shadow(0 0 15px #ff1a1a); }
-}
 
-.slow-glow {
-  animation: slowGlow 2.5s infinite;
-}
-</style>
 
 <h1 style="display:flex;align-items:center;gap:10px;font-family:sans-serif;color:white;">
   SHADOW MONARCH
