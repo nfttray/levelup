@@ -668,6 +668,7 @@ function closeArchitectModal() {
 }
   
   document.addEventListener("DOMContentLoaded", () => {
+    localStorage.removeItem("lastArchitectCheck"); // force reset
     runArchitectDailyReport();
 });
   return (
