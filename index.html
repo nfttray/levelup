@@ -1115,109 +1115,15 @@ const conditions = [
       )}
 
       {/* Tasks Section */}
-      <div className="mt-5 space-y-8 max-w-md mx-auto text-white">
-
-  {/* Tasks Section */}
-  <div>
-    <h2 className="text-lg mb-2 font-semibold">Tasks</h2>
-    <div className="mb-3 flex justify-end">
-      {!lockdown && (
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-blue-500 px-3 py-1 rounded hover:bg-blue-600 transition-colors duration-200 shadow-md"
-        >
-          + Add Task
-        </button>
-      )}
-    </div>
-
-    {tasks.length === 0 ? (
-      <p className="text-center text-gray-400 italic">No tasks yet.</p>
-    ) : (
-      <div className="space-y-3">
-        {tasks.map((task) => (
-          <div
-            key={task.id}
-            className="bg-gray-800 p-3 rounded flex justify-between items-center shadow-md
-              hover:bg-gray-700 transition-colors duration-200"
-          >
-            <div>
-              <p className="font-bold text-sm">{task.title}</p>
-              <p className="text-xs text-gray-400">
-                {task.type === "daily"
-                  ? `Time: ${task.start} - ${task.end}`
-                  : `Deadline: ${task.days} days`}
-              </p>
-            </div>
-            {!lockdown && (
-              <button
-                onClick={() => completeTask(task.id)}
-                className="bg-green-500 px-3 py-1 rounded text-sm font-semibold shadow hover:bg-green-600 transition-colors duration-200"
-              >
-                Done
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-
-  {/* Habits Section */}
-  <div>
-    <h2 className="text-lg mb-2 font-semibold">Habits</h2>
-    {habits.length === 0 ? (
-      <p className="text-center text-gray-400 italic">No habits yet.</p>
-    ) : (
-      <div className="space-y-3">
-        {habits.map((h) => (
-          <div
-            key={h.id}
-            className="bg-gray-800 p-3 rounded flex justify-between items-center text-sm shadow-md
-              hover:bg-gray-700 transition-colors duration-200"
-          >
-            <p className="font-bold">{h.title}</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => completeHabit(h.id)}
-                disabled={h.done || lockdown}
-                className={`px-3 py-1 rounded font-semibold shadow ${
-                  h.done
-                    ? "bg-gray-500 cursor-not-allowed"
-                    : "bg-green-500 hover:bg-green-600 cursor-pointer transition-colors duration-200"
-                }`}
-              >
-                {h.done ? "Done" : "Mark"}
-              </button>
-              {!lockdown && (
-                <button
-                  onClick={() => deleteHabit(h.id)}
-                  className="bg-red-500 px-3 py-1 rounded hover:bg-red-600 transition-colors duration-200 shadow font-semibold"
-                >
-                  Delete
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-
-  {/* Add Task Modal */}
-  {showAddModal && (
+      {showAddModal && (
   <div
     className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 animate-fadeIn"
   >
-    <div
-      className="bg-gray-900 p-6 rounded-xl w-full max-w-sm shadow-lg transform animate-scaleIn"
-    >
-      <h2 className="text-xl mb-5 font-semibold text-white">Add Task</h2>
-
+    <div className="bg-gray-900 p-6 rounded-xl w-full max-w-sm shadow-lg transform animate-scaleIn">
       <select
         value={newTask.type}
-        onChange={(e) => setNewTask({ ...newTask, type: e.target.value })}
-        className="mb-4 w-full p-3 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+        onChange={e => setNewTask({ ...newTask, type: e.target.value })}
+        className="mb-3 w-full p-2 text-black rounded"
       >
         <option value="daily">Daily</option>
         <option value="timed">Timed</option>
@@ -1225,52 +1131,44 @@ const conditions = [
       </select>
 
       <input
-        type="text"
         value={newTask.title}
-        onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+        onChange={e => setNewTask({ ...newTask, title: e.target.value })}
         placeholder="Task Title"
-        className="mb-4 w-full p-3 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+        className="mb-3 w-full p-2 text-black rounded"
       />
 
-      {newTask.type === "daily" && (
-        <div className="flex gap-4 mb-4">
+      {newTask.type === 'daily' && (
+        <div className="flex gap-2 mb-3">
           <input
             type="time"
             value={newTask.start}
-            onChange={(e) => setNewTask({ ...newTask, start: e.target.value })}
-            className="w-1/2 p-3 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+            onChange={e => setNewTask({ ...newTask, start: e.target.value })}
+            className="p-2 text-black rounded w-1/2"
           />
           <input
             type="time"
             value={newTask.end}
-            onChange={(e) => setNewTask({ ...newTask, end: e.target.value })}
-            className="w-1/2 p-3 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+            onChange={e => setNewTask({ ...newTask, end: e.target.value })}
+            className="p-2 text-black rounded w-1/2"
           />
         </div>
       )}
 
-      {newTask.type === "timed" && (
+      {newTask.type === 'timed' && (
         <input
           type="number"
-          min="1"
           placeholder="Days"
           value={newTask.days}
-          onChange={(e) => setNewTask({ ...newTask, days: e.target.value })}
-          className="mb-4 w-full p-3 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+          onChange={e => setNewTask({ ...newTask, days: e.target.value })}
+          className="mb-3 w-full p-2 text-black rounded"
         />
       )}
 
-      <div className="flex gap-4">
-        <button
-          onClick={addTask}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded font-semibold shadow transition-colors duration-200"
-        >
+      <div className="flex gap-2">
+        <button onClick={addTask} className="bg-blue-500 flex-1 py-2 rounded text-white hover:bg-blue-600 transition">
           Add
         </button>
-        <button
-          onClick={() => setShowAddModal(false)}
-          className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded font-semibold shadow transition-colors duration-200"
-        >
+        <button onClick={() => setShowAddModal(false)} className="bg-red-500 flex-1 py-2 rounded text-white hover:bg-red-600 transition">
           Cancel
         </button>
       </div>
@@ -1294,6 +1192,5 @@ const conditions = [
     `}</style>
   </div>
 )}
-
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
