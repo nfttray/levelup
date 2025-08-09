@@ -147,7 +147,7 @@ const [relapseHua, setRelapseHua] = useState(false);
 const [showArchitect, setShowArchitect] = useState(false);
 const [architectMessage, setArchitectMessage] = useState("");
 const [architectMood, setArchitectMood] = useState("neutral"); // "positive" / "negative"
-const [architectThreshold, setArchitectThreshold] = useState(parseInt(localStorage.getItem('architectThreshold')) || 75);
+const [architectThreshold, setArchitectThreshold] = useState(parseInt(localStorage.getItem('architectThreshold')) || 85);
 const [architectPositiveStreak, setArchitectPositiveStreak] = useState(parseInt(localStorage.getItem('architectPositiveStreak')) || 0);
 const [architectNegativeStreak, setArchitectNegativeStreak] = useState(parseInt(localStorage.getItem('architectNegativeStreak')) || 0);
   function triggerUrgeRedirect() {
