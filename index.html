@@ -587,13 +587,13 @@ useEffect(() => {
 
   function deleteHabit(id){setHabits(habits.filter(h=>h.id!==id));}
 //artictect 
-  window.addEventListener("load", () => {
-  const today = new Date().toDateString();
-  const lastCheck = localStorage.getItem("lastArchitectCheck");
-
-  if (lastCheck !== today) {
-    checkArchitectDailyReport();
-    localStorage.setItem("lastArchitectCheck", today);
+  window.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("architectCloseBtn");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      document.getElementById("architectModal").style.display = "none";
+      showArchitect = false;
+    });
   }
 });
 
