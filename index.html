@@ -691,7 +691,7 @@ function runArchitectDailyReport(testMode = false) {
   // --- conditions (weighted) ---
 const conditions = [
   { pass: !relapse, weight: 3, desc: "No relapse" },
-  { pass: xpToday >= 20, weight: 2, desc: "Earned 20+ XP today" },
+  { pass: xpToday >= 25, weight: 2, desc: "Earned 25+ XP today" },
   { pass: fog <= 70, weight: 2, desc: "Fog under control" },
   { 
     pass: !(dopamineOn && dopamineLevel < 80), // Detox pass if OFF or Level is good
