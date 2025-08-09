@@ -37,21 +37,15 @@
 .slow-glow {
   animation: slowGlow 2.5s infinite;
 }
+
     .dragon-logo {
   width: 120px;
-  height: auto;
   animation: float 2s ease-in-out infinite;
 }
 
-.glow-red {
-  animation: glowRed 1.5s ease-in-out infinite alternate, float 2s ease-in-out infinite;
-}
-.glow-gold {
-  animation: glowGold 1.5s ease-in-out infinite alternate, float 2s ease-in-out infinite;
-}
-.glow-purple {
-  animation: glowPurple 1.5s ease-in-out infinite alternate, float 2s ease-in-out infinite;
-}
+.glow-red { animation: glowRed 1.5s ease-in-out infinite alternate, float 2s ease-in-out infinite; }
+.glow-gold { animation: glowGold 1.5s ease-in-out infinite alternate, float 2s ease-in-out infinite; }
+.glow-purple { animation: glowPurple 1.5s ease-in-out infinite alternate, float 2s ease-in-out infinite; }
 
 @keyframes glowRed {
   from { filter: drop-shadow(0 0 5px #ff5555) drop-shadow(0 0 10px #ff0000); }
@@ -1109,18 +1103,11 @@ const conditions = [
         </div>
       )}
 
-      {['boss', 'weeklyBoss', 'dungeon'].includes(punishments[0].type) && (
+{['boss','weeklyBoss','dungeon'].includes(punishments[0].type) && (
   <div className="flex flex-col items-center mb-4">
-    {/* Dragon Logo */}
     <img
-      src={
-        punishments[0].type === 'boss'
-          ? '/dragon-boss.png'
-          : punishments[0].type === 'weeklyBoss'
-          ? '/dragon-weekly.png'
-          : '/dragon-dungeon.png'
-      }
-      alt="Boss Logo"
+      src="https://your-cdn.com/glow-dragon.png"
+      alt="Dragon Logo"
       className={`dragon-logo ${
         punishments[0].type === 'boss'
           ? 'glow-red'
