@@ -838,26 +838,45 @@ const conditions = [
       </header>
         
       {/* Dopamine Detox Section */}
-<div className="mt-5">
-  <h2 className="text-lg mb-2 font-semibold">Dopamine Detox</h2>
-  <div className="flex justify-between items-center mb-2">
-    <span>Detox Mode</span>
-    <label className="switch">
+<div className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
+  <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
+    Dopamine Detox
+  </h2>
+
+  <div className="flex justify-between items-center mb-4">
+    <span className="text-gray-300 font-medium">Detox Mode</span>
+    <label className="switch relative inline-block w-14 h-8">
       <input
         type="checkbox"
         checked={dopamineActive}
         onChange={() => setDopamineActive(!dopamineActive)}
+        className="opacity-0 w-0 h-0"
       />
-      <span className="slider round"></span>
+      <span className="slider absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-600 rounded-full transition-colors duration-300 ease-in-out"></span>
+      <span className="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full shadow-md transition-transform duration-300 ease-in-out"></span>
     </label>
   </div>
-  <div className="w-full bg-gray-700 rounded h-3 mt-2 overflow-hidden">
+
+  <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
     <div
-      className="bg-green-500 h-3"
+      className="bg-green-500 h-4 rounded-full transition-all duration-1000 ease-in-out"
       style={{ width: `${dopamineLevel}%` }}
     ></div>
   </div>
-  <p className="text-sm mt-1">Dopamine Level: {dopamineLevel.toFixed(1)}%</p>
+
+  <p className="text-sm mt-2 text-gray-300 font-medium">
+    Dopamine Level: <span className="font-bold">{dopamineLevel.toFixed(1)}%</span>
+  </p>
+
+  <style>{`
+    /* Custom toggle switch styling */
+    .switch input:checked + .slider {
+      background-color: #22c55e; /* green-500 */
+    }
+    .switch input:checked + .slider + .dot {
+      transform: translateX(26px);
+    }
+  `}</style>
 </div>
 
       <div className="mt-5">
