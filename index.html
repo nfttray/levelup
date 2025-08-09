@@ -856,9 +856,8 @@ const conditions = [
   localStorage.setItem('architectLastReport', JSON.stringify({ date: today, percentage }));
   }
 
-  function HistoryCalendar() {
+  function HistoryCalendar({ onSelectDay }) {
   const history = JSON.parse(localStorage.getItem("history") || "[]");
-  const [selectedDay, setSelectedDay] = React.useState(null);
 
   return (
     <div className="p-4 bg-gray-900 rounded-lg mt-6">
@@ -867,7 +866,7 @@ const conditions = [
         {history.map(day => (
           <div
             key={day.date}
-            onClick={() => setSelectedDay(day)}
+            onClick={() => onSelectDay(day)}
             className={`p-2 rounded-lg text-center text-xs cursor-pointer hover:scale-105 transition-transform duration-200 ${
               day.dailyQuestCompleted ? "bg-green-500" : "bg-red-500"
             }`}
@@ -878,53 +877,9 @@ const conditions = [
           </div>
         ))}
       </div>
-{selectedDay && (
-  <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-    <div className="bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md text-white relative max-h-[90vh] overflow-y-auto">
-      <button
-        className="absolute top-2 right-2 text-gray-400 hover:text-white"
-        onClick={() => setSelectedDay(null)} // Sirf button se band hoga
-      >
-        ✖
-      </button>
- 
-            <h3 className="text-lg font-bold mb-3">📅 {selectedDay.date}</h3>
-            <p><strong>XP:</strong> {selectedDay.xp}</p>
-            <p><strong>Level:</strong> {selectedDay.level}</p>
-            <p><strong>Fog Level:</strong> {selectedDay.fogLevel}%</p>
-            <p>
-              <strong>Daily Quest:</strong>{" "}
-              {selectedDay.dailyQuestCompleted ? "✅ Completed" : "❌ Failed"}
-            </p>
-            <p><strong>Punishments:</strong> {selectedDay.punishments}</p>
-
-            {selectedDay.punishmentDetails?.length > 0 && (
-              <div className="mt-3">
-                <h4 className="font-semibold">Punishment Details:</h4>
-                <ul className="list-disc list-inside text-sm">
-                  {selectedDay.punishmentDetails.map((p, idx) => (
-                    <li key={idx}>{p}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {selectedDay.tasksCompleted?.length > 0 && (
-              <div className="mt-3">
-                <h4 className="font-semibold">Tasks Completed:</h4>
-                <ul className="list-disc list-inside text-sm">
-                  {selectedDay.tasksCompleted.map((t, idx) => (
-                    <li key={idx}>{t}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
-      }
+}
   
   return (
     <div className={"p-4 max-w-md mx-auto bg-black bg-opacity-70 rounded-lg mt-4 shadow-lg "+(showLevelUp?'flash':'')}>
@@ -1455,7 +1410,29 @@ const conditions = [
   </div>
 )}
 </div>
-      <HistoryCalendar />
+      <HistoryCalendar onSelectDay={(day) => setSelectedHistoryDay(day)} />
+{selectedHistoryDay && (
+  <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+    <div className="bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md text-white relative max-h-[90vh] overflow-y-auto">
+      <button
+        className="absolute top-2 right-2 text-gray-400 hover:text-white"
+        onClick={() => setSelectedHistoryDay(null)}
+      >
+        ✖
+      </button>
+      <h3 className="text-lg font-bold mb-3">📅 {selectedHistoryDay.date}</h3>
+      <p><strong>XP:</strong> {selectedHistoryDay.xp}</p>
+      <p><strong>Level:</strong> {selectedHistoryDay.level}</p>
+      <p><strong>Fog Level:</strong> {selectedHistoryDay.fogLevel}%</p>
+      <p>
+        <strong>Daily Quest:</strong>{" "}
+        {selectedHistoryDay.dailyQuestCompleted ? "✅ Completed" : "❌ Failed"}
+      </p>
+      <p><strong>Punishments:</strong> {selectedHistoryDay.punishments}</p>
+    </div>
+  </div>
+)}
+      
     </div>   
   );         
 }            
