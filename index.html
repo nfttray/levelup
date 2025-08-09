@@ -180,6 +180,7 @@ function App(){
   const [fogLevel, setFogLevel] = useState(20); // Starts at 20%
   const [fogReason, setFogReason] = useState('');
 const [relapseHua, setRelapseHua] = useState(false);
+  const [selectedHistoryDay, setSelectedHistoryDay] = useState(null);
   // Architect states
 const [showArchitect, setShowArchitect] = useState(false);
 const [architectMessage, setArchitectMessage] = useState("");
@@ -374,6 +375,16 @@ addPunishment({
       setTimeout(()=>setShowLevelUp(false),2000);
     }
   },[xp]);
+
+  useEffect(() => {
+  if (selectedHistoryDay) {
+    const timer = setTimeout(() => {
+      setSelectedHistoryDay(null); // Modal close after 10s
+    }, 10000); // 10000 ms = 10 seconds
+
+    return () => clearTimeout(timer); // Cleanup if modal closes early
+  }
+}, [selectedHistoryDay]);
 
   // Dopamine Detox System
 useEffect(() => {
