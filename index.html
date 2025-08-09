@@ -37,6 +37,39 @@
 .slow-glow {
   animation: slowGlow 2.5s infinite;
 }
+    .dragon-logo {
+  width: 120px;
+  height: auto;
+  animation: float 2s ease-in-out infinite;
+}
+
+.glow-red {
+  animation: glowRed 1.5s ease-in-out infinite alternate, float 2s ease-in-out infinite;
+}
+.glow-gold {
+  animation: glowGold 1.5s ease-in-out infinite alternate, float 2s ease-in-out infinite;
+}
+.glow-purple {
+  animation: glowPurple 1.5s ease-in-out infinite alternate, float 2s ease-in-out infinite;
+}
+
+@keyframes glowRed {
+  from { filter: drop-shadow(0 0 5px #ff5555) drop-shadow(0 0 10px #ff0000); }
+  to { filter: drop-shadow(0 0 15px #ff4444) drop-shadow(0 0 25px #ff1111); }
+}
+@keyframes glowGold {
+  from { filter: drop-shadow(0 0 5px #ffd700) drop-shadow(0 0 10px #ffaa00); }
+  to { filter: drop-shadow(0 0 15px #ffcc00) drop-shadow(0 0 25px #ffaa33); }
+}
+@keyframes glowPurple {
+  from { filter: drop-shadow(0 0 5px #aa55ff) drop-shadow(0 0 10px #7700ff); }
+  to { filter: drop-shadow(0 0 15px #bb66ff) drop-shadow(0 0 25px #9900ff); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
   </style>
 </head>
 <body class="text-white">
@@ -1077,8 +1110,30 @@ const conditions = [
       )}
 
       {['boss', 'weeklyBoss', 'dungeon'].includes(punishments[0].type) && (
-        <p className="mt-2 text-red-400 text-lg font-bold">Time Left: {formatTime(timer)}</p>
-      )}
+  <div className="flex flex-col items-center mb-4">
+    {/* Dragon Logo */}
+    <img
+      src={
+        punishments[0].type === 'boss'
+          ? '/dragon-boss.png'
+          : punishments[0].type === 'weeklyBoss'
+          ? '/dragon-weekly.png'
+          : '/dragon-dungeon.png'
+      }
+      alt="Boss Logo"
+      className={`dragon-logo ${
+        punishments[0].type === 'boss'
+          ? 'glow-red'
+          : punishments[0].type === 'weeklyBoss'
+          ? 'glow-gold'
+          : 'glow-purple'
+      }`}
+    />
+    <p className="mt-2 text-red-400 text-lg font-bold">
+      Time Left: {formatTime(timer)}
+    </p>
+  </div>
+)}
 
       <div className="flex flex-col gap-3 mt-5">
         <button
