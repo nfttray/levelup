@@ -1120,7 +1120,7 @@ const conditions = [
     {!lockdown && (
       <button
         onClick={() => setShowAddModal(true)}
-        className="bg-blue-500 px-3 py-1 rounded shadow-md hover:scale-105 hover:bg-blue-600 transform transition-all duration-300"
+        className="bg-blue-500 px-3 py-1 rounded shadow-md hover:scale-105 hover:shadow-blue-500/50 transform transition-all duration-300"
       >
         + Add Task
       </button>
@@ -1132,7 +1132,7 @@ const conditions = [
     tasks.map((task, i) => (
       <div
         key={task.id}
-        className="bg-gray-800 p-3 rounded mb-2 flex justify-between items-center shadow-lg transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl animate-slideIn"
+        className="bg-gray-800 p-3 rounded mb-2 flex justify-between items-center shadow-lg transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl animate-slideInUp"
         style={{ animationDelay: `${i * 0.1}s` }}
       >
         <div>
@@ -1165,7 +1165,7 @@ const conditions = [
     habits.map((h, i) => (
       <div
         key={h.id}
-        className="bg-gray-800 p-3 rounded mb-2 flex justify-between items-center text-sm shadow-lg transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl animate-slideIn"
+        className="bg-gray-800 p-3 rounded mb-2 flex justify-between items-center text-sm shadow-lg transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl animate-slideInUp"
         style={{ animationDelay: `${i * 0.1}s` }}
       >
         <p className="font-bold">{h.title}</p>
@@ -1195,15 +1195,19 @@ const conditions = [
   )}
 </div>
 
-
-
 {/* Add Task Modal */}
 {showAddModal && (
-  <div
-    className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 animate-fadeIn"
-  >
-    <div className="bg-gray-900 p-5 rounded w-full max-w-sm transform animate-scaleIn">
+  <div className="fixed inset-0 flex items-center justify-center z-50 p-4 animate-fadeBg">
+    {/* Background overlay */}
+    <div
+      className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+      onClick={() => setShowAddModal(false)}
+    ></div>
+
+    {/* Modal Box */}
+    <div className="relative bg-gray-900 p-5 rounded-lg w-full max-w-sm transform animate-popUp shadow-xl">
       <h2 className="text-lg mb-4 font-semibold">Add Task</h2>
+
       <select
         value={newTask.type}
         onChange={e => setNewTask({ ...newTask, type: e.target.value })}
@@ -1213,12 +1217,14 @@ const conditions = [
         <option value="timed">Timed</option>
         <option value="habit">Habit</option>
       </select>
+
       <input
         value={newTask.title}
         onChange={e => setNewTask({ ...newTask, title: e.target.value })}
         placeholder="Task Title"
         className="mb-3 w-full p-2 text-black rounded"
       />
+
       {newTask.type === 'daily' && (
         <div className="flex gap-2 mb-3">
           <input
@@ -1235,6 +1241,7 @@ const conditions = [
           />
         </div>
       )}
+
       {newTask.type === 'timed' && (
         <input
           type="number"
@@ -1244,6 +1251,7 @@ const conditions = [
           className="mb-3 w-full p-2 text-black rounded"
         />
       )}
+
       <div className="flex gap-2">
         <button
           onClick={addTask}
@@ -1262,20 +1270,22 @@ const conditions = [
 
     {/* Animation CSS */}
     <style>{`
-      @keyframes fadeIn {
-        from {opacity: 0;}
-        to {opacity: 1;}
+      @keyframes fadeBg {
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
-      @keyframes scaleIn {
-        from {transform: scale(0.9); opacity: 0;}
-        to {transform: scale(1); opacity: 1;}
+      @keyframes popUp {
+        0% { transform: scale(0.8); opacity: 0; }
+        60% { transform: scale(1.05); opacity: 1; }
+        100% { transform: scale(1); }
       }
-      .animate-fadeIn {
-        animation: fadeIn 0.3s ease forwards;
+      @keyframes slideInUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
       }
-      .animate-scaleIn {
-        animation: scaleIn 0.3s ease forwards;
-      }
+      .animate-fadeBg { animation: fadeBg 0.3s ease forwards; }
+      .animate-popUp { animation: popUp 0.35s ease forwards; }
+      .animate-slideInUp { animation: slideInUp 0.4s ease forwards; }
     `}</style>
   </div>
 )}
