@@ -1429,6 +1429,14 @@ const conditions = [
         {selectedHistoryDay.dailyQuestCompleted ? "✅ Completed" : "❌ Failed"}
       </p>
       <p><strong>Punishments:</strong> {selectedHistoryDay.punishments}</p>
+       <div className="mt-3">
+    <h4 className="font-semibold">✅ Tasks Completed:</h4>
+    <ul className="list-disc list-inside text-sm">
+      {selectedHistoryDay.tasksCompleted.map((t, idx) => (
+        <li key={idx}>{t}</li>
+      ))}
+    </ul>
+  </div>
     </div>
   </div>
 )}
