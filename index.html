@@ -790,18 +790,25 @@ const conditions = [
       <header className="text-center mb-4">
         <div className="max-w-sm mx-auto p-5 bg-gray-900 rounded-xl shadow-lg text-center text-white">
 <style>
-  @keyframes slowGlow {
-    0%, 100% { filter: drop-shadow(0 0 3px red); }
-    50% { filter: drop-shadow(0 0 12px red); }
-  }
-  .slow-glow {
-    animation: slowGlow 2.5s infinite;
-  }
+@keyframes slowGlow {
+  0%, 100% { filter: drop-shadow(0 0 3px #ff0000); }
+  50% { filter: drop-shadow(0 0 15px #ff1a1a); }
+}
+
+.slow-glow {
+  animation: slowGlow 2.5s infinite;
+}
 </style>
 
-<h1 class="flex items-center text-3xl font-extrabold tracking-wider mb-2 drop-shadow-lg">
+<h1 style="display:flex;align-items:center;gap:10px;font-family:sans-serif;color:white;">
   SHADOW MONARCH
-  <svg class="w-8 h-8 ml-3 text-red-500 slow-glow" fill="currentColor" viewBox="0 0 512 512">
+  <svg 
+    class="slow-glow" 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="32" height="32" 
+    viewBox="0 0 512 512" 
+    fill="#ff0000"
+  >
     <path d="M256 0L96 160l64 64L192 192l32 32L96 352l64 64L416 160 352 96 256 0z"/>
   </svg>
 </h1>
