@@ -515,34 +515,40 @@ useEffect(() => {
 
   // === Daily Quest System ===
   useEffect(() => {
-    const today = new Date().toDateString();
-    const lastReset = localStorage.getItem('lastQuestReset');
-    const todayIndex = new Date().getDay();
-    if (lastReset !== today) {
-      const resetQuests = (weeklyQuestExercises[todayIndex] || weeklyQuestExercises[0])
-        .map(e => ({ title: e, done: false }));
-      setDailyQuestList(resetQuests);
-      localStorage.setItem('lastQuestReset', today);
-      localStorage.setItem('dailyQuestList', JSON.stringify(resetQuests));
-      setShowDailyQuest(true);
-    } else {
-      const saved = JSON.parse(localStorage.getItem('dailyQuestList')) || [];
-      setDailyQuestList(saved);
-      setShowDailyQuest(!saved.every(q => q.done));
-    }
-  }, []);
+  const today = new Date().toDateString();
+  const lastReset = localStorage.getItem('lastQuestReset');
+  const todayIndex = new Date().getDay();
+  if (lastReset !== today) {
+    const resetQuests = (weeklyQuestExercises[todayIndex] || weeklyQuestExercises[0])
+      .map(e => ({ title: e, done: false }));
+    setDailyQuestList(resetQuests);
+    localStorage.setItem('lastQuestReset', today);
+    localStorage.setItem('dailyQuestList', JSON.stringify(resetQuests));
+    setShowDailyQuest(true);
 
-  function toggleQuestDone(index){
-    const updated=[...dailyQuestList];
-    updated[index].done=!updated[index].done;
-    setDailyQuestList(updated);
-    localStorage.setItem('dailyQuestList',JSON.stringify(updated));
-    if(updated.every(q=>q.done)){
-      setShowDailyQuest(false);
-      setXP(xp+10);
-    }
+    // ⬅️ Flag reset
+    localStorage.setItem('dailyQuestCompletedToday', 'false');
+  } else {
+    const saved = JSON.parse(localStorage.getItem('dailyQuestList')) || [];
+    setDailyQuestList(saved);
+    setShowDailyQuest(!saved.every(q => q.done));
   }
+}, []);
+  
+function toggleQuestDone(index){
+  const updated=[...dailyQuestList];
+  updated[index].done=!updated[index].done;
+  setDailyQuestList(updated);
+  localStorage.setItem('dailyQuestList',JSON.stringify(updated));
 
+  if(updated.every(q=>q.done)){
+    // Quest complete hone ka flag save karo
+    localStorage.setItem('dailyQuestCompletedToday', 'true');
+
+    setShowDailyQuest(false);
+    setXP(xp+10);
+  }
+}
   function failDailyQuest(){
   setShowDailyQuest(false);
   const randomDeathPunishment = deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)];
@@ -692,11 +698,11 @@ const conditions = [
     weight: 2, 
     desc: "Detox level good" 
   },
-  { 
-    pass: (dailyQuests.length > 0 && dailyQuests.every(q => q.done)), 
-    weight: 1, 
-    desc: "Daily quest completed" 
-  },
+{ 
+  pass: localStorage.getItem('dailyQuestCompletedToday') === 'true', 
+  weight: 1, 
+  desc: "Daily quest completed" 
+},
   { pass: taskLogLocal.length > 0, weight: 1, desc: "Completed some tasks" }
 ];
 
