@@ -946,55 +946,87 @@ const conditions = [
     }
   `}</style>
 </div>
+<div className="mt-5 max-w-sm mx-auto bg-gray-900 p-5 rounded-xl shadow-lg text-center text-white">
+  <h2 className="text-lg font-semibold mb-4">Fog Meter</h2>
 
-      <div className="mt-5">
-  <h2 className="text-lg mb-2 font-semibold">Fog Meter</h2>
-  <div className="w-full bg-gray-700 rounded h-3 mt-2 overflow-hidden">
-    <div
-      className={`h-3 ${fogLevel < 40 ? 'bg-green-500' : fogLevel < 70 ? 'bg-yellow-500' : 'bg-red-500'}`}
-      style={{ width: `${fogLevel}%` }}
-    ></div>
+  <div className="relative w-36 h-36 mx-auto mb-4">
+    <svg className="transform -rotate-90" width={144} height={144} viewBox="0 0 144 144">
+      <circle
+        cx="72"
+        cy="72"
+        r="64"
+        stroke="#374151"  /* gray-700 */
+        strokeWidth="16"
+        fill="none"
+      />
+      <circle
+        cx="72"
+        cy="72"
+        r="64"
+        stroke={fogLevel < 40 ? "#22c55e" : fogLevel < 70 ? "#eab308" : "#ef4444"} /* green/yellow/red */
+        strokeWidth="16"
+        fill="none"
+        strokeDasharray={2 * Math.PI * 64}
+        strokeDashoffset={(1 - fogLevel / 100) * 2 * Math.PI * 64}
+        strokeLinecap="round"
+        style={{ transition: "stroke-dashoffset 1s ease, stroke 0.5s ease" }}
+      />
+    </svg>
+
+    <div className="absolute inset-0 flex flex-col items-center justify-center">
+      <p
+        className="text-4xl font-bold"
+        style={{ color: fogLevel < 40 ? "#22c55e" : fogLevel < 70 ? "#eab308" : "#ef4444" }}
+      >
+        {fogLevel.toFixed(0)}%
+      </p>
+      <p className="text-sm mt-1 text-gray-400">Fog Level</p>
+    </div>
   </div>
-  <p className="text-sm mt-1">Fog Level: {fogLevel.toFixed(0)}%</p>
 
-  {/* Fog Reason Dropdown */}
-  <div className="mt-3">
+  {/* Dropdown and Confirm button */}
+  <div className="text-left">
     <p className="text-sm font-semibold mb-1">Adjust Fog Level</p>
     <select
       onChange={(e) => setFogReason(e.target.value)}
-      className="w-full text-black p-2 rounded"
+      className="w-full rounded-md p-2 text-black focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
       value={fogReason}
     >
       <option value="">-- Select a reason --</option>
       <optgroup label="Increase Fog">
         {fogIncreaseOptions.map((item, index) => (
-          <option key={`inc-${index}`} value={`inc-${item}`}>{item}</option>
+          <option key={`inc-${index}`} value={`inc-${item}`}>
+            {item}
+          </option>
         ))}
       </optgroup>
       <optgroup label="Reduce Fog">
         {fogReduceOptions.map((item, index) => (
-          <option key={`dec-${index}`} value={`dec-${item}`}>{item}</option>
+          <option key={`dec-${index}`} value={`dec-${item}`}>
+            {item}
+          </option>
         ))}
       </optgroup>
     </select>
 
     {fogReason && (
       <button
-        className="bg-blue-500 mt-2 px-4 py-2 rounded w-full"
         onClick={() => {
           if (fogReason.startsWith("inc-")) {
             setFogLevel(Math.min(100, fogLevel + 5));
           } else {
             setFogLevel(Math.max(0, fogLevel - 5));
           }
-          setFogReason('');
+          setFogReason("");
         }}
+        className="mt-3 w-full bg-blue-600 hover:bg-blue-700 transition-colors duration-300 text-white font-semibold py-2 rounded-md shadow-md"
       >
         Confirm
       </button>
     )}
   </div>
 </div>
+
       {punishments.length > 0 && (
   <div
     className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4
