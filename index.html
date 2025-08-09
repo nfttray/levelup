@@ -347,7 +347,7 @@ addPunishment({
   if (!localStorage.getItem('xpStartValue')) {
     localStorage.setItem('xpStartValue', String(xp));
   }
-
+    saveDailySummary();
 }, [
   xp,
   level,
@@ -571,6 +571,30 @@ useEffect(() => {
     setShowDailyQuest(!saved.every(q => q.done));
   }
 }, []);
+// calender 
+  function saveDailySummary() {
+  const today = new Date().toISOString().split("T")[0];
+  const history = JSON.parse(localStorage.getItem("history") || "[]");
+
+  const newEntry = {
+    date: today,
+    xp,
+    level,
+    fogLevel,
+    dailyQuestCompleted: localStorage.getItem("dailyQuestCompletedToday") === "true",
+    punishments: punishments.length,
+  };
+
+  // Agar aaj ka record already hai to update
+  const existingIndex = history.findIndex(h => h.date === today);
+  if (existingIndex >= 0) {
+    history[existingIndex] = newEntry;
+  } else {
+    history.push(newEntry);
+  }
+
+  localStorage.setItem("history", JSON.stringify(history));
+                      }
   
 function toggleQuestDone(index){
   const updated=[...dailyQuestList];
@@ -819,7 +843,30 @@ const conditions = [
   // also store the last report
   localStorage.setItem('architectLastReport', JSON.stringify({ date: today, percentage }));
   }
-  
+
+  function HistoryCalendar() {
+  const history = JSON.parse(localStorage.getItem("history") || "[]");
+
+  return (
+    <div className="p-4 bg-gray-900 rounded-lg mt-6">
+      <h2 className="text-lg font-semibold mb-4 text-white">📅 History Calendar</h2>
+      <div className="grid grid-cols-7 gap-2">
+        {history.map(day => (
+          <div
+            key={day.date}
+            className={`p-2 rounded-lg text-center text-xs ${
+              day.dailyQuestCompleted ? "bg-green-500" : "bg-red-500"
+            }`}
+          >
+            <p className="font-bold">{day.date.slice(5)}</p>
+            <p>XP: {day.xp}</p>
+            <p>Fog: {day.fogLevel}%</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
   
   return (
     <div className={"p-4 max-w-md mx-auto bg-black bg-opacity-70 rounded-lg mt-4 shadow-lg "+(showLevelUp?'flash':'')}>
@@ -1350,6 +1397,7 @@ const conditions = [
   </div>
 )}
 </div>
+      <HistoryCalendar />
     </div>   
   );         
 }            
