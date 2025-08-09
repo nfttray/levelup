@@ -35,6 +35,10 @@
 <script type="text/babel">
 const { useState, useEffect } = React;
 
+  let showArchitect = false;
+let architectMessage = "";
+let architectMood = "neutral"; // "positive" or "negative"
+
 // === CONSTANTS ===
 const normalPunishments = [
   "Solve 50 maths questions", "Solve 100 GK questions", "Revise 2 topics",
@@ -582,6 +586,93 @@ useEffect(() => {
   }
 
   function deleteHabit(id){setHabits(habits.filter(h=>h.id!==id));}
+//artictect 
+  window.addEventListener("load", () => {
+  const today = new Date().toDateString();
+  const lastCheck = localStorage.getItem("lastArchitectCheck");
+
+  if (lastCheck !== today) {
+    checkArchitectDailyReport();
+    localStorage.setItem("lastArchitectCheck", today);
+  }
+});
+
+  function showArchitectModal(message, mood) {
+  const modal = document.getElementById("architectModal");
+  const box = document.getElementById("architectBox");
+  const msg = document.getElementById("architectMessage");
+
+  msg.textContent = message;
+  box.className = `p-5 rounded w-full max-w-sm text-center shadow-lg border-2 ${mood === "positive" ? "bg-green-900 border-green-500" : "bg-red-900 border-red-500"}`;
+  
+  modal.style.display = "flex";
+  showArchitect = true;
+}
+
+document.getElementById("architectCloseBtn").addEventListener("click", () => {
+  document.getElementById("architectModal").style.display = "none";
+  showArchitect = false;
+});
+  function checkArchitectDailyReport() {
+  let positive = true;
+  let messages = [];
+
+  // Daily tasks incomplete?
+  if (tasks && tasks.length > 0) {
+    positive = false;
+    messages.push("You left tasks incomplete.");
+  }
+
+  // Fog meter high?
+  if (fogLevel > 60) {
+    positive = false;
+    messages.push("Fog level is too high.");
+  }
+
+  // Detox broken?
+  if (!dopamineActive) {
+    positive = false;
+    messages.push("You broke detox mode.");
+  }
+
+  // Daily quest missed?
+  if (showDailyQuest) {
+    positive = false;
+    messages.push("Daily quest incomplete.");
+  }
+
+  // Relapse?
+  const relapseCount = parseInt(localStorage.getItem('relapseCount') || "0");
+  if (relapseCount > 0) {
+    positive = false;
+    messages.push("Relapse detected.");
+  }
+
+  // XP target missed?
+  if (xp < 20) {
+    positive = false;
+    messages.push("XP target not achieved.");
+  }
+
+  // Apply result
+  if (positive) {
+    xp += 5;
+    fogLevel = Math.max(0, fogLevel - 15);
+    showArchitectModal("Impressive work today! Keep it up.", "positive");
+  } else {
+    xp = Math.max(0, xp - 5);
+    fogLevel = Math.min(100, fogLevel + 15);
+    showArchitectModal("You disappointed me today.\n" + messages.join("\n"), "negative");
+
+    // Punishment
+    const randomDeathPunishment = deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)];
+    addPunishment({
+      type: 'architectPunish',
+      text: `Architect's Judgment: ${randomDeathPunishment}`,
+      deathMode: true
+    });
+  }
+    }
   
   return (
     <div className={"p-4 max-w-md mx-auto bg-black bg-opacity-70 rounded-lg mt-4 shadow-lg "+(showLevelUp?'flash':'')}>
@@ -739,7 +830,14 @@ useEffect(() => {
           </div>
         </div>
       )}
-
+<div id="architectModal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+  <div id="architectBox" class="p-5 rounded w-full max-w-sm text-center shadow-lg border-2">
+    <h2 class="text-xl font-bold mb-3">Architect's Judgment</h2>
+    <pre id="architectMessage" class="mb-3 whitespace-pre-wrap text-left"></pre>
+    <button id="architectCloseBtn" class="bg-gray-700 px-4 py-2 rounded mt-3 w-full">Continue</button>
+  </div>
+</div>
+      
       {/* Daily Quest Modal */}
       {showDailyQuest && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
