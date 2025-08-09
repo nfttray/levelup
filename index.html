@@ -237,13 +237,20 @@ addPunishment({
   }
 // === Decay System Effect ===
   useEffect(() => {
-  // TESTING: to force modal every reload during dev, set testMode=true
-  const testMode = true; // set to true while testing
-  if (testMode) {
-    localStorage.removeItem('lastArchitectCheck');
+  const testMode = false;
+
+  const today = new Date().toISOString().split('T')[0];
+  const firstRun = localStorage.getItem('architectFirstRun');
+
+  if (!firstRun) {
+    // Pehli baar app chala, date save karo, report mat dikhayo
+    localStorage.setItem('architectFirstRun', today);
+    localStorage.setItem('lastArchitectCheck', today);
+    return;
   }
+
   runArchitectDailyReport(testMode);
-}, []); // run once after mount
+}, []);
 
   
   // === Timer Update ===
