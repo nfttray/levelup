@@ -185,6 +185,7 @@ function App(){
   const [dailyQuestList,setDailyQuestList]=useState([]);
   const [dopamineActive, setDopamineActive] = useState(JSON.parse(localStorage.getItem('dopamineActive')) || false);
   const [dopamineLevel, setDopamineLevel] = useState(parseFloat(localStorage.getItem('dopamineLevel')) || 100);
+  const [smallBossCount, setSmallBossCount] = useState(parseInt(localStorage.getItem('smallBossCount')) || 0);
   const [showUrgeModal, setShowUrgeModal] = useState(false);
   const [urgeTask, setUrgeTask] = useState('');
   const urgeTasks = [
@@ -387,7 +388,11 @@ addPunishment({
   architectPositiveStreak,
   architectNegativeStreak
 ]);
-
+  
+useEffect(() => {
+  localStorage.setItem('smallBossCount', smallBossCount);
+}, [smallBossCount]);
+  
   // === LEVEL UP ===
   useEffect(()=>{
     if(xp>=getXPForLevel(level)){
@@ -471,18 +476,38 @@ useEffect(() => {
     localStorage.setItem("fogDate", today);
   }
 }, []);
+  
   // Boss Fight Check
 useEffect(() => {
   // === Small Boss after 7 tasks ===
-  if (bossCountdown >= 7 && !punishments.some(p => p.type === 'boss')) {
-    addPunishment({
-  type: 'boss',
-  text: "Revision Boss Fight! Complete within 3 hrs!",
-  deathMode: true
-});
-    startBossTimer(3); // 3 hrs
-    setBossCountdown(0);
-  }
+  if (bossCountdown >= 7 && !punishments.some(p => p.type === 'smallBoss')) {
+  addPunishment({
+    type: 'smallBoss',
+    text: "Small Boss Fight! Complete within 3 hrs!",
+    deathMode: true
+  });
+  startBossTimer(3);
+
+  // Small boss streak increase
+  setSmallBossCount(prev => {
+    const newCount = prev + 1;
+    if (newCount >= 10) {
+      // Trigger Dungeon Boss after 10 small bosses
+      addPunishment({
+        type: 'dungeon',
+        text: "Dungeon Boss! Complete 20 tasks within 24 hrs!",
+        deathMode: true
+      });
+      startBossTimer(24);
+      localStorage.setItem('lastDungeonDate', new Date().toISOString());
+      return 0; // reset streak
+    }
+    return newCount;
+  });
+
+  setBossCountdown(0);
+    }
+  
 
   // === Weekly Boss every Sunday ===
   const today = new Date().getDay();
@@ -500,16 +525,7 @@ useEffect(() => {
     localStorage.setItem('weeklyBossTriggered', 'false');
   }
 
-  // === Dungeon Boss if 20 tasks in 24 hrs ===
-  if (taskLog.length >= 20 && !punishments.some(p => p.type === 'dungeon')) {
-    addPunishment({
-      type: 'dungeon',
-      text: "Dungeon Boss! Complete within 24 hrs!",
-      deathMode: true
-    });
-    startBossTimer(24);
-    setTaskLog([]); // reset dungeon log
-  }
+
 }, [bossCountdown, taskLog]);
 
   useEffect(() => {
