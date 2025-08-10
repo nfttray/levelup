@@ -177,9 +177,13 @@ function App(){
   "Drink a glass of water.",
   "Do 10 squat."
    ];
-  const [fogLevel, setFogLevel] = useState(20); // Starts at 20%
+  
   const [fogReason, setFogReason] = useState('');
 const [relapseHua, setRelapseHua] = useState(false);
+  const [fogLevel, setFogLevel] = useState(() => {
+  const saved = localStorage.getItem("fogLevel");
+  return saved !== null ? parseInt(saved) : 20;
+}); // Starts at 20%
   const [selectedHistoryDay, setSelectedHistoryDay] = useState(null);
   // Architect states
 const [showArchitect, setShowArchitect] = useState(false);
@@ -430,6 +434,10 @@ useEffect(() => {
   }
 }, []);
 
+  useEffect(() => {
+  localStorage.setItem("fogLevel", fogLevel);
+}, [fogLevel]);
+  
   useEffect(() => {
   // Fog level penalty/reward at end of day
   const today = new Date().toLocaleDateString();
