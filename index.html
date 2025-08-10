@@ -864,7 +864,7 @@ const conditions = [
   localStorage.setItem('architectLastReport', JSON.stringify({ date: today, percentage }));
   }
 
-  function HistoryCalendar({ onSelectDay }) {
+  function HistoryCalendar({ debt, onSelectDay }) {
   const history = JSON.parse(localStorage.getItem("history") || "[]");
 
   return (
@@ -1466,7 +1466,10 @@ const conditions = [
   </div>
 )}
 </div>
-      <HistoryCalendar onSelectDay={(day) => setSelectedHistoryDay(day)} />
+      <HistoryCalendar 
+    debt={debt} 
+    onSelectDay={(day) => setSelectedHistoryDay(day)} 
+/>
 {selectedHistoryDay && (
   <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
     <div className="bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md text-white relative max-h-[90vh] overflow-y-auto">
