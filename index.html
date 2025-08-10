@@ -1260,24 +1260,24 @@ const conditions = [
         {punishments[0].text}
       </pre>
 
-      {punishments[0].type === 'boss' && taskLog.length > 0 && (
-        <div className="text-left mb-3 max-h-36 overflow-y-auto">
-          <h3 className="font-semibold mb-1 text-red-400">Last 7 Tasks:</h3>
-          <ul className="list-disc list-inside text-sm text-gray-300">
-            {taskLog.slice(-7).map((t, i) => (
-              <li key={i}>{t}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {['boss', 'smallBoss'].includes(punishments[0].type) && taskLog.length > 0 && (
+  <div className="text-left mb-3 max-h-36 overflow-y-auto">
+    <h3 className="font-semibold mb-1 text-red-400">Last 7 Tasks:</h3>
+    <ul className="list-disc list-inside text-sm text-gray-300">
+      {taskLog.slice(-7).map((t, i) => (
+        <li key={i}>{t}</li>
+      ))}
+    </ul>
+  </div>
+)}
 
-{['boss','weeklyBoss','dungeon'].includes(punishments[0].type) && (
+{['boss', 'smallBoss', 'weeklyBoss', 'dungeon'].includes(punishments[0].type) && (
   <div className="flex flex-col items-center mb-4">
     <img
       src="https://i.ibb.co/rG54PGTL/image-from-rawpixel-id-12652540-png.png"
       alt="Dragon Logo"
       className={`dragon-logo ${
-        punishments[0].type === 'boss'
+        punishments[0].type === 'boss' || punishments[0].type === 'smallBoss'
           ? 'glow-red'
           : punishments[0].type === 'weeklyBoss'
           ? 'glow-gold'
