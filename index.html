@@ -149,6 +149,23 @@ const HOURLY_RIVAL_XP = 1.25;
 
   // === MAIN APP ===
 function App(){
+  // pehle se jo states hain unke sath yeh add karo
+  const [debt, setDebt] = React.useState(parseInt(localStorage.getItem('debt')) || 0);
+  const [showDebtModal, setShowDebtModal] = React.useState(false);
+  const [currentRepaymentTask, setCurrentRepaymentTask] = React.useState("");
+
+  const repaymentTasks = [
+    "Solve 50 maths questions",
+    "Do 20 push-ups",
+    "Read 10 pages of a book",
+    "Meditate for 10 minutes",
+    "Organize your desk",
+    "Write a 200-word journal entry",
+    "Do 10 squats",
+    "Drink 2 glasses of water and walk 5 mins",
+    "Revise 1 topic you are weak at",
+    "Clean your room for 10 minutes"
+  ];
   const [xp,setXP]=useState(parseInt(localStorage.getItem('xp'))||0);
   const [level,setLevel]=useState(parseInt(localStorage.getItem('level'))||1);
   const [tasks,setTasks]=useState(JSON.parse(localStorage.getItem('tasks'))||[]);
