@@ -695,20 +695,25 @@ function increaseDebt(amount) {
   }
 
   function completePunishment(){
-    const [first,...rest]=punishments;
-    let gain=0;
-    if(first.type==='boss')gain=4;
-    if(first.type==='weeklyBoss')gain=10;
-    if(first.type==='dungeon')gain=20;
-    setXP(xp+gain);
-    if(['boss','weeklyBoss','dungeon'].includes(first.type)){
-      setRivalXP(prev=>prev+Math.floor(gain/2));
+    const [first, ...rest] = punishments;
+    let gain = 0;
+
+    if(first.type === 'boss' || first.type === 'smallBoss') gain = 4;
+    if(first.type === 'weeklyBoss') gain = 10;
+    if(first.type === 'dungeon') gain = 20;
+
+    setXP(xp + gain);
+
+    if(['boss','smallBoss','weeklyBoss','dungeon'].includes(first.type)){
+        setRivalXP(prev => prev + Math.floor(gain / 2));
     }
+
     if(first.deathMode){
-      alert(`Reward: ${rewards[Math.floor(Math.random()*rewards.length)]}`);
+        alert(`Reward: ${rewards[Math.floor(Math.random() * rewards.length)]}`);
     }
+
     setPunishments(rest);
-    if(rest.length===0)setLockdown(false);
+    if(rest.length === 0) setLockdown(false);
   }
 
   function forgivePunishment() {
