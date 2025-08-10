@@ -272,7 +272,8 @@ addPunishment({
   text: `You missed: ${task.title}\nPunishment: ${randomPunishment}`,
   deathMode: false
 });
-      
+      // NEW: Add debt when task missed
+    increaseDebt(5);
     });
   }
   }
@@ -462,6 +463,8 @@ useEffect(() => {
   if (lastCheck !== today) {
     if (fogLevel > 70) {
       setXP(prev => Math.max(0, prev - 5));
+      // NEW: Add debt if fog high
+      increaseDebt(5);
     } else if (fogLevel < 30) {
       setXP(prev => prev + 5);
     }
@@ -520,6 +523,8 @@ useEffect(() => {
         // Boss failed
         setXP(Math.max(0, xp - 30)); // Penalty
         setRivalXP(prev => prev + 20); // Rival advantage
+        // NEW: Add debt when punishment fails
+    increaseDebt(10);
         completePunishment(); // Remove boss punishment
       }
     }
@@ -655,8 +660,18 @@ function toggleQuestDone(index){
     text: `Daily Quest Failed! Punishment: ${randomDeathPunishment}`,
     deathMode: true
   });
+    // NEW: Add debt on quest fail
+  increaseDebt(7);
   }
-
+// === Debt Increase Helper ===
+function increaseDebt(amount) {
+  setDebt(prev => {
+    const newDebt = prev + amount;
+    localStorage.setItem('debt', newDebt);
+    return newDebt;
+  });
+  }
+  
   // === Add / Complete Tasks ===
   function addPunishment(p){
     setPunishments([...punishments,p]);
@@ -689,6 +704,9 @@ function toggleQuestDone(index){
 
   // Rival gains XP equal to penalty
   setRivalXP(prev => prev + penalty);
+
+      // NEW: Add debt when forgiving punishment
+  increaseDebt(3);
 
   // Remove punishment without giving reward
   const [, ...rest] = punishments;
