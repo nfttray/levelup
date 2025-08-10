@@ -974,17 +974,25 @@ const conditions = [
             </button>
             <h3 className="text-xl font-bold mb-4">Debt Repayment Task</h3>
             <p className="mb-6">{currentRepaymentTask}</p>
-            <button
-              onClick={() => {
-                setDebt(prev => Math.max(0, prev - 5));
-                gainXP(2);
-                setShowDebtModal(false);
-                alert("✅ Debt reduced by 5!");
-              }}
-              className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded shadow-md font-semibold w-full"
-            >
-              Mark as Done (-5 Debt)
-            </button>
+          <button
+  onClick={() => {
+    // reduce debt and persist immediately
+    setDebt(prev => {
+      const newDebt = Math.max(0, prev - 5);
+      localStorage.setItem('debt', String(newDebt));
+      return newDebt;
+    });
+
+    // award XP
+    gainXP(2);
+
+    setShowDebtModal(false);
+    alert("✅ Debt reduced by 5!");
+  }}
+  className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded shadow-md font-semibold w-full"
+>
+  Mark as Done (-5 Debt)
+</button>
           </div>
         </div>
       )}
