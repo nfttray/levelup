@@ -687,6 +687,18 @@ function increaseDebt(amount) {
     return newDebt;
   });
   }
+  // --- add this helper (place near increaseDebt / completePunishment helpers) ---
+function gainXP(amount) {
+  setXP(prev => {
+    const next = prev + Number(amount || 0);
+    localStorage.setItem('xp', next);
+    return next;
+  });
+  }
+// Persist debt whenever it changes (optional but recommended)
+React.useEffect(() => {
+  localStorage.setItem('debt', String(debt));
+}, [debt]);
   
   // === Add / Complete Tasks ===
   function addPunishment(p){
