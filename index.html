@@ -633,15 +633,23 @@ useEffect(() => {
   const today = new Date().toISOString().split("T")[0];
   const history = JSON.parse(localStorage.getItem("history") || "[]");
 
+  // Calculate XP gained today from xpStartValue
+  const xpStartValue = parseInt(localStorage.getItem('xpStartValue')) || xp;
+  const xpGainedToday = Math.max(0, xp - xpStartValue);
+
   const newEntry = {
     date: today,
     xp,
+    xpGainedToday, // 🔹 for Architect's "XP today" check
     level,
     fogLevel,
     dailyQuestCompleted: localStorage.getItem("dailyQuestCompletedToday") === "true",
     punishments: punishments.length,
-    punishmentDetails: punishments.map(p => p.text), // Full text
-    tasksCompleted: taskLog // Tumhare existing completed tasks log se
+    punishmentDetails: punishments.map(p => p.text),
+    tasksCompleted: taskLog,
+    relapseHua: relapseHua, // 🔹 store relapse status
+    dopamineActive: dopamineActive, // 🔹 store dopamine toggle
+    dopamineLevel: dopamineLevel // 🔹 store dopamine level %
   };
 
   const existingIndex = history.findIndex(h => h.date === today);
@@ -652,7 +660,10 @@ useEffect(() => {
   }
 
   localStorage.setItem("history", JSON.stringify(history));
-  }
+
+  // Reset xpStartValue for tomorrow's calculation
+  localStorage.setItem('xpStartValue', String(xp));
+        }
   
 function toggleQuestDone(index){
   const updated=[...dailyQuestList];
@@ -813,60 +824,59 @@ function applyDynamicThreshold() {
     localStorage.setItem('architectNegativeStreak', "0");
   }
 }
-
 function runArchitectDailyReport(testMode = false) {
-  // prevent multiple runs in a day (unless testMode true)
-  const today = new Date().toDateString();
+  // Calculate yesterday date keys
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayKey = yesterdayDate.toISOString().split("T")[0]; // YYYY-MM-DD
+  const todayKey = new Date().toDateString();
+
+  // Prevent multiple runs in a day unless test mode
   if (!testMode) {
     const last = localStorage.getItem('lastArchitectCheck');
-    if (last === today) return; // already checked today
+    if (last === todayKey) return;
   }
 
-  // --- gather values (prefer state if available else localStorage) ---
-  const xpNow = typeof xp !== 'undefined' ? xp : parseInt(localStorage.getItem('xp')) || 0;
-  const fog = typeof fogLevel !== 'undefined' ? fogLevel : parseInt(localStorage.getItem('fogLevel')) || 0;
-  const dopamineOn = typeof dopamineActive !== 'undefined' ? dopamineActive : JSON.parse(localStorage.getItem('dopamineActive') || "false");
-  const dailyQuests = (typeof dailyQuestList !== 'undefined') ? dailyQuestList : JSON.parse(localStorage.getItem('dailyQuestList') || '[]');
-  const taskLogLocal = (typeof taskLog !== 'undefined') ? taskLog : JSON.parse(localStorage.getItem('taskLog') || '[]');
-  const relapse = typeof relapseHua !== 'undefined' ? relapseHua : JSON.parse(localStorage.getItem('relapseHua') || "false");
-  const punishList = Array.isArray(punishments) ? punishments : JSON.parse(localStorage.getItem('punishments') || '[]');
+  // Get yesterday's history entry
+  const history = JSON.parse(localStorage.getItem("history") || "[]");
+  const prevDayData = history.find(h => h.date === yesterdayKey);
 
-  // xpToday calculation using stored xpStartValue
-  const xpStartValue = parseInt(localStorage.getItem('xpStartValue')) || 0;
-  const xpToday = Math.max(0, xpNow - xpStartValue);
+  if (!prevDayData) {
+    console.warn("⚠️ No data found for yesterday in history");
+    return;
+  }
 
-  // --- conditions (weighted) ---
-  // modify weights if you want: relapse=3, xp>=20=2, fog<=70=2, detox active=2, daily quests done=1, task activity =1
-  // --- conditions (weighted) ---
-const conditions = [
-  { pass: !relapse, weight: 3, desc: "No relapse" },
-  { pass: xpToday >= 25, weight: 2, desc: "Earned 25+ XP today" },
-  { pass: fog <= 70, weight: 2, desc: "Fog under control" },
-  { 
-    pass: !(dopamineOn && dopamineLevel < 80), // Detox pass if OFF or Level is good
-    weight: 2, 
-    desc: "Detox level good" 
-  },
-{ 
-  pass: localStorage.getItem('dailyQuestCompletedToday') === 'true', 
-  weight: 1, 
-  desc: "Daily quest completed" 
-},
-  { pass: taskLogLocal.length > 0, weight: 1, desc: "Completed some tasks" }
-];
+  // Gather values from yesterday
+  const xpToday = prevDayData.xpGainedToday || 0;
+  const fog = prevDayData.fogLevel || 0;
+  const dailyQuestDone = prevDayData.dailyQuestCompleted;
+  const taskLogLocal = prevDayData.tasksCompleted || [];
+  const relapse = !!prevDayData.relapseHua;
+  const dopamineOn = !!prevDayData.dopamineActive;
+  const dopamineLevel = parseFloat(prevDayData.dopamineLevel) || 0;
+
+  // --- Conditions ---
+  const conditions = [
+    { pass: !relapse, weight: 3, desc: "No relapse" },
+    { pass: xpToday >= 25, weight: 2, desc: "Earned 25+ XP" },
+    { pass: fog <= 70, weight: 2, desc: "Fog under control" },
+    { pass: !(dopamineOn && dopamineLevel < 80), weight: 2, desc: "Detox level good" },
+    { pass: dailyQuestDone === true, weight: 1, desc: "Daily quest completed" },
+    { pass: taskLogLocal.length > 0, weight: 1, desc: "Completed some tasks" }
+  ];
 
   let totalWeight = 0;
   let achieved = 0;
   const fails = [];
   conditions.forEach(c => {
     totalWeight += c.weight;
-    if (c.pass) achieved += c.weight; else fails.push(`❌ ${c.desc}`);
+    if (c.pass) achieved += c.weight;
+    else fails.push(`❌ ${c.desc}`);
   });
 
   const percentage = Math.round((achieved / totalWeight) * 100);
   const threshold = architectThreshold;
 
-  // Apply positive / negative result
   if (percentage >= threshold) {
     // Positive
     setArchitectPositiveStreak(prev => {
@@ -877,18 +887,16 @@ const conditions = [
     setArchitectNegativeStreak(0);
     localStorage.setItem('architectNegativeStreak', "0");
 
-    // small reward
     setXP(prev => {
       const next = prev + 5;
       localStorage.setItem('xp', next);
       return next;
     });
     setFogLevel(prev => Math.max(0, prev - 15));
-    // small detox bonus (if you track dopamineLevel)
     setDopamineLevel(prev => Math.min(100, prev + 10));
 
     showArchitectModal(
-      `✅ Excellent! Score: ${percentage}%\n+5 XP, -15% Fog\n${fails.length ? "Warnings:\n"+fails.join("\n") : ""}`,
+      `✅ Excellent! (Yesterday's Score: ${percentage}%)\n+5 XP, -15% Fog\n${fails.length ? "Warnings:\n" + fails.join("\n") : ""}`,
       "positive"
     );
   } else {
@@ -901,7 +909,6 @@ const conditions = [
     setArchitectPositiveStreak(0);
     localStorage.setItem('architectPositiveStreak', "0");
 
-    // penalty
     setXP(prev => {
       const next = Math.max(0, prev - 5);
       localStorage.setItem('xp', next);
@@ -910,27 +917,28 @@ const conditions = [
     setFogLevel(prev => Math.min(100, prev + 15));
     setDopamineLevel(prev => Math.max(0, prev - 15));
 
-    // pick a deathmode punishment from your list (fall back to deathModePunishments)
-    const deathList = (Array.isArray(deathModePunishments) && deathModePunishments.length) ? deathModePunishments : punishList;
-    const punishText = deathList.length ? deathList[Math.floor(Math.random()*deathList.length)] : "Do deep work 2 hours";
+    const deathList = (Array.isArray(deathModePunishments) && deathModePunishments.length)
+      ? deathModePunishments
+      : (Array.isArray(punishments) ? punishments : []);
+    const punishText = deathList.length
+      ? deathList[Math.floor(Math.random() * deathList.length)]
+      : "Do deep work 2 hours";
 
-    // push into punishments
     addPunishment({ type: 'architectPunish', text: `Architect's Judgment: ${punishText}`, deathMode: true });
 
     showArchitectModal(
-      `⚠️ Discipline low: ${percentage}%\n${fails.join("\n")}\nPunishment: ${punishText}`,
+      `⚠️ Discipline low (Yesterday's Score: ${percentage}%)\n${fails.join("\n")}\nPunishment: ${punishText}`,
       "negative"
     );
   }
 
-  // dynamic threshold after 3-day streak
   applyDynamicThreshold();
 
-  // save last check date
-  localStorage.setItem('lastArchitectCheck', today);
-  // also store the last report
-  localStorage.setItem('architectLastReport', JSON.stringify({ date: today, percentage }));
-  }
+  // Mark today's check as done
+  localStorage.setItem('lastArchitectCheck', todayKey);
+  localStorage.setItem('architectLastReport', JSON.stringify({ date: yesterdayKey, percentage }));
+}
+
 
   function HistoryCalendar({ debt, onSelectDay }) {
   const history = JSON.parse(localStorage.getItem("history") || "[]");
