@@ -726,7 +726,7 @@ function addPunishment(p) {
 }
 
 // 📌 Daily summary save karo
-function saveDailySummary() {
+  function saveDailySummary() {
     const today = new Date().toISOString().split("T")[0];
     const history = JSON.parse(localStorage.getItem("history") || "[]");
 
@@ -734,25 +734,26 @@ function saveDailySummary() {
     const xpStartValue = parseInt(localStorage.getItem('xpStartValue')) || xp;
     const xpGainedToday = Math.max(0, xp - xpStartValue);
 
+    // Punishment data localStorage se lo (state clear hone pe bhi sahi milega)
+    const punishmentsCount = parseInt(localStorage.getItem("punishmentsTodayCount") || "0", 10);
+    const punishmentsList = JSON.parse(localStorage.getItem("punishmentsTodayDetails") || "[]");
+
     const newEntry = {
         date: today,
         xp,
-        xpGainedToday, // Architect check ke liye
+        xpGainedToday,
         level,
         fogLevel,
         dailyQuestCompleted: localStorage.getItem("dailyQuestCompletedToday") === "true",
-
-        // 📌 LocalStorage se count lo taaki state reset hone pe bhi value mile
-        punishments: parseInt(localStorage.getItem("punishmentsTodayCount") || "0", 10),
-        punishmentDetails: JSON.parse(localStorage.getItem("punishmentsTodayDetails") || "[]"),
-
+        punishments: punishmentsCount,
+        punishmentDetails: punishmentsList,
         tasksCompleted: taskLog,
         relapseHua: relapseHua,
         dopamineActive: dopamineActive,
         dopamineLevel: dopamineLevel
     };
 
-    // Agar aaj ka entry already exist hai to update karo
+    // Update or add entry for today
     const existingIndex = history.findIndex(h => h.date === today);
     if (existingIndex >= 0) {
         history[existingIndex] = newEntry;
@@ -760,15 +761,18 @@ function saveDailySummary() {
         history.push(newEntry);
     }
 
-    // History save karo
     localStorage.setItem("history", JSON.stringify(history));
 
-    // Reset XP start value
+    // Reset XP start value for tomorrow's calculation
     localStorage.setItem('xpStartValue', String(xp));
 
-    // 📌 Punishment counter reset karo next day ke liye
-    localStorage.setItem("punishmentsTodayCount", "0");
-    localStorage.setItem("punishmentsTodayDetails", "[]");
+    // ✅ Reset punishments only if date has changed (next day)
+    const lastSaveDate = localStorage.getItem("lastSummaryDate");
+    if (lastSaveDate !== today) {
+        localStorage.setItem("punishmentsTodayCount", "0");
+        localStorage.setItem("punishmentsTodayDetails", "[]");
+    }
+    localStorage.setItem("lastSummaryDate", today);
   }
 
   function completePunishment(){
