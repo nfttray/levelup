@@ -561,10 +561,10 @@ useEffect(() => {
 
     // ---- Choose Option A or B ----
     // Option A: Give 1 day XP on first run
-    const lastUpdate = stored ? parseInt(stored, 10) : (now - MS_PER_DAY);
+    //const lastUpdate = stored ? parseInt(stored, 10) : (now - MS_PER_DAY);
 
     // Option B: No XP on first run
-   // const lastUpdate = stored ? parseInt(stored, 10) : now;
+    const lastUpdate = stored ? parseInt(stored, 10) : now;
 
     const hoursPassed = Math.floor((now - lastUpdate) / MS_PER_HOUR);
 
