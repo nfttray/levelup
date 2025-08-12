@@ -655,42 +655,7 @@ useEffect(() => {
     setShowDailyQuest(!saved.every(q => q.done));
   }
 }, []);
-// calender 
-  function saveDailySummary() {
-  const today = new Date().toISOString().split("T")[0];
-  const history = JSON.parse(localStorage.getItem("history") || "[]");
 
-  // Calculate XP gained today from xpStartValue
-  const xpStartValue = parseInt(localStorage.getItem('xpStartValue')) || xp;
-  const xpGainedToday = Math.max(0, xp - xpStartValue);
-
-  const newEntry = {
-    date: today,
-    xp,
-    xpGainedToday, // 🔹 for Architect's "XP today" check
-    level,
-    fogLevel,
-    dailyQuestCompleted: localStorage.getItem("dailyQuestCompletedToday") === "true",
-    punishments: punishments.length,
-    punishmentDetails: punishments.map(p => p.text),
-    tasksCompleted: taskLog,
-    relapseHua: relapseHua, // 🔹 store relapse status
-    dopamineActive: dopamineActive, // 🔹 store dopamine toggle
-    dopamineLevel: dopamineLevel // 🔹 store dopamine level %
-  };
-
-  const existingIndex = history.findIndex(h => h.date === today);
-  if (existingIndex >= 0) {
-    history[existingIndex] = newEntry;
-  } else {
-    history.push(newEntry);
-  }
-
-  localStorage.setItem("history", JSON.stringify(history));
-
-  // Reset xpStartValue for tomorrow's calculation
-  localStorage.setItem('xpStartValue', String(xp));
-        }
   
 function toggleQuestDone(index){
   const updated=[...dailyQuestList];
@@ -738,10 +703,65 @@ React.useEffect(() => {
   localStorage.setItem('debt', String(debt));
 }, [debt]);
   
-  // === Add / Complete Tasks ===
-  function addPunishment(p){
-    setPunishments([...punishments,p]);
+// 📌 Punishment add hone par storage me live save karo
+function addPunishment(p) {
+    setPunishments(prev => {
+        const updated = [...prev, p];
+
+        // Count & details ko localStorage me save karo
+        localStorage.setItem("punishmentsTodayCount", updated.length);
+        localStorage.setItem("punishmentsTodayDetails", JSON.stringify(updated.map(pp => pp.text)));
+
+        return updated;
+    });
+
     setLockdown(true);
+}
+
+// 📌 Daily summary save karo
+function saveDailySummary() {
+    const today = new Date().toISOString().split("T")[0];
+    const history = JSON.parse(localStorage.getItem("history") || "[]");
+
+    // Calculate XP gained today
+    const xpStartValue = parseInt(localStorage.getItem('xpStartValue')) || xp;
+    const xpGainedToday = Math.max(0, xp - xpStartValue);
+
+    const newEntry = {
+        date: today,
+        xp,
+        xpGainedToday, // Architect check ke liye
+        level,
+        fogLevel,
+        dailyQuestCompleted: localStorage.getItem("dailyQuestCompletedToday") === "true",
+
+        // 📌 LocalStorage se count lo taaki state reset hone pe bhi value mile
+        punishments: parseInt(localStorage.getItem("punishmentsTodayCount") || "0", 10),
+        punishmentDetails: JSON.parse(localStorage.getItem("punishmentsTodayDetails") || "[]"),
+
+        tasksCompleted: taskLog,
+        relapseHua: relapseHua,
+        dopamineActive: dopamineActive,
+        dopamineLevel: dopamineLevel
+    };
+
+    // Agar aaj ka entry already exist hai to update karo
+    const existingIndex = history.findIndex(h => h.date === today);
+    if (existingIndex >= 0) {
+        history[existingIndex] = newEntry;
+    } else {
+        history.push(newEntry);
+    }
+
+    // History save karo
+    localStorage.setItem("history", JSON.stringify(history));
+
+    // Reset XP start value
+    localStorage.setItem('xpStartValue', String(xp));
+
+    // 📌 Punishment counter reset karo next day ke liye
+    localStorage.setItem("punishmentsTodayCount", "0");
+    localStorage.setItem("punishmentsTodayDetails", "[]");
   }
 
   function completePunishment(){
