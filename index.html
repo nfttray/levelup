@@ -74,15 +74,30 @@ const { useState, useEffect } = React;
 
 // === CONSTANTS ===
 const normalPunishments = [
-  "Solve 50 maths questions", "Solve 100 GK questions", "Revise 2 topics",
-  "No social media 6 hrs", "Full mock analysis"
+  "Solve 30 Maths (Speed + Arithmetic) questions",
+  "Solve 100 GK/Current Affairs questions",
+  "Revise 50 screenshot",
+  "No Social Media for 6 hours + 1 mock section analysis",
+  "Full Mock Test Analysis (check each wrong answer)",
+  "1 sectional mock"
 ];
+
 const deathModePunishments = [
-  "Study 6 hrs straight + summary", "200 questions + 50 push-ups",
-  "Watch 4-5 videos continue and learn", "2 Full mock test now + No phone 8 hrs + analysis", "Revise 8 topics + Cold shower"
+  "Study 6 hours straight + make handwritten summary",
+  "Solve 200 mixed questions (Maths, Reasoning, GK) + 50 push-ups",
+  "Watch 4-5 concept videos continuously and make notes",
+  "2 Full Mock Tests back-to-back + No Phone for 8 hours + Analysis",
+  "Revise 8 topics (4 GK + 4 Maths/Reasoning) + Cold Shower",
+  "Revise 200 screenshot"
+  
 ];
+
 const rewards = [
-  "Watch 1 anime episode", "Eat favorite snack", "Listen to music", "Take a relaxing walk", "watch insta for 20 mins"
+  "Watch 1 anime episode",
+  "Eat your favorite snack",
+  "Listen to 3-4 songs you love",
+  "Take a relaxing walk for 20 minutes",
+  "Watch Instagram for 20 minutes guilt-free"
 ];
 
 // === DAILY QUEST EXERCISES (7 Days) ===
@@ -155,12 +170,12 @@ function App(){
   const [currentRepaymentTask, setCurrentRepaymentTask] = React.useState("");
 
   const repaymentTasks = [
-    "Solve 50 maths questions",
+    "Solve 20 maths questions",
     "Do 20 push-ups",
-    "Read 10 pages of a book",
-    "Meditate for 10 minutes",
-    "Organize your desk",
-    "Write a 200-word journal entry",
+    "Read 5 pages of a GK",
+    "Watch youtube gk shorts 15 min",
+    "Watch YouTube maths shorts 15 min",
+    "revise screenshot 15 min",
     "Do 10 squats",
     "Drink 2 glasses of water and walk 5 mins",
     "Revise 1 topic you are weak at",
