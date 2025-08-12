@@ -177,6 +177,7 @@ function App(){
   const [bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
   const [rivalXP,setRivalXP]=useState(parseFloat(localStorage.getItem('rivalXP'))||0);
   const [rivalLevel,setRivalLevel]=useState(parseInt(localStorage.getItem('rivalLevel'))||1);
+  const lastUpdate = parseInt(localStorage.getItem('lastRivalUpdate')) || now;
   const [behindDays,setBehindDays]=useState(parseInt(localStorage.getItem('behindDays'))||0);
   const [showLevelUp,setShowLevelUp]=useState(false);
   const [lockdown,setLockdown]=useState(false);
@@ -552,7 +553,10 @@ useEffect(() => {
 useEffect(() => {
   const updateRivalXP = () => {
     const now = Date.now();
-    const lastUpdate = parseInt(localStorage.getItem('lastRivalUpdate')) || now;
+    const storedLastUpdate = localStorage.getItem('lastRivalUpdate');
+    const lastUpdate = storedLastUpdate ? parseInt(storedLastUpdate, 10) : now - 24*3600000; 
+    // default: ek din purana so XP mile
+
     const hoursPassed = Math.floor((now - lastUpdate) / 3600000);
 
     if (hoursPassed > 0) {
@@ -582,8 +586,8 @@ useEffect(() => {
   const interval = setInterval(updateRivalXP, 3600000);
   return () => clearInterval(interval);
 }, []);
-  
 
+  
   useEffect(() => {
   const now = Date.now();
   const lastCheck = parseInt(localStorage.getItem('last3DayCheck')) || 0;
