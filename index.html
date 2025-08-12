@@ -330,6 +330,13 @@ addPunishment({
   runArchitectDailyReport(testMode);
 }, []);
 
+  useEffect(() => {
+    const savedPunishments = JSON.parse(localStorage.getItem("punishmentsTodayDetails") || "[]");
+    if (savedPunishments.length > 0) {
+        // Punishment text se p object bana ke state set karo
+        setPunishments(savedPunishments.map(text => ({ text })));
+    }
+}, []);
   
   // === Timer Update ===
   useEffect(()=>{
