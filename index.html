@@ -550,43 +550,58 @@ useEffect(() => {
 }, [punishments]);
 
   // === Rival XP Auto Update ===
+
 useEffect(() => {
+  const MS_PER_HOUR = 3600000;
+  const MS_PER_DAY = 24 * MS_PER_HOUR;
+
   const updateRivalXP = () => {
+    console.log('[rival] updateRivalXP called');
     const now = Date.now();
-    const storedLastUpdate = localStorage.getItem('lastRivalUpdate');
-    const lastUpdate = storedLastUpdate ? parseInt(storedLastUpdate, 10) : now - 24*3600000; 
-    // default: ek din purana so XP mile
 
-    const hoursPassed = Math.floor((now - lastUpdate) / 3600000);
+    const stored = localStorage.getItem('lastRivalUpdate');
 
-    if (hoursPassed > 0) {
-      const daysPassed = Math.floor(hoursPassed / 24);
-      const extraHours = hoursPassed % 24;
+    // 🔹 Choose ONE of these:
+    // const lastUpdate = stored ? parseInt(stored, 10) : (now - MS_PER_DAY); // Option A
+    const lastUpdate = stored ? parseInt(stored, 10) : now;                  // Option B
 
-      const gainedXP = (daysPassed * DAILY_RIVAL_XP) + (extraHours * HOURLY_RIVAL_XP);
+    const hoursPassed = Math.floor((now - lastUpdate) / MS_PER_HOUR);
 
-      setRivalXP(prevXP => {
-        let newXP = prevXP + gainedXP;
-        let level = rivalLevel;
+    if (hoursPassed <= 0) {
+      console.log('[rival] no hours passed', { now, lastUpdate, hoursPassed, stored });
+      if (!stored) localStorage.setItem('lastRivalUpdate', String(lastUpdate));
+      return;
+    }
 
+    const daysPassed = Math.floor(hoursPassed / 24);
+    const extraHours = hoursPassed % 24;
+    const gainedXP = (daysPassed * DAILY_RIVAL_XP) + (extraHours * HOURLY_RIVAL_XP);
+
+    console.log('[rival] calc', { now, lastUpdate, hoursPassed, daysPassed, extraHours, gainedXP });
+
+    setRivalXP(prevXP => {
+      let newXP = prevXP + gainedXP;
+
+      setRivalLevel(prevLevel => {
+        let level = prevLevel;
         while (newXP >= getXPForLevel(level)) {
           newXP -= getXPForLevel(level);
           level++;
         }
-
-        setRivalLevel(level);
-        return newXP;
+        return level;
       });
 
-      localStorage.setItem('lastRivalUpdate', now);
-    }
+      console.log('[rival] xp changed', { prevXP, gainedXP, newXPAfterLevelAdjust: newXP });
+      return newXP;
+    });
+
+    localStorage.setItem('lastRivalUpdate', String(now));
   };
 
   updateRivalXP();
   const interval = setInterval(updateRivalXP, 3600000);
   return () => clearInterval(interval);
 }, []);
-
   
   useEffect(() => {
   const now = Date.now();
