@@ -443,12 +443,6 @@ useEffect(() => {
 const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
 const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
 
-const [dopamineActive, setDopamineActive] = React.useState(
-  JSON.parse(localStorage.getItem("dopamineActive")) || false
-);
-const [dopamineLevel, setDopamineLevel] = React.useState(
-  parseFloat(localStorage.getItem("dopamineLevel")) || 100
-);
 const [startTime, setStartTime] = React.useState(
   parseInt(localStorage.getItem("dopamineStartTime") || Date.now(), 10)
 );
