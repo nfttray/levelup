@@ -438,38 +438,66 @@ useEffect(() => {
 }, [selectedHistoryDay]);
 
   // Dopamine Detox System
+  // 2 hours full depletion
+const DECREASE_PER_SEC = 100 / (2 * 60 * 60); 
+
+// Background-safe dopamine bar
 useEffect(() => {
   let interval;
+
   if (dopamineActive && dopamineLevel > 0) {
+    // Calculate background gap
+    const lastUpdate = parseInt(localStorage.getItem("dopamineLastUpdate") || Date.now(), 10);
+    const now = Date.now();
+    const secondsPassed = Math.floor((now - lastUpdate) / 1000);
+
+    if (secondsPassed > 0) {
+      setDopamineLevel(prev => {
+        const newLevel = Math.max(prev - (secondsPassed * DECREASE_PER_SEC), 0);
+        localStorage.setItem("dopamineLevel", newLevel);
+        return newLevel;
+      });
+    }
+
+    localStorage.setItem("dopamineLastUpdate", now);
+
+    // Regular decrement for active session
     interval = setInterval(() => {
       setDopamineLevel(prev => {
-        const newLevel = Math.max(prev - (100 / (2 * 60 * 60)), 0);
-        localStorage.setItem('dopamineLevel', newLevel);
+        const newLevel = Math.max(prev - DECREASE_PER_SEC, 0);
+        localStorage.setItem("dopamineLevel", newLevel);
+        localStorage.setItem("dopamineLastUpdate", Date.now());
         return newLevel;
       });
     }, 1000);
   }
+
   return () => clearInterval(interval);
 }, [dopamineActive]);
 
 // Save toggle state
 useEffect(() => {
-  localStorage.setItem('dopamineActive', JSON.stringify(dopamineActive));
+  localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
+  if (dopamineActive) {
+    localStorage.setItem("dopamineLastUpdate", Date.now());
+  }
 }, [dopamineActive]);
 
 // Penalty when dopamine hits 0
 useEffect(() => {
-  if (dopamineLevel === 0) {
+  if (dopamineLevel === 0 && dopamineActive) {
     alert("⚠️ Dopamine depleted! Apply punishment now!");
     setDopamineActive(false);
-    // Optional: Trigger punishment system
+
+    // Punishment
     addPunishment({
-      type: 'dopamineFail',
+      type: "dopamineFail",
       text: "Dopamine Bar Empty! Punishment: Solve 100 questions + No social media 6 hrs",
       deathMode: true
     });
   }
 }, [dopamineLevel]);
+
 
   useEffect(() => {
   const today = new Date().toLocaleDateString();
