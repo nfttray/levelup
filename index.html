@@ -438,65 +438,83 @@ useEffect(() => {
 }, [selectedHistoryDay]);
 
   // Dopamine Detox System
-  // 2 hours full depletion
-const DECREASE_PER_SEC = 100 / (2 * 60 * 60); 
+  // ---- Constants ----
+const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
+const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
 
-// Background-safe dopamine bar
-useEffect(() => {
+// ---- State ----
+const [dopamineActive, setDopamineActive] = React.useState(
+  JSON.parse(localStorage.getItem("dopamineActive") || "false")
+);
+const [dopamineLevel, setDopamineLevel] = React.useState(
+  parseFloat(localStorage.getItem("dopamineLevel") || "100")
+);
+const [startTime, setStartTime] = React.useState(
+  parseInt(localStorage.getItem("dopamineStartTime") || Date.now(), 10)
+);
+const [timeRemaining, setTimeRemaining] = React.useState("02:00:00");
+
+// ---- Main Timer Effect ----
+React.useEffect(() => {
   let interval;
 
-  if (dopamineActive && dopamineLevel > 0) {
-    // Calculate background gap
-    const lastUpdate = parseInt(localStorage.getItem("dopamineLastUpdate") || Date.now(), 10);
-    const now = Date.now();
-    const secondsPassed = Math.floor((now - lastUpdate) / 1000);
+  if (dopamineActive) {
+    // Check instantly (even after background)
+    const checkAndUpdate = () => {
+      const now = Date.now();
+      const secondsPassed = Math.floor((now - startTime) / 1000);
+      const newLevel = Math.max(100 - (secondsPassed * DECREASE_PER_SEC), 0);
 
-    if (secondsPassed > 0) {
-      setDopamineLevel(prev => {
-        const newLevel = Math.max(prev - (secondsPassed * DECREASE_PER_SEC), 0);
-        localStorage.setItem("dopamineLevel", newLevel);
-        return newLevel;
-      });
-    }
+      setDopamineLevel(newLevel);
+      localStorage.setItem("dopamineLevel", newLevel);
 
-    localStorage.setItem("dopamineLastUpdate", now);
+      // Update countdown display
+      const secondsLeft = Math.floor((newLevel / 100) * TOTAL_TIME_SEC);
+      const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
+      const mins = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, "0");
+      const secs = String(secondsLeft % 60).padStart(2, "0");
+      setTimeRemaining(`${hrs}:${mins}:${secs}`);
 
-    // Regular decrement for active session
-    interval = setInterval(() => {
-      setDopamineLevel(prev => {
-        const newLevel = Math.max(prev - DECREASE_PER_SEC, 0);
-        localStorage.setItem("dopamineLevel", newLevel);
-        localStorage.setItem("dopamineLastUpdate", Date.now());
-        return newLevel;
-      });
-    }, 1000);
+      // Punishment if empty
+      if (newLevel <= 0) {
+        setDopamineActive(false);
+        alert("⚠️ Dopamine depleted! Apply punishment now!");
+        addPunishment({
+          type: "dopamineFail",
+          text: "Dopamine Bar Empty! Punishment: Solve 100 questions + No social media 6 hrs",
+          deathMode: true
+        });
+      }
+    };
+
+    checkAndUpdate(); // Run immediately when effect starts
+    interval = setInterval(checkAndUpdate, 1000); // Update every second
   }
 
   return () => clearInterval(interval);
-}, [dopamineActive]);
+}, [dopamineActive, startTime]);
 
-// Save toggle state
-useEffect(() => {
+// ---- Save State when starting ----
+React.useEffect(() => {
   localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
   if (dopamineActive) {
-    localStorage.setItem("dopamineLastUpdate", Date.now());
+    const now = Date.now();
+    setStartTime(now);
+    localStorage.setItem("dopamineStartTime", now);
   }
 }, [dopamineActive]);
 
-// Penalty when dopamine hits 0
-useEffect(() => {
-  if (dopamineLevel === 0 && dopamineActive) {
-    alert("⚠️ Dopamine depleted! Apply punishment now!");
-    setDopamineActive(false);
-
-    // Punishment
-    addPunishment({
-      type: "dopamineFail",
-      text: "Dopamine Bar Empty! Punishment: Solve 100 questions + No social media 6 hrs",
-      deathMode: true
-    });
-  }
-}, [dopamineLevel]);
+// ---- Render Example ----
+return (
+  <div style={{ textAlign: "center" }}>
+    <h3>Dopamine Detox</h3>
+    <p>Time Remaining: <strong>{timeRemaining}</strong></p>
+    <p>Dopamine Level: {dopamineLevel.toFixed(2)}%</p>
+    <button onClick={() => setDopamineActive(a => !a)}>
+      {dopamineActive ? "Pause" : "Start"}
+    </button>
+  </div>
+);
 
 
   useEffect(() => {
