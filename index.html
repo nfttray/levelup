@@ -438,23 +438,20 @@ useEffect(() => {
 }, [selectedHistoryDay]);
 
   // Dopamine Detox System
-  // ---- Constants ----
 const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
 const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
 
-// ---- State ----
+// ---- Extra State ----
 const [timeRemaining, setTimeRemaining] = React.useState("02:00:00");
 const [startTime, setStartTime] = React.useState(
   parseInt(localStorage.getItem("dopamineStartTime") || Date.now(), 10)
 );
-const [timeRemaining, setTimeRemaining] = React.useState("02:00:00");
 
 // ---- Main Timer Effect ----
 React.useEffect(() => {
   let interval;
 
   if (dopamineActive) {
-    // Check instantly (even after background)
     const checkAndUpdate = () => {
       const now = Date.now();
       const secondsPassed = Math.floor((now - startTime) / 1000);
@@ -482,8 +479,9 @@ React.useEffect(() => {
       }
     };
 
-    checkAndUpdate(); // Run immediately when effect starts
-    interval = setInterval(checkAndUpdate, 1000); // Update every second
+    // Run immediately on start
+    checkAndUpdate();
+    interval = setInterval(checkAndUpdate, 1000);
   }
 
   return () => clearInterval(interval);
