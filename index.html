@@ -572,7 +572,8 @@ useEffect(() => {
 }, [punishments]);
 
   // === Rival XP Auto Update ===
-const DAILY_RIVAL_XP = 30;
+
+  const DAILY_RIVAL_XP = 30;
 
 useEffect(() => {
   const giveDailyRivalXP = () => {
@@ -593,17 +594,23 @@ useEffect(() => {
     console.log("🎯 Daily Rival XP Added at", new Date().toLocaleTimeString());
   };
 
-  // ✅ Step 1: App start hote hi XP dena
-  giveDailyRivalXP();
+  const lastUpdate = parseInt(localStorage.getItem("lastRivalUpdate") || 0, 10);
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
 
-  // ✅ Step 2: Midnight scheduler
+  // ✅ Step 1: First app start of the day
+  if (lastUpdate < todayMidnight.getTime()) {
+    giveDailyRivalXP();
+  }
+
+  // ✅ Step 2: Schedule at midnight
   const now = new Date();
   const millisTillMidnight =
     new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) - now;
 
   const midnightTimeout = setTimeout(() => {
     giveDailyRivalXP();
-    setInterval(giveDailyRivalXP, 24 * 60 * 60 * 1000); // every 24 hrs after first midnight
+    setInterval(giveDailyRivalXP, 24 * 60 * 60 * 1000);
   }, millisTillMidnight);
 
   return () => clearTimeout(midnightTimeout);
