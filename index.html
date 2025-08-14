@@ -452,7 +452,6 @@ const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
 const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
 
 
-// Helper: Update Time Remaining Display
 function updateTimeRemainingFromLevel(level) {
   const secondsLeft = Math.floor((level / 100) * TOTAL_TIME_SEC);
   const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
@@ -461,7 +460,7 @@ function updateTimeRemainingFromLevel(level) {
   setTimeRemaining(`${hrs}:${mins}:${secs}`);
 }
 
-// === Daily Reset (once per day) ===
+// Daily reset
 useEffect(() => {
   const today = new Date().toLocaleDateString();
   const lastReset = localStorage.getItem("dopamineResetDate");
@@ -470,13 +469,12 @@ useEffect(() => {
     setDopamineLevel(100);
     localStorage.setItem("dopamineLevel", 100);
     localStorage.setItem("dopamineResetDate", today);
-    setDopamineActive(false); // stop timer for fresh start
+    setDopamineActive(false);
     updateTimeRemainingFromLevel(100);
   }
 }, []);
 
-// === Toggle ON/OFF Logic ===
-
+// Toggle ON/OFF logic (freeze mode)
 useEffect(() => {
   localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
 
@@ -495,25 +493,13 @@ useEffect(() => {
       return;
     }
 
-    if (storedLevel === 100) {
-      // Fresh start
-      const now = Date.now();
-      setLastUpdate(now);
-      localStorage.setItem("dopamineLastUpdate", now);
-    } else {
-      // Resume from last saved update (OFF time)
-      const storedLast = parseInt(localStorage.getItem("dopamineLastUpdate")) || Date.now();
-      setLastUpdate(storedLast);
-    }
-  } else {
-    // 🟢 Save OFF time to prevent jump
-    const now = Date.now();
-    setLastUpdate(now);
-    localStorage.setItem("dopamineLastUpdate", now);
+    // Set lastUpdate to now only when ON starts
+    setLastUpdate(Date.now());
+    localStorage.setItem("dopamineLastUpdate", Date.now());
   }
 }, [dopamineActive]);
 
-// === Main Timer Effect ===
+// Timer effect (runs only when ON)
 useEffect(() => {
   let interval;
 
@@ -545,15 +531,12 @@ useEffect(() => {
       }
     };
 
-    tick(); // Run immediately
+    tick(); // immediate
     interval = setInterval(tick, 1000);
   }
 
-  // Cleanup: stop timer on OFF or unmount
-  return () => {
-    if (interval) clearInterval(interval);
-  };
-}, [dopamineActive]); // Runs only when toggle changes
+  return () => clearInterval(interval); // Stop when OFF
+}, [dopamineActive, lastUpdate, dopamineLevel]);
   
   useEffect(() => {
   const today = new Date().toLocaleDateString();
