@@ -197,8 +197,8 @@ const lastUpdate = parseInt(localStorage.getItem('lastRivalUpdate')) || now;
   const [timer,setTimer]=useState(getRemainingBossTime());
   const [showDailyQuest,setShowDailyQuest]=useState(false);
   const [dailyQuestList,setDailyQuestList]=useState([]);
-  const [dopamineActive, setDopamineActive] = useState(JSON.parse(localStorage.getItem('dopamineActive')) || false);
-  const [dopamineLevel, setDopamineLevel] = useState(parseFloat(localStorage.getItem('dopamineLevel')) || 100);
+ // const [dopamineActive, setDopamineActive] = useState(JSON.parse(localStorage.getItem('dopamineActive')) || false);
+//  const [dopamineLevel, setDopamineLevel] = useState(parseFloat(localStorage.getItem('dopamineLevel')) || 100);
   const [smallBossCount, setSmallBossCount] = useState(parseInt(localStorage.getItem('smallBossCount')) || 0);
   const [showUrgeModal, setShowUrgeModal] = useState(false);
   const [urgeTask, setUrgeTask] = useState('');
@@ -437,11 +437,15 @@ useEffect(() => {
   // Dopamine Detox System
 
 // Dopamine Detox Logic
-const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
+  const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
 const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
 
-
-const [timeRemaining, setTimeRemaining] = React.useState("02:00:00");
+const [dopamineActive, setDopamineActive] = React.useState(
+  JSON.parse(localStorage.getItem("dopamineActive")) || false
+);
+const [dopamineLevel, setDopamineLevel] = React.useState(
+  parseFloat(localStorage.getItem("dopamineLevel")) || 100
+);
 
 React.useEffect(() => {
   let interval;
@@ -457,14 +461,7 @@ React.useEffect(() => {
           const newLevel = Math.max(prev - (secondsPassed * DECREASE_PER_SEC), 0);
           localStorage.setItem("dopamineLevel", newLevel);
 
-          // Countdown update
-          const secondsLeft = Math.floor((newLevel / 100) * TOTAL_TIME_SEC);
-          const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
-          const mins = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, "0");
-          const secs = String(secondsLeft % 60).padStart(2, "0");
-          setTimeRemaining(`${hrs}:${mins}:${secs}`);
-
-          if (newLevel <= 0 && dopamineActive) {
+          if (newLevel <= 0) {
             setDopamineActive(false);
             alert("⚠️ Dopamine depleted! Apply punishment now!");
             addPunishment({
@@ -485,6 +482,16 @@ React.useEffect(() => {
   }
 
   return () => clearInterval(interval);
+}, [dopamineActive]);
+
+// Save toggle state
+React.useEffect(() => {
+  localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
+
+  if (dopamineActive) {
+    // Starting → store "now" as last update
+    localStorage.setItem("dopamineLastUpdate", Date.now());
+  }
 }, [dopamineActive]);
 
 // Save toggle state & timestamp
