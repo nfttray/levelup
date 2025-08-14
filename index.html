@@ -437,72 +437,48 @@ useEffect(() => {
 }, [selectedHistoryDay]);
 
   // Dopamine Detox System
-// Constants
-const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
-const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
-
-// State
-const [dopamineActive, setDopamineActive] = useState(
-  JSON.parse(localStorage.getItem("dopamineActive")) || false
-);
-const [dopamineLevel, setDopamineLevel] = useState(
-  parseFloat(localStorage.getItem("dopamineLevel")) || 100
-);
-const [lastUpdate, setLastUpdate] = useState(
-  parseInt(localStorage.getItem("dopamineLastUpdate")) || Date.now()
-);
-const [timeRemaining, setTimeRemaining] = useState("02:00:00");
-
-// Main effect
+// Daily dopamine reset + toggle logic
 useEffect(() => {
-  let interval;
+  const today = new Date().toLocaleDateString();
+  const lastDopamineReset = localStorage.getItem("dopamineResetDate");
 
-  if (dopamineActive) {
-    const checkAndUpdate = () => {
-      const now = Date.now();
-      const secondsPassed = Math.floor((now - lastUpdate) / 1000);
-
-      if (secondsPassed > 0) {
-        const decrease = secondsPassed * DECREASE_PER_SEC;
-        const newLevel = Math.max(dopamineLevel - decrease, 0);
-
-        setDopamineLevel(newLevel);
-        setLastUpdate(now);
-
-        localStorage.setItem("dopamineLevel", newLevel);
-        localStorage.setItem("dopamineLastUpdate", now);
-
-        const secondsLeft = Math.floor((newLevel / 100) * TOTAL_TIME_SEC);
-        const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
-        const mins = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, "0");
-        const secs = String(secondsLeft % 60).padStart(2, "0");
-        setTimeRemaining(`${hrs}:${mins}:${secs}`);
-
-        if (newLevel <= 0) {
-          setDopamineActive(false);
-          alert("⚠️ Dopamine depleted! Apply punishment now!");
-          addPunishment({
-            type: "dopamineFail",
-            text: "Dopamine Bar Empty! Punishment: Solve 100 questions + No social media 6 hrs",
-            deathMode: true
-          });
-        }
-      }
-    };
-
-    checkAndUpdate();
-    interval = setInterval(checkAndUpdate, 1000);
+  // 🔹 Daily reset
+  if (lastDopamineReset !== today) {
+    setDopamineLevel(100);
+    localStorage.setItem("dopamineLevel", 100);
+    localStorage.setItem("dopamineResetDate", today);
   }
+}, []);
 
-  return () => clearInterval(interval);
-}, [dopamineActive, lastUpdate, dopamineLevel]);
-
-// Save toggle state
+// Toggle ON/OFF logic with resume
 useEffect(() => {
   localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
+
   if (dopamineActive) {
-    setLastUpdate(Date.now());
-    localStorage.setItem("dopamineLastUpdate", Date.now());
+    const storedLevel = parseFloat(localStorage.getItem("dopamineLevel")) || 100;
+
+    if (storedLevel <= 0) {
+      // Already empty → punishment immediately
+      setDopamineActive(false);
+      alert("⚠️ Dopamine depleted! Apply punishment now!");
+      addPunishment({
+        type: "dopamineFail",
+        text: "Dopamine Bar Empty! Punishment: Solve 100 questions + No social media 6 hrs",
+        deathMode: true
+      });
+      return;
+    }
+
+    if (storedLevel === 100) {
+      // Fresh start
+      const now = Date.now();
+      setLastUpdate(now);
+      localStorage.setItem("dopamineLastUpdate", now);
+    } else {
+      // Resume from where left off
+      const storedLast = parseInt(localStorage.getItem("dopamineLastUpdate")) || Date.now();
+      setLastUpdate(storedLast);
+    }
   }
 }, [dopamineActive]);
 
