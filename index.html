@@ -452,6 +452,7 @@ const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
 const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
 
 
+
 function updateTimeRemainingFromLevel(level) {
   const secondsLeft = Math.floor((level / 100) * TOTAL_TIME_SEC);
   const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
@@ -460,7 +461,7 @@ function updateTimeRemainingFromLevel(level) {
   setTimeRemaining(`${hrs}:${mins}:${secs}`);
 }
 
-// Daily reset
+// === Daily Reset ===
 useEffect(() => {
   const today = new Date().toLocaleDateString();
   const lastReset = localStorage.getItem("dopamineResetDate");
@@ -474,7 +475,7 @@ useEffect(() => {
   }
 }, []);
 
-// Toggle ON/OFF logic (freeze mode)
+// === Toggle Logic ===
 useEffect(() => {
   localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
 
@@ -492,34 +493,21 @@ useEffect(() => {
       });
       return;
     }
-
-    // Set lastUpdate to now only when ON starts
-    setLastUpdate(Date.now());
-    localStorage.setItem("dopamineLastUpdate", Date.now());
   }
 }, [dopamineActive]);
 
-// Timer effect (runs only when ON)
+// === Timer Effect (Freeze Mode) ===
 useEffect(() => {
   let interval;
-
   if (dopamineActive) {
-    const tick = () => {
-      const now = Date.now();
-      const secondsPassed = Math.floor((now - lastUpdate) / 1000);
-
-      if (secondsPassed > 0) {
-        const decrease = secondsPassed * DECREASE_PER_SEC;
-        const newLevel = Math.max(dopamineLevel - decrease, 0);
-
-        setDopamineLevel(newLevel);
-        setLastUpdate(now);
+    interval = setInterval(() => {
+      setDopamineLevel(prev => {
+        const newLevel = Math.max(prev - DECREASE_PER_SEC, 0);
+        localStorage.setItem("dopamineLevel", newLevel);
         updateTimeRemainingFromLevel(newLevel);
 
-        localStorage.setItem("dopamineLevel", newLevel);
-        localStorage.setItem("dopamineLastUpdate", now);
-
         if (newLevel <= 0) {
+          clearInterval(interval);
           setDopamineActive(false);
           alert("⚠️ Dopamine depleted! Apply punishment now!");
           addPunishment({
@@ -528,15 +516,13 @@ useEffect(() => {
             deathMode: true
           });
         }
-      }
-    };
 
-    tick(); // immediate
-    interval = setInterval(tick, 1000);
+        return newLevel;
+      });
+    }, 1000);
   }
-
-  return () => clearInterval(interval); // Stop when OFF
-}, [dopamineActive, lastUpdate, dopamineLevel]);
+  return () => clearInterval(interval);
+}, [dopamineActive]);
   
   useEffect(() => {
   const today = new Date().toLocaleDateString();
