@@ -436,103 +436,98 @@ useEffect(() => {
 
   // Dopamine Detox System
 
-// Dopamine Detox Logic
-  
-// ---- Constants ----
-const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
+
+const TOTAL_TIME_SEC = 2 * 60 * 60;
 const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
 
-// ---- State ----
-const [dopamineActive, setDopamineActive] = React.useState(
-  JSON.parse(localStorage.getItem("dopamineActive")) || false
-);
-const [dopamineLevel, setDopamineLevel] = React.useState(
-  parseFloat(localStorage.getItem("dopamineLevel")) || 100
-);
-const [startTime, setStartTime] = React.useState(
-  parseInt(localStorage.getItem("dopamineStartTime") || Date.now(), 10)
-);
-const [timeRemaining, setTimeRemaining] = React.useState("02:00:00");
+let dopamineActive = JSON.parse(localStorage.getItem("dopamineActive")) || false;
+let dopamineLevel = parseFloat(localStorage.getItem("dopamineLevel")) || 100;
+let startTime = parseInt(localStorage.getItem("dopamineStartTime") || Date.now(), 10);
 
-// ---- Effect for Midnight Reset ----
-React.useEffect(() => {
-  const checkMidnight = () => {
-    const today = new Date().toDateString();
-    const lastResetDay = localStorage.getItem("dopamineLastReset");
+const toggleEl = document.getElementById("dopamine-toggle");
+const barEl = document.getElementById("dopamine-bar");
+const levelEl = document.getElementById("dopamine-level");
+const timeEl = document.getElementById("time-remaining");
 
-    if (lastResetDay !== today) {
-      // Reset at midnight
-      setDopamineLevel(100);
-      setDopamineActive(false);
-      setStartTime(Date.now());
-      localStorage.setItem("dopamineLevel", 100);
-      localStorage.setItem("dopamineActive", false);
-      localStorage.setItem("dopamineStartTime", Date.now());
-      localStorage.setItem("dopamineLastReset", today);
+toggleEl.checked = dopamineActive;
+
+// ---- Midnight Exact Reset ----
+function scheduleMidnightReset() {
+  const now = new Date();
+  const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) - now;
+
+  setTimeout(() => {
+    resetDopamine();
+    setInterval(resetDopamine, 24 * 60 * 60 * 1000);
+  }, msUntilMidnight);
+}
+
+function resetDopamine() {
+  dopamineLevel = 100;
+  dopamineActive = false;
+  startTime = Date.now();
+  localStorage.setItem("dopamineLevel", dopamineLevel);
+  localStorage.setItem("dopamineActive", dopamineActive);
+  localStorage.setItem("dopamineStartTime", startTime);
+  localStorage.removeItem("dopaminePunished");
+  updateUI();
+  toggleEl.checked = false;
+}
+
+// ---- Update UI ----
+function updateUI() {
+  barEl.style.width = `${dopamineLevel}%`;
+  levelEl.textContent = `${dopamineLevel.toFixed(1)}%`;
+
+  const secondsLeft = Math.floor((dopamineLevel / 100) * TOTAL_TIME_SEC);
+  const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
+  const mins = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, "0");
+  const secs = String(secondsLeft % 60).padStart(2, "0");
+  timeEl.textContent = `${hrs}:${mins}:${secs}`;
+}
+
+// ---- Main Countdown ----
+let intervalId = null;
+function startTimer() {
+  if (intervalId) clearInterval(intervalId);
+  intervalId = setInterval(() => {
+    const now = Date.now();
+    const secondsPassed = Math.floor((now - startTime) / 1000);
+    dopamineLevel = Math.max(100 - (secondsPassed * DECREASE_PER_SEC), 0);
+    localStorage.setItem("dopamineLevel", dopamineLevel);
+    updateUI();
+
+    if (dopamineLevel <= 0 && !localStorage.getItem("dopaminePunished")) {
+      dopamineActive = false;
+      toggleEl.checked = false;
+      localStorage.setItem("dopamineActive", dopamineActive);
+      localStorage.setItem("dopaminePunished", "true");
+      alert("⚠️ Dopamine depleted! Apply punishment now!");
     }
-  };
+  }, 1000);
+}
 
-  checkMidnight(); // Run on load
-  const midnightInterval = setInterval(checkMidnight, 60 * 1000); // Check every 1 min
-  return () => clearInterval(midnightInterval);
-}, []);
+// ---- Toggle Handler ----
+toggleEl.addEventListener("change", () => {
+  dopamineActive = toggleEl.checked;
+  localStorage.setItem("dopamineActive", dopamineActive);
 
-// ---- Main Timer Effect ----
-React.useEffect(() => {
-  let interval;
-
-  if (dopamineActive) {
-    const checkAndUpdate = () => {
-      const now = Date.now();
-      const secondsPassed = Math.floor((now - startTime) / 1000);
-      const newLevel = Math.max(100 - (secondsPassed * DECREASE_PER_SEC), 0);
-
-      setDopamineLevel(newLevel);
-      localStorage.setItem("dopamineLevel", newLevel);
-
-      // Countdown calculation
-      const secondsLeft = Math.floor((newLevel / 100) * TOTAL_TIME_SEC);
-      const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
-      const mins = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, "0");
-      const secs = String(secondsLeft % 60).padStart(2, "0");
-      setTimeRemaining(`${hrs}:${mins}:${secs}`);
-
-      if (newLevel <= 0) {
-        setDopamineActive(false);
-        alert("⚠️ Dopamine depleted! Apply punishment now!");
-        addPunishment({
-          type: "dopamineFail",
-          text: "Dopamine Bar Empty! Punishment: Solve 100 questions + No social media 6 hrs",
-          deathMode: true
-        });
-      }
-    };
-
-    checkAndUpdate();
-    interval = setInterval(checkAndUpdate, 1000);
-  }
-
-  return () => clearInterval(interval);
-}, [dopamineActive, startTime]);
-
-// ---- Save State when toggle changes ----
-React.useEffect(() => {
-  localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
   if (dopamineActive) {
     const now = Date.now();
-    if (!localStorage.getItem("dopamineStartTime") || dopamineLevel === 100) {
-      setStartTime(now);
-      localStorage.setItem("dopamineStartTime", now);
-    }
+    const elapsedFromLevel = (100 - dopamineLevel) / 100 * TOTAL_TIME_SEC * 1000;
+    startTime = now - elapsedFromLevel;
+    localStorage.setItem("dopamineStartTime", startTime);
+    startTimer();
+  } else {
+    clearInterval(intervalId);
   }
-}, [dopamineActive]);
-// Save toggle state & timestamp
-React.useEffect(() => {
-  localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
-  if (dopamineActive) {
-    localStorage.setItem("dopamineLastUpdate", Date.now());
-  }
-}, [dopamineActive]);
+});
+
+// ---- Init ----
+updateUI();
+if (dopamineActive) startTimer();
+scheduleMidnightReset();
+
   
   useEffect(() => {
   const today = new Date().toLocaleDateString();
@@ -1244,47 +1239,38 @@ function runArchitectDailyReport(testMode = false) {
       </header>
         
       {/* Dopamine Detox Section */}
-      <div className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
-  <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
-    Dopamine Detox
-  </h2>
+<!-- Dopamine Detox UI -->
+<div id="dopamine-detox" class="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
+  <h2 class="text-xl font-semibold mb-4 text-green-400 tracking-wide">Dopamine Detox</h2>
 
-  <div className="flex justify-between items-center mb-4">
-    <span className="text-gray-300 font-medium">Detox Mode</span>
-    <label className="switch relative inline-block w-14 h-8">
-      <input
-        type="checkbox"
-        checked={dopamineActive}
-        onChange={() => setDopamineActive(!dopamineActive)}
-        className="opacity-0 w-0 h-0"
-      />
-      <span className="slider absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-600 rounded-full transition-colors duration-300 ease-in-out"></span>
-      <span className="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full shadow-md transition-transform duration-300 ease-in-out"></span>
+  <div class="flex justify-between items-center mb-4">
+    <span class="text-gray-300 font-medium">Detox Mode</span>
+    <label class="switch relative inline-block w-14 h-8">
+      <input id="dopamine-toggle" type="checkbox" class="opacity-0 w-0 h-0">
+      <span class="slider absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-600 rounded-full transition-colors duration-300 ease-in-out"></span>
+      <span class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full shadow-md transition-transform duration-300 ease-in-out"></span>
     </label>
   </div>
 
-  <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
-    <div
-      className="bg-green-500 h-4 rounded-full transition-all duration-1000 ease-in-out"
-      style={{ width: `${dopamineLevel}%` }}
-    ></div>
+  <div class="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+    <div id="dopamine-bar" class="bg-green-500 h-4 rounded-full transition-all duration-1000 ease-in-out"></div>
   </div>
 
-  <p className="text-sm mt-2 text-gray-300 font-medium">
-    Time Remaining: <span className="font-bold">{timeRemaining}</span>
+  <p class="text-sm mt-2 text-gray-300 font-medium">
+    Time Remaining: <span id="time-remaining" class="font-bold">02:00:00</span>
   </p>
-  <p className="text-sm mt-2 text-gray-300 font-medium">
-    Dopamine Level: <span className="font-bold">{dopamineLevel.toFixed(1)}%</span>
+  <p class="text-sm mt-2 text-gray-300 font-medium">
+    Dopamine Level: <span id="dopamine-level" class="font-bold">100%</span>
   </p>
 
-  <style>{`
+  <style>
     .switch input:checked + .slider {
       background-color: #22c55e;
     }
     .switch input:checked + .slider + .dot {
       transform: translateX(26px);
     }
-  `}</style>
+  </style>
 </div>
 
 <div className="mt-5 max-w-sm mx-auto bg-gray-900 p-5 rounded-xl shadow-lg text-center text-white">
