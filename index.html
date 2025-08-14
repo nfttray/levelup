@@ -508,8 +508,10 @@ useEffect(() => {
 }, [dopamineActive]);
 
 // Main timer effect
+// Main timer effect (fixed to stop when OFF)
 useEffect(() => {
   let interval;
+
   if (dopamineActive) {
     const tick = () => {
       const now = Date.now();
@@ -538,12 +540,15 @@ useEffect(() => {
       }
     };
 
-    tick(); // run immediately
+    tick(); // run immediately when ON
     interval = setInterval(tick, 1000);
+  } else {
+    // OFF hone pe timer band
+    clearInterval(interval);
   }
 
-  return () => clearInterval(interval);
-}, [dopamineActive, lastUpdate, dopamineLevel]);
+  return () => clearInterval(interval); // Cleanup on unmount or OFF
+}, [dopamineActive]); // ✅ Only runs when toggle changes
 
   useEffect(() => {
   const today = new Date().toLocaleDateString();
