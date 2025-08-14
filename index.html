@@ -159,8 +159,7 @@ function getRank(level){
 }
 
 // Rival XP constants
-const DAILY_RIVAL_XP = 30;
-const HOURLY_RIVAL_XP = 0;
+
 
   // === MAIN APP ===
 function App(){
@@ -573,49 +572,41 @@ useEffect(() => {
 }, [punishments]);
 
   // === Rival XP Auto Update ===
+const DAILY_RIVAL_XP = 30;
+const HOURLY_RIVAL_XP = 0;
+
 useEffect(() => {
-  const MS_PER_HOUR = 3600000;
-  const MS_PER_DAY = 24 * MS_PER_HOUR;
+  const giveDailyRivalXP = () => {
+    setRivalXP(prevXP => {
+      let newXP = prevXP + DAILY_RIVAL_XP;
+      let level = rivalLevel;
 
-  const updateRivalXP = () => {
-    const now = Date.now();
-    const stored = localStorage.getItem('lastRivalUpdate');
+      while (newXP >= getXPForLevel(level)) {
+        newXP -= getXPForLevel(level);
+        level++;
+      }
 
-    // ---- Choose Option A or B ----
-    // Option A: Give 1 day XP on first run
-    //const lastUpdate = stored ? parseInt(stored, 10) : (now - MS_PER_DAY);
+      setRivalLevel(level);
+      return newXP;
+    });
 
-    // Option B: No XP on first run
-    const lastUpdate = stored ? parseInt(stored, 10) : now;
-
-    const hoursPassed = Math.floor((now - lastUpdate) / MS_PER_HOUR);
-
-    if (hoursPassed > 0) {
-      const daysPassed = Math.floor(hoursPassed / 24);
-      const extraHours = hoursPassed % 24;
-
-      const gainedXP = (daysPassed * DAILY_RIVAL_XP) + (extraHours * HOURLY_RIVAL_XP);
-
-      setRivalXP(prevXP => {
-        let newXP = prevXP + gainedXP;
-        let level = rivalLevel;
-
-        while (newXP >= getXPForLevel(level)) {
-          newXP -= getXPForLevel(level);
-          level++;
-        }
-
-        setRivalLevel(level);
-        return newXP;
-      });
-
-      localStorage.setItem('lastRivalUpdate', String(now)); // ✅ store as string
-    }
+    localStorage.setItem("lastRivalUpdate", Date.now());
   };
 
-  updateRivalXP();
-  const interval = setInterval(updateRivalXP, MS_PER_HOUR);
-  return () => clearInterval(interval);
+  // Calculate time till midnight
+  const now = new Date();
+  const millisTillMidnight =
+    new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) - now;
+
+  // Schedule first run at midnight
+  const midnightTimeout = setTimeout(() => {
+    giveDailyRivalXP();
+
+    // Schedule every 24 hrs after first midnight
+    setInterval(giveDailyRivalXP, 24 * 60 * 60 * 1000);
+  }, millisTillMidnight);
+
+  return () => clearTimeout(midnightTimeout);
 }, []);
   
   useEffect(() => {
