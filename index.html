@@ -443,55 +443,48 @@ useEffect(() => {
 const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
 const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
 
-// Load states
-const [startTime, setStartTime] = React.useState(
-  parseInt(localStorage.getItem("dopamineStartTime") || Date.now(), 10)
+const [dopamineActive, setDopamineActive] = React.useState(
+  JSON.parse(localStorage.getItem("dopamineActive")) || false
+);
+const [dopamineLevel, setDopamineLevel] = React.useState(
+  parseFloat(localStorage.getItem("dopamineLevel")) || 100
 );
 const [timeRemaining, setTimeRemaining] = React.useState("02:00:00");
 
-// ---- Daily Reset Effect ----
-React.useEffect(() => {
-  const today = new Date().toDateString();
-  const lastResetDay = localStorage.getItem("dopamineLastReset");
-
-  if (lastResetDay !== today) {
-    setDopamineLevel(100);
-    localStorage.setItem("dopamineLevel", 100);
-    localStorage.setItem("dopamineLastReset", today);
-  }
-}, []);
-
-// ---- Main Timer ----
 React.useEffect(() => {
   let interval;
 
   if (dopamineActive) {
     const checkAndUpdate = () => {
       const now = Date.now();
-      const secondsPassed = Math.floor((now - startTime) / 1000);
-      const newLevel = Math.max(
-        parseFloat(localStorage.getItem("dopamineLevel") || 100) -
-          (secondsPassed * DECREASE_PER_SEC),
-        0
-      );
+      const lastUpdate = parseInt(localStorage.getItem("dopamineLastUpdate") || now, 10);
+      const secondsPassed = Math.floor((now - lastUpdate) / 1000);
 
-      setDopamineLevel(newLevel);
-      localStorage.setItem("dopamineLevel", newLevel);
+      if (secondsPassed > 0) {
+        setDopamineLevel(prev => {
+          const newLevel = Math.max(prev - (secondsPassed * DECREASE_PER_SEC), 0);
+          localStorage.setItem("dopamineLevel", newLevel);
 
-      const secondsLeft = Math.floor((newLevel / 100) * TOTAL_TIME_SEC);
-      const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
-      const mins = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, "0");
-      const secs = String(secondsLeft % 60).padStart(2, "0");
-      setTimeRemaining(`${hrs}:${mins}:${secs}`);
+          // Countdown update
+          const secondsLeft = Math.floor((newLevel / 100) * TOTAL_TIME_SEC);
+          const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
+          const mins = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, "0");
+          const secs = String(secondsLeft % 60).padStart(2, "0");
+          setTimeRemaining(`${hrs}:${mins}:${secs}`);
 
-      if (newLevel === 0 && dopamineActive) {
-        setDopamineActive(false);
-        alert("⚠️ Dopamine depleted! Apply punishment now!");
-        addPunishment({
-          type: "dopamineFail",
-          text: "Dopamine Bar Empty! Punishment: Solve 100 questions + No social media 6 hrs",
-          deathMode: true
+          if (newLevel <= 0 && dopamineActive) {
+            setDopamineActive(false);
+            alert("⚠️ Dopamine depleted! Apply punishment now!");
+            addPunishment({
+              type: "dopamineFail",
+              text: "Dopamine Bar Empty! Punishment: Solve 100 questions + No social media 6 hrs",
+              deathMode: true
+            });
+          }
+          return newLevel;
         });
+
+        localStorage.setItem("dopamineLastUpdate", now);
       }
     };
 
@@ -500,18 +493,13 @@ React.useEffect(() => {
   }
 
   return () => clearInterval(interval);
-}, [dopamineActive, startTime]);
+}, [dopamineActive]);
 
-// ---- Save toggle state without resetting progress ----
+// Save toggle state & timestamp
 React.useEffect(() => {
   localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
   if (dopamineActive) {
-    // Only set startTime when first turning ON
-    if (!JSON.parse(localStorage.getItem("dopamineActive"))) {
-      const now = Date.now();
-      setStartTime(now);
-      localStorage.setItem("dopamineStartTime", now);
-    }
+    localStorage.setItem("dopamineLastUpdate", Date.now());
   }
 }, [dopamineActive]);
   
