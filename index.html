@@ -476,6 +476,7 @@ useEffect(() => {
 }, []);
 
 // === Toggle ON/OFF Logic ===
+
 useEffect(() => {
   localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
 
@@ -484,7 +485,6 @@ useEffect(() => {
     updateTimeRemainingFromLevel(storedLevel);
 
     if (storedLevel <= 0) {
-      // Already empty → punishment immediately
       setDopamineActive(false);
       alert("⚠️ Dopamine depleted! Apply punishment now!");
       addPunishment({
@@ -501,10 +501,15 @@ useEffect(() => {
       setLastUpdate(now);
       localStorage.setItem("dopamineLastUpdate", now);
     } else {
-      // Resume
+      // Resume from last saved update (OFF time)
       const storedLast = parseInt(localStorage.getItem("dopamineLastUpdate")) || Date.now();
       setLastUpdate(storedLast);
     }
+  } else {
+    // 🟢 Save OFF time to prevent jump
+    const now = Date.now();
+    setLastUpdate(now);
+    localStorage.setItem("dopamineLastUpdate", now);
   }
 }, [dopamineActive]);
 
