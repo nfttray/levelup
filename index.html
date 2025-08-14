@@ -437,38 +437,75 @@ useEffect(() => {
 }, [selectedHistoryDay]);
 
   // Dopamine Detox System
+const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
+const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
+
+const [dopamineActive, setDopamineActive] = useState(JSON.parse(localStorage.getItem('dopamineActive')) || false);
+const [dopamineLevel, setDopamineLevel] = useState(parseFloat(localStorage.getItem('dopamineLevel')) || 100);
+const [lastUpdate, setLastUpdate] = useState(parseInt(localStorage.getItem('dopamineLastUpdate') || Date.now(), 10));
+const [timeRemaining, setTimeRemaining] = useState("02:00:00");
+
+// ⏳ Timer logic
 useEffect(() => {
   let interval;
-  if (dopamineActive && dopamineLevel > 0) {
+
+  if (dopamineActive) {
+    // Resume calculation if app was in background
+    const now = Date.now();
+    const secondsPassed = Math.floor((now - lastUpdate) / 1000);
+
+    if (secondsPassed > 0) {
+      setDopamineLevel(prev => {
+        const newLevel = Math.max(prev - (secondsPassed * DECREASE_PER_SEC), 0);
+        return newLevel;
+      });
+    }
+    setLastUpdate(now);
+
+    // Start interval
     interval = setInterval(() => {
       setDopamineLevel(prev => {
-        const newLevel = Math.max(prev - (100 / (2 * 60 * 60)), 0);
+        const newLevel = Math.max(prev - DECREASE_PER_SEC, 0);
         localStorage.setItem('dopamineLevel', newLevel);
+        localStorage.setItem('dopamineLastUpdate', Date.now());
         return newLevel;
       });
     }, 1000);
   }
+
   return () => clearInterval(interval);
 }, [dopamineActive]);
 
-// Save toggle state
+// 💾 Save active state
 useEffect(() => {
   localStorage.setItem('dopamineActive', JSON.stringify(dopamineActive));
+  if (dopamineActive) {
+    setLastUpdate(Date.now());
+    localStorage.setItem('dopamineLastUpdate', Date.now());
+  }
 }, [dopamineActive]);
 
-// Penalty when dopamine hits 0
+// ⏱ Update countdown display
 useEffect(() => {
-  if (dopamineLevel === 0) {
+  const secondsLeft = Math.floor((dopamineLevel / 100) * TOTAL_TIME_SEC);
+  const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
+  const mins = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, "0");
+  const secs = String(secondsLeft % 60).padStart(2, "0");
+  setTimeRemaining(`${hrs}:${mins}:${secs}`);
+}, [dopamineLevel]);
+
+// ⚠️ Punishment when level reaches 0
+useEffect(() => {
+  if (dopamineLevel <= 0 && dopamineActive) {
     alert("⚠️ Dopamine depleted! Apply punishment now!");
     setDopamineActive(false);
-    // Optional: Trigger punishment system
     addPunishment({
       type: 'dopamineFail',
       text: "Dopamine Bar Empty! Punishment: Solve 100 questions + No social media 6 hrs",
       deathMode: true
     });
   }
-}, [dopamineLevel]);
+}, [dopamineLevel, dopamineActive]);
 
   useEffect(() => {
   const today = new Date().toLocaleDateString();
@@ -1188,7 +1225,7 @@ function runArchitectDailyReport(testMode = false) {
       </header>
         
       {/* Dopamine Detox Section */}
-<div className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
+      <div className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
     Dopamine Detox
   </h2>
@@ -1217,17 +1254,21 @@ function runArchitectDailyReport(testMode = false) {
   <p className="text-sm mt-2 text-gray-300 font-medium">
     Dopamine Level: <span className="font-bold">{dopamineLevel.toFixed(1)}%</span>
   </p>
+  <p className="text-sm text-gray-300 font-medium">
+    Time Remaining: <span className="font-bold">{timeRemaining}</span>
+  </p>
 
   <style>{`
-    /* Custom toggle switch styling */
     .switch input:checked + .slider {
-      background-color: #22c55e; /* green-500 */
+      background-color: #22c55e;
     }
     .switch input:checked + .slider + .dot {
       transform: translateX(26px);
     }
   `}</style>
 </div>
+<div className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
+
 <div className="mt-5 max-w-sm mx-auto bg-gray-900 p-5 rounded-xl shadow-lg text-center text-white">
   <h2 className="text-lg font-semibold mb-4">Fog Meter</h2>
 
