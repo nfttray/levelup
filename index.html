@@ -447,13 +447,12 @@ useEffect(() => {
 }, [selectedHistoryDay]);
 
   // Dopamine Detox System
-  // === Dopamine Detox System ===
+// === Dopamine Detox System ===
 const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
 const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
 
 
-
-// Helper: Update timeRemaining display
+// Helper: Update Time Remaining Display
 function updateTimeRemainingFromLevel(level) {
   const secondsLeft = Math.floor((level / 100) * TOTAL_TIME_SEC);
   const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
@@ -462,7 +461,7 @@ function updateTimeRemainingFromLevel(level) {
   setTimeRemaining(`${hrs}:${mins}:${secs}`);
 }
 
-// Daily reset (run once on mount)
+// === Daily Reset (once per day) ===
 useEffect(() => {
   const today = new Date().toLocaleDateString();
   const lastReset = localStorage.getItem("dopamineResetDate");
@@ -476,7 +475,7 @@ useEffect(() => {
   }
 }, []);
 
-// Toggle ON/OFF logic
+// === Toggle ON/OFF Logic ===
 useEffect(() => {
   localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
 
@@ -485,7 +484,7 @@ useEffect(() => {
     updateTimeRemainingFromLevel(storedLevel);
 
     if (storedLevel <= 0) {
-      // Already empty → instant punishment
+      // Already empty → punishment immediately
       setDopamineActive(false);
       alert("⚠️ Dopamine depleted! Apply punishment now!");
       addPunishment({
@@ -497,18 +496,19 @@ useEffect(() => {
     }
 
     if (storedLevel === 100) {
+      // Fresh start
       const now = Date.now();
       setLastUpdate(now);
       localStorage.setItem("dopamineLastUpdate", now);
     } else {
+      // Resume
       const storedLast = parseInt(localStorage.getItem("dopamineLastUpdate")) || Date.now();
       setLastUpdate(storedLast);
     }
   }
 }, [dopamineActive]);
 
-// Main timer effect
-// Main timer effect (fixed to stop when OFF)
+// === Main Timer Effect ===
 useEffect(() => {
   let interval;
 
@@ -540,16 +540,16 @@ useEffect(() => {
       }
     };
 
-    tick(); // run immediately when ON
+    tick(); // Run immediately
     interval = setInterval(tick, 1000);
-  } else {
-    // OFF hone pe timer band
-    clearInterval(interval);
   }
 
-  return () => clearInterval(interval); // Cleanup on unmount or OFF
-}, [dopamineActive]); // ✅ Only runs when toggle changes
-
+  // Cleanup: stop timer on OFF or unmount
+  return () => {
+    if (interval) clearInterval(interval);
+  };
+}, [dopamineActive]); // Runs only when toggle changes
+  
   useEffect(() => {
   const today = new Date().toLocaleDateString();
   const lastFogReset = localStorage.getItem("fogReset");
