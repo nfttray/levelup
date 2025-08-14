@@ -443,11 +443,25 @@ useEffect(() => {
 const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
 const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
 
+// Load states
 const [startTime, setStartTime] = React.useState(
   parseInt(localStorage.getItem("dopamineStartTime") || Date.now(), 10)
 );
 const [timeRemaining, setTimeRemaining] = React.useState("02:00:00");
 
+// ---- Daily Reset Effect ----
+React.useEffect(() => {
+  const today = new Date().toDateString();
+  const lastResetDay = localStorage.getItem("dopamineLastReset");
+
+  if (lastResetDay !== today) {
+    setDopamineLevel(100);
+    localStorage.setItem("dopamineLevel", 100);
+    localStorage.setItem("dopamineLastReset", today);
+  }
+}, []);
+
+// ---- Main Timer ----
 React.useEffect(() => {
   let interval;
 
@@ -455,7 +469,11 @@ React.useEffect(() => {
     const checkAndUpdate = () => {
       const now = Date.now();
       const secondsPassed = Math.floor((now - startTime) / 1000);
-      const newLevel = Math.max(100 - (secondsPassed * DECREASE_PER_SEC), 0);
+      const newLevel = Math.max(
+        parseFloat(localStorage.getItem("dopamineLevel") || 100) -
+          (secondsPassed * DECREASE_PER_SEC),
+        0
+      );
 
       setDopamineLevel(newLevel);
       localStorage.setItem("dopamineLevel", newLevel);
@@ -466,7 +484,7 @@ React.useEffect(() => {
       const secs = String(secondsLeft % 60).padStart(2, "0");
       setTimeRemaining(`${hrs}:${mins}:${secs}`);
 
-      if (newLevel <= 0) {
+      if (newLevel === 0 && dopamineActive) {
         setDopamineActive(false);
         alert("⚠️ Dopamine depleted! Apply punishment now!");
         addPunishment({
@@ -484,15 +502,19 @@ React.useEffect(() => {
   return () => clearInterval(interval);
 }, [dopamineActive, startTime]);
 
+// ---- Save toggle state without resetting progress ----
 React.useEffect(() => {
   localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
   if (dopamineActive) {
-    const now = Date.now();
-    setStartTime(now);
-    localStorage.setItem("dopamineStartTime", now);
+    // Only set startTime when first turning ON
+    if (!JSON.parse(localStorage.getItem("dopamineActive"))) {
+      const now = Date.now();
+      setStartTime(now);
+      localStorage.setItem("dopamineStartTime", now);
+    }
   }
 }, [dopamineActive]);
-
+  
   useEffect(() => {
   const today = new Date().toLocaleDateString();
   const lastFogReset = localStorage.getItem("fogReset");
