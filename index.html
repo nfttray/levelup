@@ -438,15 +438,26 @@ useEffect(() => {
 
   // Dopamine Detox System
 // Daily dopamine reset + toggle logic
+  // Helper to format remaining time from dopamine level
+function updateTimeRemainingFromLevel(level) {
+  const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
+  const secondsLeft = Math.floor((level / 100) * TOTAL_TIME_SEC);
+  const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
+  const mins = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, "0");
+  const secs = String(secondsLeft % 60).padStart(2, "0");
+  setTimeRemaining(`${hrs}:${mins}:${secs}`);
+}
+
+// Daily dopamine reset
 useEffect(() => {
   const today = new Date().toLocaleDateString();
   const lastDopamineReset = localStorage.getItem("dopamineResetDate");
 
-  // 🔹 Daily reset
   if (lastDopamineReset !== today) {
     setDopamineLevel(100);
     localStorage.setItem("dopamineLevel", 100);
     localStorage.setItem("dopamineResetDate", today);
+    updateTimeRemainingFromLevel(100); // 🟢 Reset timeRemaining
   }
 }, []);
 
@@ -456,9 +467,9 @@ useEffect(() => {
 
   if (dopamineActive) {
     const storedLevel = parseFloat(localStorage.getItem("dopamineLevel")) || 100;
+    updateTimeRemainingFromLevel(storedLevel); // 🟢 Update display
 
     if (storedLevel <= 0) {
-      // Already empty → punishment immediately
       setDopamineActive(false);
       alert("⚠️ Dopamine depleted! Apply punishment now!");
       addPunishment({
@@ -470,12 +481,10 @@ useEffect(() => {
     }
 
     if (storedLevel === 100) {
-      // Fresh start
       const now = Date.now();
       setLastUpdate(now);
       localStorage.setItem("dopamineLastUpdate", now);
     } else {
-      // Resume from where left off
       const storedLast = parseInt(localStorage.getItem("dopamineLastUpdate")) || Date.now();
       setLastUpdate(storedLast);
     }
