@@ -437,8 +437,7 @@ useEffect(() => {
 }, [selectedHistoryDay]);
 
   // Dopamine Detox System
-// Daily dopamine reset + toggle logic
-  // Helper to format remaining time from dopamine level
+// Helper to format remaining time from dopamine level
 function updateTimeRemainingFromLevel(level) {
   const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
   const secondsLeft = Math.floor((level / 100) * TOTAL_TIME_SEC);
@@ -457,17 +456,17 @@ useEffect(() => {
     setDopamineLevel(100);
     localStorage.setItem("dopamineLevel", 100);
     localStorage.setItem("dopamineResetDate", today);
-    updateTimeRemainingFromLevel(100); // 🟢 Reset timeRemaining
+    updateTimeRemainingFromLevel(100); // reset display
   }
 }, []);
 
-// Toggle ON/OFF logic with resume
+// Toggle ON/OFF with resume
 useEffect(() => {
   localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
 
   if (dopamineActive) {
     const storedLevel = parseFloat(localStorage.getItem("dopamineLevel")) || 100;
-    updateTimeRemainingFromLevel(storedLevel); // 🟢 Update display
+    updateTimeRemainingFromLevel(storedLevel); // show instantly
 
     if (storedLevel <= 0) {
       setDopamineActive(false);
