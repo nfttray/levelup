@@ -201,6 +201,8 @@ const lastUpdate = parseInt(localStorage.getItem('lastRivalUpdate')) || now;
   const [dailyQuestList,setDailyQuestList]=useState([]);
 const [dopamineActive, setDopamineActive] = useState(JSON.parse(localStorage.getItem('dopamineActive')) || false);
   const [dopamineLevel, setDopamineLevel] = useState(parseFloat(localStorage.getItem('dopamineLevel')) || 100);
+  const [timeRemaining, setTimeRemaining] = useState("02:00:00"); // 🟢 Yahi missing tha
+  
   const [smallBossCount, setSmallBossCount] = useState(parseInt(localStorage.getItem('smallBossCount')) || 0);
   const [showUrgeModal, setShowUrgeModal] = useState(false);
   const [urgeTask, setUrgeTask] = useState('');
