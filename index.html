@@ -158,9 +158,6 @@ function getRank(level){
   return rankTitles[5];
 }
 
-// Rival XP constants
-const DAILY_RIVAL_XP = 30;
-const HOURLY_RIVAL_XP = 0;
 
   // === MAIN APP ===
 function App(){
@@ -600,33 +597,20 @@ useEffect(() => {
 }, [punishments]);
 
   // === Rival XP Auto Update ===
+const DAILY_RIVAL_XP = 30;
+
 useEffect(() => {
-  const MS_PER_HOUR = 3600000;
-  const MS_PER_DAY = 24 * MS_PER_HOUR;
-
   const updateRivalXP = () => {
-    const now = Date.now();
-    const stored = localStorage.getItem('lastRivalUpdate');
+    const today = new Date().toDateString(); // e.g., "Tue Aug 13 2025"
+    const lastRewardDay = localStorage.getItem("lastRivalRewardDay");
 
-    // ---- Choose Option A or B ----
-    // Option A: Give 1 day XP on first run
-    //const lastUpdate = stored ? parseInt(stored, 10) : (now - MS_PER_DAY);
-
-    // Option B: No XP on first run
-    const lastUpdate = stored ? parseInt(stored, 10) : now;
-
-    const hoursPassed = Math.floor((now - lastUpdate) / MS_PER_HOUR);
-
-    if (hoursPassed > 0) {
-      const daysPassed = Math.floor(hoursPassed / 24);
-      const extraHours = hoursPassed % 24;
-
-      const gainedXP = (daysPassed * DAILY_RIVAL_XP) + (extraHours * HOURLY_RIVAL_XP);
-
+    // Agar aaj ka reward abhi tak nahi diya
+    if (lastRewardDay !== today) {
       setRivalXP(prevXP => {
-        let newXP = prevXP + gainedXP;
+        let newXP = prevXP + DAILY_RIVAL_XP;
         let level = rivalLevel;
 
+        // Level up check
         while (newXP >= getXPForLevel(level)) {
           newXP -= getXPForLevel(level);
           level++;
@@ -636,12 +620,16 @@ useEffect(() => {
         return newXP;
       });
 
-      localStorage.setItem('lastRivalUpdate', String(now)); // ✅ store as string
+      // Save last reward date
+      localStorage.setItem("lastRivalRewardDay", today);
     }
   };
 
-  updateRivalXP();
-  const interval = setInterval(updateRivalXP, MS_PER_HOUR);
+  updateRivalXP(); // Run immediately on load
+
+  // Check every 1 hour in case midnight passes while app is open
+  const interval = setInterval(updateRivalXP, 3600000);
+
   return () => clearInterval(interval);
 }, []);
   
