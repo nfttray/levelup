@@ -447,12 +447,12 @@ useEffect(() => {
 }, [selectedHistoryDay]);
 
   // Dopamine Detox System
-// === Dopamine Detox System ===
+
+
 const TOTAL_TIME_SEC = 2 * 60 * 60; // 2 hours
 const DECREASE_PER_SEC = 100 / TOTAL_TIME_SEC;
 
-
-
+// Helper: Update time string
 function updateTimeRemainingFromLevel(level) {
   const secondsLeft = Math.floor((level / 100) * TOTAL_TIME_SEC);
   const hrs = String(Math.floor(secondsLeft / 3600)).padStart(2, "0");
@@ -491,7 +491,6 @@ useEffect(() => {
         text: "Dopamine Bar Empty! Punishment: Solve 100 questions + No social media 6 hrs",
         deathMode: true
       });
-      return;
     }
   }
 }, [dopamineActive]);
@@ -516,13 +515,15 @@ useEffect(() => {
             deathMode: true
           });
         }
-
         return newLevel;
       });
     }, 1000);
   }
-  return () => clearInterval(interval);
+
+  return () => clearInterval(interval); // 🟢 OFF hone pe turant band
 }, [dopamineActive]);
+
+
   
   useEffect(() => {
   const today = new Date().toLocaleDateString();
