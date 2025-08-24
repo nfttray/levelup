@@ -589,7 +589,7 @@ useEffect(() => {
 
   // === Weekly Boss every Sunday ===
   const today = new Date().getDay();
-  if (today === 0 && localStorage.getItem('weeklyBossTriggered') !== 'true') {
+  if (today === 6 && localStorage.getItem('weeklyBossTriggered') !== 'true') {
   const randomDeathPunishment = deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)];
   addPunishment({
     type: 'weeklyBoss',
