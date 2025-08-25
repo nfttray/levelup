@@ -737,29 +737,50 @@ function logWakeUp() {
 }
 
   // === Wake Up Auto Penalty Check (midnight reset style) ===
+// === Wake Up Miss Punishment (Midnight Check Only, Once per Day) ===
 useEffect(() => {
-  const today = new Date().toDateString();
-  const lastCheck = localStorage.getItem("wakeUpPenaltyCheck");
+  const checkWakeUpMiss = () => {
+    const today = new Date().toDateString();
+    const storedLog = localStorage.getItem("wakeUpLoggedToday");
+    const punishedDate = localStorage.getItem("wakeUpPunishedDate");
 
-  if (lastCheck !== today) {
-    // check if user logged wake-up today
-    const loggedToday = localStorage.getItem("wakeUpLoggedToday") === today;
+    // Agar pehli baar run hai (data hi nahi hai) → skip
+    if (!storedLog) {
+      localStorage.setItem("wakeUpLoggedToday", "");
+      return;
+    }
 
-    if (!loggedToday) {
-      // ❌ Missed log => apply penalty ONCE per day
+    const wakeLogged = storedLog === today;
+
+    // Sirf tab punishment do agar aaj ka log miss hai aur abhi punishment nahi diya gaya
+    if (!wakeLogged && punishedDate !== today) {
       setXP(prev => Math.max(0, prev - 10));
       setFogLevel(prev => Math.min(100, prev + 15));
       addPunishment({
-        type: "missedWake",
-        text: `⚠️ You did not log your wake-up today!\nPunishment: 50 questions or 1 km run`,
+        type: "wakeUpMiss",
+        text: "⚠️ You missed logging wake-up today!\nPunishment: -10 XP, +15% Fog",
         deathMode: false
       });
-      alert("⚠️ Forgot to log wake-up today!\n-10 XP, +15% Fog");
+
+      // Mark punishment given for today
+      localStorage.setItem("wakeUpPunishedDate", today);
     }
 
-    // save today as checked
-    localStorage.setItem("wakeUpPenaltyCheck", today);
-  }
+    // Next day ke liye wakeUpLoggedToday reset
+    localStorage.setItem("wakeUpLoggedToday", "");
+  };
+
+  // Schedule at midnight only
+  const now = new Date();
+  const millisTillMidnight =
+    new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5) - now;
+
+  const midnightTimeout = setTimeout(() => {
+    checkWakeUpMiss();
+    setInterval(checkWakeUpMiss, 24 * 60 * 60 * 1000);
+  }, millisTillMidnight);
+
+  return () => clearTimeout(midnightTimeout);
 }, []);
   // === Daily Quest System ===
   useEffect(() => {
