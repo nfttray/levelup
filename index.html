@@ -694,6 +694,47 @@ useEffect(() => {
   }
 }, [xp, level, rivalXP, rivalLevel]);
 
+  // === Wake Up System ===
+const [goalWakeUp, setGoalWakeUp] = useState(localStorage.getItem("goalWakeUp") || "07:00");
+const [wakeUpTime, setWakeUpTime] = useState(localStorage.getItem("wakeUpTime") || null);
+const [wakeUpLoggedToday, setWakeUpLoggedToday] = useState(localStorage.getItem("wakeUpLoggedToday") === new Date().toDateString());
+
+function logWakeUp() {
+  if (wakeUpLoggedToday) {
+    alert("✅ Already logged today!");
+    return;
+  }
+
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const timeStr = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+  
+  setWakeUpTime(timeStr);
+  localStorage.setItem("wakeUpTime", timeStr);
+  localStorage.setItem("wakeUpLoggedToday", new Date().toDateString());
+
+  // compare with goal
+  const [goalH, goalM] = goalWakeUp.split(":").map(Number);
+  const goalDate = new Date();
+  goalDate.setHours(goalH, goalM, 0, 0);
+
+  if (now <= goalDate) {
+    setXP(prev => prev + 5);
+    setFogLevel(prev => Math.max(0, prev - 10));
+    alert(`🌅 Early wake up! Goal ${goalWakeUp}, You: ${timeStr}\n+5 XP, -10% Fog`);
+  } else {
+    setXP(prev => Math.max(0, prev - 5));
+    setFogLevel(prev => Math.min(100, prev + 10));
+    addPunishment({
+      type: "lateWake",
+      text: `⏰ You woke up late! Goal ${goalWakeUp}, You: ${timeStr}\nPunishment: Solve 50 questions or 20 push-ups`,
+      deathMode: false
+    });
+    alert(`⚠️ Late wake up! Goal ${goalWakeUp}, You: ${timeStr}\n-5 XP, +10% Fog`);
+  }
+                                             }
+
   // === Daily Quest System ===
   useEffect(() => {
   const today = new Date().toDateString();
@@ -1285,7 +1326,33 @@ function runArchitectDailyReport(testMode = false) {
     }
   `}</style>
 </div>
+<div className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg">
+  <h2 className="text-xl font-semibold mb-4">🌅 Wake Up Log</h2>
 
+  <div className="flex items-center gap-2 mb-3">
+    <span className="text-gray-300">Goal:</span>
+    <input
+      type="time"
+      value={goalWakeUp}
+      onChange={(e) => {
+        setGoalWakeUp(e.target.value);
+        localStorage.setItem("goalWakeUp", e.target.value);
+      }}
+      className="p-2 rounded text-black"
+    />
+  </div>
+
+  {wakeUpLoggedToday ? (
+    <p className="text-green-400">Logged: {wakeUpTime}</p>
+  ) : (
+    <button
+      onClick={logWakeUp}
+      className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded shadow-md"
+    >
+      Log Wake Up
+    </button>
+  )}
+</div>
 
 <div className="mt-5 max-w-sm mx-auto bg-gray-900 p-5 rounded-xl shadow-lg text-center text-white">
   <h2 className="text-lg font-semibold mb-4">Fog Meter</h2>
