@@ -733,8 +733,34 @@ function logWakeUp() {
     });
     alert(`⚠️ Late wake up! Goal ${goalWakeUp}, You: ${timeStr}\n-5 XP, +10% Fog`);
   }
-                                             }
+     
+}
 
+  // === Wake Up Auto Penalty Check (midnight reset style) ===
+useEffect(() => {
+  const today = new Date().toDateString();
+  const lastCheck = localStorage.getItem("wakeUpPenaltyCheck");
+
+  if (lastCheck !== today) {
+    // check if user logged wake-up today
+    const loggedToday = localStorage.getItem("wakeUpLoggedToday") === today;
+
+    if (!loggedToday) {
+      // ❌ Missed log => apply penalty ONCE per day
+      setXP(prev => Math.max(0, prev - 10));
+      setFogLevel(prev => Math.min(100, prev + 15));
+      addPunishment({
+        type: "missedWake",
+        text: `⚠️ You did not log your wake-up today!\nPunishment: 50 questions or 1 km run`,
+        deathMode: false
+      });
+      alert("⚠️ Forgot to log wake-up today!\n-10 XP, +15% Fog");
+    }
+
+    // save today as checked
+    localStorage.setItem("wakeUpPenaltyCheck", today);
+  }
+}, []);
   // === Daily Quest System ===
   useEffect(() => {
   const today = new Date().toDateString();
