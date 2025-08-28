@@ -283,58 +283,66 @@ function handleUrgeSkip() {
   const today = new Date().toISOString().split("T")[0];
   const newEntry = { date: today, percentile: Number(percentile) };
 
-  // 🚫 Block logging if in grace
+  // 🚫 If in grace period
   if (Date.now() < graceDeadline) {
     alert("🚫 No mock today! Grace Period Active. Revise wrong questions.");
     return;
   }
 
-  // Save history
+  // === Save / Replace Today's Log ===
   let updatedHistory = [...mockHistory];
-  if (updatedHistory.length > 0 && updatedHistory[updatedHistory.length - 1].date === today) {
-    updatedHistory[updatedHistory.length - 1] = newEntry; // replace today's log
+  let lastEntry = updatedHistory[updatedHistory.length - 1];
+
+  if (lastEntry && lastEntry.date === today) {
+    // Replace today's log (update, no streak change again)
+    updatedHistory[updatedHistory.length - 1] = newEntry;
   } else {
+    // New day log
     updatedHistory.push(newEntry);
   }
+
   setMockHistory(updatedHistory);
   localStorage.setItem("mockHistory", JSON.stringify(updatedHistory));
 
-  // === Check vs Best ===
-  if (newEntry.percentile >= bestPercentile) {
-    // 🎉 New record or matched best
-    setBestPercentile(newEntry.percentile);
-    localStorage.setItem("bestPercentile", newEntry.percentile);
+  // === Check vs Best (only once per day) ===
+  if (!lastEntry || lastEntry.date !== today) {
+    // ✅ New day streak calculation
+    if (newEntry.percentile >= bestPercentile) {
+      setBestPercentile(Math.max(bestPercentile, newEntry.percentile));
+      localStorage.setItem("bestPercentile", Math.max(bestPercentile, newEntry.percentile));
 
-    setFailStreak(0);
-    localStorage.setItem("failStreak", 0);
+      setFailStreak(0);
+      localStorage.setItem("failStreak", 0);
 
-    setXP((prev) => prev + 5);
-    alert(`✅ Great! You matched/beaten your best (${bestPercentile}%). +5 XP`);
-  } else {
-    // ❌ Below best
-    const newFail = failStreak + 1;
-    setFailStreak(newFail);
-    localStorage.setItem("failStreak", newFail);
+      setXP((prev) => prev + 5);
+      alert(`✅ Great! You matched/beaten your best (${bestPercentile}%). +5 XP`);
+    } else {
+      const newFail = failStreak + 1;
+      setFailStreak(newFail);
+      localStorage.setItem("failStreak", newFail);
 
-    if (newFail === 2) {
-      // Punishment
-      addPunishment({
-        type: "mockTestFail",
-        text: `❌ Two consecutive drops below ${bestPercentile}%. Punishment: ${
-          deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)]
-        }`,
-        deathMode: true
-      });
+      if (newFail === 2) {
+        // Punishment
+        addPunishment({
+          type: "mockTestFail",
+          text: `❌ Two consecutive drops below ${bestPercentile}%. Punishment: ${
+            deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)]
+          }`,
+          deathMode: true
+        });
 
-      // Start 2-day grace period
-      const deadline = Date.now() + 2 * 24 * 60 * 60 * 1000;
-      setGraceDeadline(deadline);
-      localStorage.setItem("graceDeadline", deadline);
-      alert("⚠️ Grace period started: Next 2 days = No Mock, only revision!");
+        // Start 2-day grace
+        const deadline = Date.now() + 2 * 24 * 60 * 60 * 1000;
+        setGraceDeadline(deadline);
+        localStorage.setItem("graceDeadline", deadline);
+        alert("⚠️ Grace started: Next 2 days = No Mock, only revision!");
+      }
     }
+  } else {
+    // ✅ Same day update → no streak change
+    alert(`ℹ️ Today's log updated to ${newEntry.percentile}%.`);
   }
   }
-
   function checkTaskDeadlines() {
   const now = new Date();
   let updatedTasks = [...tasks];
@@ -460,6 +468,34 @@ useEffect(() => {
         setPunishments(savedPunishments.map(text => ({ text })));
     }
 }, []);
+
+  useEffect(() => {
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+  const lastLogDate = mockHistory.length > 0 ? mockHistory[mockHistory.length - 1].date : null;
+
+  if (lastLogDate !== today && Date.now() > new Date().setHours(23,59,59,999)) {
+    // Missed log
+    const newFail = failStreak + 1;
+    setFailStreak(newFail);
+    localStorage.setItem("failStreak", newFail);
+
+    if (newFail === 2) {
+      addPunishment({
+        type: "mockTestMiss",
+        text: `❌ You missed logging 2 days in a row! Punishment: ${
+          deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)]
+        }`,
+        deathMode: true
+      });
+
+      const deadline = Date.now() + 2 * 24 * 60 * 60 * 1000;
+      setGraceDeadline(deadline);
+      localStorage.setItem("graceDeadline", deadline);
+      alert("⚠️ Grace started due to missed logs!");
+    }
+  }
+}, [mockHistory]);
   
   // === Timer Update ===
   useEffect(()=>{
