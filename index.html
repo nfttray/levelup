@@ -322,6 +322,36 @@ addPunishment({
     const secs=totalSeconds%60;
     return `${hrs}h ${mins}m ${secs}s`;
   }
+
+  // Habits daily reset (midnight only, not on reload)
+useEffect(() => {
+  function resetHabits() {
+    const today = new Date().toDateString();
+    const updated = habits.map(h => ({
+      ...h,
+      done: false,     // reset everyday
+      lastReset: today // track last reset
+    }));
+    setHabits(updated);
+    localStorage.setItem("habits", JSON.stringify(updated));
+    console.log("♻️ Habits reset at midnight:", today);
+  }
+
+  // Abhi se agle midnight ka time nikal lo
+  const now = new Date();
+  const millisTillMidnight =
+    new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5) - now;
+
+  // Pehli reset midnight pe
+  const midnightTimeout = setTimeout(() => {
+    resetHabits();
+    // Phir har 24 ghante repeat hoga
+    setInterval(resetHabits, 24 * 60 * 60 * 1000);
+  }, millisTillMidnight);
+
+  return () => clearTimeout(midnightTimeout);
+}, [habits]);
+  
 // === Decay System Effect ===
   useEffect(() => {
   const testMode = false;
