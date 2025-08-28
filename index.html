@@ -304,6 +304,19 @@ addPunishment({
     });
   }
   }
+
+  function getRemainingDays(task) {
+  if (task.type !== "timed") return null;
+
+  const createdDate = new Date(task.created);
+  const deadline = new Date(createdDate);
+  deadline.setDate(createdDate.getDate() + parseInt(task.days || 0));
+
+  const diffTime = deadline - new Date();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays > 0 ? `${diffDays} days left` : "Expired!";
+      }
   // === BOSS TIMER ===
   function startBossTimer(hours){
     const endTime=Date.now()+hours*60*60*1000;
@@ -1658,10 +1671,10 @@ function runArchitectDailyReport(testMode = false) {
         <div>
           <p className="font-bold text-sm">{task.title}</p>
           <p className="text-xs text-gray-400">
-            {task.type === 'daily'
-              ? `Time: ${task.start}-${task.end}`
-              : `Deadline: ${task.days} days`}
-          </p>
+  {task.type === 'daily'
+    ? `Time: ${task.start}-${task.end}`
+    : getRemainingDays(task)}
+</p>
         </div>
         {!lockdown && (
           <button
