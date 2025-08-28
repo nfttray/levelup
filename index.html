@@ -199,6 +199,21 @@ function App(){
   const [timer,setTimer]=useState(getRemainingBossTime());
   const [showDailyQuest,setShowDailyQuest]=useState(false);
   const [dailyQuestList,setDailyQuestList]=useState([]);
+  // Mock Test Tracker states
+const [mockHistory, setMockHistory] = useState(
+  JSON.parse(localStorage.getItem("mockHistory")) || []
+);
+const [bestPercentile, setBestPercentile] = useState(
+  parseInt(localStorage.getItem("bestPercentile")) || 80
+);
+const [failStreak, setFailStreak] = useState(
+  parseInt(localStorage.getItem("failStreak")) || 0
+);
+const [graceDeadline, setGraceDeadline] = useState(
+  parseInt(localStorage.getItem("graceDeadline")) || 0
+);
+const [tempPercentile, setTempPercentile] = useState("");
+  
 // State
 const [dopamineActive, setDopamineActive] = useState(
   JSON.parse(localStorage.getItem("dopamineActive")) || false
@@ -262,6 +277,62 @@ function handleUrgeSkip() {
     if(confirm("Are you sure? Relapse will cost 50 XP!")){
       setXP(Math.max(0,xp-50));
     }
+  }
+
+  function logMockPercentile(percentile) {
+  const today = new Date().toISOString().split("T")[0];
+  const newEntry = { date: today, percentile: Number(percentile) };
+
+  // 🚫 Block logging if in grace
+  if (Date.now() < graceDeadline) {
+    alert("🚫 No mock today! Grace Period Active. Revise wrong questions.");
+    return;
+  }
+
+  // Save history
+  let updatedHistory = [...mockHistory];
+  if (updatedHistory.length > 0 && updatedHistory[updatedHistory.length - 1].date === today) {
+    updatedHistory[updatedHistory.length - 1] = newEntry; // replace today's log
+  } else {
+    updatedHistory.push(newEntry);
+  }
+  setMockHistory(updatedHistory);
+  localStorage.setItem("mockHistory", JSON.stringify(updatedHistory));
+
+  // === Check vs Best ===
+  if (newEntry.percentile >= bestPercentile) {
+    // 🎉 New record or matched best
+    setBestPercentile(newEntry.percentile);
+    localStorage.setItem("bestPercentile", newEntry.percentile);
+
+    setFailStreak(0);
+    localStorage.setItem("failStreak", 0);
+
+    setXP((prev) => prev + 5);
+    alert(`✅ Great! You matched/beaten your best (${bestPercentile}%). +5 XP`);
+  } else {
+    // ❌ Below best
+    const newFail = failStreak + 1;
+    setFailStreak(newFail);
+    localStorage.setItem("failStreak", newFail);
+
+    if (newFail === 2) {
+      // Punishment
+      addPunishment({
+        type: "mockTestFail",
+        text: `❌ Two consecutive drops below ${bestPercentile}%. Punishment: ${
+          deathModePunishments[Math.floor(Math.random() * deathModePunishments.length)]
+        }`,
+        deathMode: true
+      });
+
+      // Start 2-day grace period
+      const deadline = Date.now() + 2 * 24 * 60 * 60 * 1000;
+      setGraceDeadline(deadline);
+      localStorage.setItem("graceDeadline", deadline);
+      alert("⚠️ Grace period started: Next 2 days = No Mock, only revision!");
+    }
+  }
   }
 
   function checkTaskDeadlines() {
@@ -1444,6 +1515,72 @@ function runArchitectDailyReport(testMode = false) {
   )}
 </div>
 
+     {/* === Mock Test Tracker === */}
+<div className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
+  <h2 className="text-xl font-semibold mb-4 text-yellow-400">📊 Mock Test Tracker</h2>
+
+  <p className="text-sm text-gray-300 mb-2">
+    Best Percentile: <span className="font-bold text-green-400">{bestPercentile}%</span>
+  </p>
+
+  {Date.now() < graceDeadline ? (
+    // 🚫 Grace Period Message
+    <div className="bg-red-900 text-red-300 p-3 rounded-md text-center">
+      🚫 No mock allowed today! <br />
+      Revise wrong questions only. <br />
+      Grace Period Active until{" "}
+      {new Date(graceDeadline).toLocaleDateString()}.
+    </div>
+  ) : (
+    // ✅ Log Mock Percentile
+    <div className="flex gap-2">
+      <input
+        type="number"
+        min="0"
+        max="100"
+        placeholder="Enter Percentile"
+        className="p-2 rounded w-full text-black"
+        onChange={(e) => setTempPercentile(e.target.value)}
+      />
+      <button
+        onClick={() => {
+          if (!tempPercentile) {
+            alert("⚠️ Please enter a percentile!");
+            return;
+          }
+          logMockPercentile(tempPercentile);
+          setTempPercentile("");
+        }}
+        className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded shadow-md text-white"
+      >
+        Log
+      </button>
+    </div>
+  )}
+
+  {/* Show Last 5 Logs */}
+  <div className="mt-4">
+    <h3 className="text-sm font-semibold text-gray-300 mb-2">Recent Logs</h3>
+    {mockHistory.length === 0 ? (
+      <p className="text-gray-500 text-sm">No logs yet.</p>
+    ) : (
+      <ul className="space-y-1 text-sm">
+        {mockHistory.slice(-5).map((entry, i) => (
+          <li
+            key={i}
+            className={`p-2 rounded ${
+              entry.percentile >= bestPercentile
+                ? "bg-green-700 text-white"
+                : "bg-gray-700 text-gray-200"
+            }`}
+          >
+            {entry.date}: {entry.percentile}%
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</div> 
 <div className="mt-5 max-w-sm mx-auto bg-gray-900 p-5 rounded-xl shadow-lg text-center text-white">
   <h2 className="text-lg font-semibold mb-4">Fog Meter</h2>
 
