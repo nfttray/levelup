@@ -1658,11 +1658,14 @@ function runArchitectDailyReport(testMode = false) {
 </div>
 {/* Trigger Button */}
 {/* ---- Trigger Button ---- */}
-<button 
-  onClick={() => setShowDisrespectModal(true)}
-  className="bg-red-600 px-4 py-2 rounded shadow-md w-full text-white font-bold">
-  ⚡ Disrespect Trigger
-</button>
+{!challenge && (
+  <button
+    onClick={() => setShowDisrespectModal(true)}
+    className="bg-red-600 px-4 py-2 rounded shadow-md w-full font-bold text-white"
+  >
+    ⚡ Disrespect Trigger
+  </button>
+)}
 
 {/* ---- Modal ---- */}
 {showDisrespectModal && (
@@ -1670,11 +1673,10 @@ function runArchitectDailyReport(testMode = false) {
     <div className="bg-gray-900 p-6 rounded-2xl w-96 text-white">
       <h2 className="text-xl font-bold mb-4">🔥 Set Disrespect Challenge</h2>
 
-      {/* Select Type */}
       <label className="block mb-2">Select Challenge Type:</label>
-      <select 
+      <select
         value={challengeType}
-        onChange={(e) => setChallengeType(e.target.value)} 
+        onChange={(e) => setChallengeType(e.target.value)}
         className="p-2 rounded w-full text-black mb-3"
       >
         <option value="">-- Choose Type --</option>
@@ -1683,9 +1685,8 @@ function runArchitectDailyReport(testMode = false) {
         <option value="tasks">Tasks Count</option>
       </select>
 
-      {/* Target Input */}
       <label className="block mb-2">Enter Target:</label>
-      <input 
+      <input
         type="number"
         placeholder="Target value"
         value={challengeTarget}
@@ -1693,11 +1694,10 @@ function runArchitectDailyReport(testMode = false) {
         className="p-2 rounded w-full text-black mb-3"
       />
 
-      {/* Duration input only for Tasks */}
       {challengeType === "tasks" && (
         <>
           <label className="block mb-2">Duration (days):</label>
-          <input 
+          <input
             type="number"
             placeholder="e.g. 7"
             value={challengeDuration}
@@ -1707,26 +1707,29 @@ function runArchitectDailyReport(testMode = false) {
         </>
       )}
 
-      {/* Action Buttons */}
       <div className="flex justify-between mt-4">
-        <button 
+        <button
           onClick={() => setShowDisrespectModal(false)}
-          className="bg-gray-600 px-4 py-2 rounded">
+          className="bg-gray-600 px-4 py-2 rounded"
+        >
           Cancel
         </button>
-        <button 
+        <button
           onClick={() => {
             startChallenge(challengeType, challengeTarget, challengeDuration);
             setShowDisrespectModal(false);
           }}
-          className="bg-green-600 px-4 py-2 rounded">
+          className="bg-green-600 px-4 py-2 rounded"
+        >
           Start
         </button>
       </div>
     </div>
   </div>
 )}
-  {challenge && (
+
+{/* ---- Active Challenge ---- */}
+{challenge && (
   <div className="bg-gray-800 p-4 mt-4 rounded-xl text-white">
     <h2 className="text-lg font-bold mb-2">🔥 Active Challenge</h2>
 
@@ -1735,13 +1738,15 @@ function runArchitectDailyReport(testMode = false) {
       <div>
         <p>{challenge.target}-Day Study Streak</p>
         {challenge.days.map((done, i) => (
-          <button 
-            key={i} 
-            onClick={() => markStreakTodayComplete(i)}
+          <button
+            key={i}
+            onClick={() => markStreakDayComplete(i)}
             disabled={done}
-            className={`mt-2 w-full p-2 rounded ${done ? "bg-green-600" : "bg-red-600"}`}
+            className={`mt-2 w-full p-2 rounded ${
+              done ? "bg-green-600" : "bg-red-600"
+            }`}
           >
-            Day {i+1}: {done ? "✅ Complete" : "❌ Pending"}
+            Day {i + 1}: {done ? "✅ Complete" : "❌ Pending"}
           </button>
         ))}
       </div>
@@ -1755,9 +1760,10 @@ function runArchitectDailyReport(testMode = false) {
           <input
             key={i}
             type="number"
-            placeholder={`Mock ${i+1} Score`}
+            placeholder={`Mock ${i + 1} Score`}
+            defaultValue={log.score ?? ""}
             className="w-full mt-2 p-2 text-black rounded"
-            onBlur={(e) => saveMockPercentile(Number(e.target.value))}
+            onBlur={(e) => saveMockPercentile(i, Number(e.target.value))}
           />
         ))}
       </div>
@@ -1766,9 +1772,13 @@ function runArchitectDailyReport(testMode = false) {
     {/* Tasks */}
     {challenge.type === "tasks" && (
       <div>
-        <p>{challenge.target} Tasks in {challenge.duration} Days</p>
-        <p className="mt-2">Progress: {challenge.progress}/{challenge.target}</p>
-        <button 
+        <p>
+          {challenge.target} Tasks in {challenge.duration} Days
+        </p>
+        <p className="mt-2">
+          Progress: {challenge.progress}/{challenge.target}
+        </p>
+        <button
           onClick={addOneTask}
           className="bg-blue-600 mt-2 px-4 py-2 rounded w-full"
         >
