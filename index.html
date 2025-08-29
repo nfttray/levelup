@@ -1652,6 +1652,24 @@ function runArchitectDailyReport(testMode = false) {
     }
   `}</style>
 </div>
+      {/* ---- Trigger Button ---- */}
+{!challenge && (
+  <button
+    onClick={() => setShowDisrespectModal(true)}
+    className="relative w-full px-6 py-3 font-extrabold text-lg text-white 
+               rounded-xl shadow-lg overflow-hidden
+               bg-gradient-to-r from-red-800 via-red-600 to-orange-500
+               hover:from-red-900 hover:via-red-700 hover:to-orange-600
+               transition-all duration-300 ease-in-out
+               animate-pulse flex items-center justify-center gap-2"
+  >
+    <span className="text-2xl">💀</span>
+    <span className="animate-bounce">⚡</span>
+    <span>DISRESPECT TRIGGER</span>
+    <span className="animate-bounce">⚡</span>
+    <span className="text-2xl">🔥</span>
+  </button>
+)}
 <div className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg">
   <h2 className="text-xl font-semibold mb-4">🌅 Wake Up Log</h2>
 
@@ -1680,24 +1698,7 @@ function runArchitectDailyReport(testMode = false) {
   )}
 </div>
 {/* Trigger Button */}
-{/* ---- Trigger Button ---- */}
-{!challenge && (
-  <button
-    onClick={() => setShowDisrespectModal(true)}
-    className="relative w-full px-6 py-3 font-extrabold text-lg text-white 
-               rounded-xl shadow-lg overflow-hidden
-               bg-gradient-to-r from-red-800 via-red-600 to-orange-500
-               hover:from-red-900 hover:via-red-700 hover:to-orange-600
-               transition-all duration-300 ease-in-out
-               animate-pulse flex items-center justify-center gap-2"
-  >
-    <span className="text-2xl">💀</span>
-    <span className="animate-bounce">⚡</span>
-    <span>DISRESPECT TRIGGER</span>
-    <span className="animate-bounce">⚡</span>
-    <span className="text-2xl">🔥</span>
-  </button>
-)}
+
 
 {/* ---- Modal ---- */}
 {showDisrespectModal && (
