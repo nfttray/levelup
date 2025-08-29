@@ -262,7 +262,9 @@ const [architectNegativeStreak, setArchitectNegativeStreak] = useState(parseInt(
     }
   }, 10000);
   }
-
+const [showDisrespectModal, setShowDisrespectModal] = React.useState(false);
+const [challengeType, setChallengeType] = React.useState("");
+const [challengeTarget, setChallengeTarget] = React.useState(0);
   const [disrespectMode, setDisrespectMode] = useState(false);
 const [angerLevel, setAngerLevel] = useState(0);
 const [customChallenge, setCustomChallenge] = useState(null);
