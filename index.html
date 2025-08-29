@@ -916,16 +916,17 @@ useEffect(() => {
   const giveDailyRivalXP = () => {
     setRivalXP(prevXP => {
   let newXP = prevXP + DAILY_RIVAL_XP;
-  let level = rivalLevel;
 
-  // jab tak XP enough hai, level up karte raho
-  while (newXP >= getXPForLevel(level)) {
-    newXP -= getXPForLevel(level); // XP kharch karo
-    level++;                       // level badao
-  }
+  setRivalLevel(prevLevel => {
+    let newLevel = prevLevel;
+    while (newXP >= getXPForLevel(newLevel)) {
+      newXP -= getXPForLevel(newLevel);
+      newLevel++;
+    }
+    return newLevel;
+  });
 
-  setRivalLevel(level);
-  return newXP; // bacha hua XP save karo
+  return newXP;
 });
 
     localStorage.setItem("lastRivalUpdate", Date.now());
