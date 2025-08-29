@@ -274,6 +274,9 @@ const [challenge, setChallenge] = React.useState(() => {
   return saved ? JSON.parse(saved) : null;
 });
 
+const [status, setStatus] = React.useState(""); // "", "completed", "failed"
+
+// Save to localStorage
 React.useEffect(() => {
   if (challenge) {
     localStorage.setItem("disrespectChallenge", JSON.stringify(challenge));
@@ -297,6 +300,7 @@ function startChallenge(type, target, duration) {
   } else if (type === "tasks") {
     setChallenge({ ...base, progress: 0, duration });
   }
+  setStatus("");
 }
 
 // ---- Update Helpers ----
@@ -314,58 +318,77 @@ function saveMockPercentile(i, score) {
 
 function addOneTask() {
   setChallenge({ ...challenge, progress: challenge.progress + 1 });
+}
+
+// ---- Check Success ----
+function checkChallengeComplete(challenge) {
+  if (!challenge) return false;
+
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  if (challenge.type === "streak") {
+    const deadline = challenge.startDate + challenge.target * oneDay;
+    if (now >= deadline) {
+      return challenge.days.every((done) => done);
+    }
   }
-  
-  // ---- Fail Detection ----
+
+  if (challenge.type === "percentile") {
+    return (
+      challenge.logs.length > 0 &&
+      challenge.logs.every((log) => log.passed === true)
+    );
+  }
+
+  if (challenge.type === "tasks") {
+    return challenge.progress >= challenge.target;
+  }
+
+  return false;
+}
+
+// ---- Check Fail ----
 function checkChallengeFail(challenge) {
   if (!challenge) return false;
 
   const now = Date.now();
   const oneDay = 24 * 60 * 60 * 1000;
 
-  // 1) Streak Fail → agar koi din miss ho gaya
   if (challenge.type === "streak") {
-    // streak shuru hone ke baad kitne din ho gaye
-    const daysPassed = Math.floor((now - challenge.startDate) / oneDay);
-
-    // agar daysPassed > 0 aur kisi din tak mark nahi kiya gaya
-    for (let i = 0; i < Math.min(daysPassed, challenge.target); i++) {
-      if (!challenge.days[i]) {
-        return true; // fail
-      }
+    const deadline = challenge.startDate + challenge.target * oneDay;
+    if (now >= deadline) {
+      return !challenge.days.every((done) => done);
     }
   }
 
-  // 2) Percentile Fail → validity khatam ho gayi aur sab pass nahi
   if (challenge.type === "percentile") {
     const deadline = challenge.startDate + challenge.duration * oneDay;
-    if (now > deadline) {
-      // check all mocks
-      const allPassed = challenge.logs.every((log) => log.passed);
-      if (!allPassed) return true;
+    if (now >= deadline) {
+      return !challenge.logs.every((log) => log.passed);
     }
   }
 
-  // 3) Tasks Fail → duration khatam hone ke baad target nahi complete
   if (challenge.type === "tasks") {
     const deadline = challenge.startDate + challenge.duration * oneDay;
-    if (now > deadline && challenge.progress < challenge.target) {
+    if (now >= deadline && challenge.progress < challenge.target) {
       return true;
     }
   }
 
   return false;
-  }
-  // Auto-check challenge fail every minute
-React.useEffect(() => {
-  const interval = setInterval(() => {
-    if (checkChallengeFail(challenge)) {
-      // punishment trigger
-      alert("💀 Disrespect Challenge FAILED!");
-      setChallenge(null); // reset
-    }
-  }, 60 * 1000); // check every 1 minute
+}
 
+// ---- Auto Check ----
+React.useEffect(() => {
+  if (!challenge) return;
+  const interval = setInterval(() => {
+    if (checkChallengeComplete(challenge)) {
+      setStatus("completed");
+    } else if (checkChallengeFail(challenge)) {
+      setStatus("failed");
+    }
+  }, 5000);
   return () => clearInterval(interval);
 }, [challenge]);
   function handleUrgeComplete() {
@@ -1761,9 +1784,9 @@ function runArchitectDailyReport(testMode = false) {
             key={i}
             type="number"
             placeholder={`Mock ${i + 1} Score`}
-            defaultValue={log.score ?? ""}
+            value={log.score ?? ""}
             className="w-full mt-2 p-2 text-black rounded"
-            onBlur={(e) => saveMockPercentile(i, Number(e.target.value))}
+            onChange={(e) => saveMockPercentile(i, Number(e.target.value))}
           />
         ))}
       </div>
@@ -1785,6 +1808,32 @@ function runArchitectDailyReport(testMode = false) {
           +1 Task
         </button>
       </div>
+    )}
+
+    {/* Status Badge */}
+    {status === "completed" && (
+      <div className="bg-green-700 text-white px-3 py-1 rounded mt-3 text-center font-bold">
+        🏆 Challenge Completed
+      </div>
+    )}
+
+    {status === "failed" && (
+      <div className="bg-red-700 text-white px-3 py-1 rounded mt-3 text-center font-bold">
+        💀 Challenge Failed
+      </div>
+    )}
+
+    {/* Reset */}
+    {status && (
+      <button
+        onClick={() => {
+          setChallenge(null);
+          setStatus("");
+        }}
+        className="bg-gray-600 mt-3 px-4 py-2 rounded w-full"
+      >
+        Reset Challenge
+      </button>
     )}
   </div>
 )}
