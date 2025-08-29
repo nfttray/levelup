@@ -263,173 +263,111 @@ const [architectNegativeStreak, setArchitectNegativeStreak] = useState(parseInt(
   }, 10000);
   }
 // ---- STATE (add with your other states) ----
-  const [showDisrespectModal, setShowDisrespectModal] = React.useState(false);
+  // ---- States ----
+const [showDisrespectModal, setShowDisrespectModal] = React.useState(false);
 const [challengeType, setChallengeType] = React.useState("");
 const [challengeTarget, setChallengeTarget] = React.useState(0);
 const [challengeDuration, setChallengeDuration] = React.useState(0);
-const [disrespectMode, setDisrespectMode] = React.useState(false);
-const [angerLevel, setAngerLevel] = React.useState(0);
-const [challenge, setChallenge] = React.useState(null); 
-// challenge = { type, target, startDate, duration?, days?, logs?, progress? }
 
-// ---- UTIL: random death punishment ----
-const DEATH_PUNISHMENTS = [
-  "☠️ 200 questions today + 30 min revision notes",
-  "☠️ 2 full-length mocks back-to-back (no breaks)",
-  "☠️ 1.5 hr active recall + 1 hr error log rewrite",
-  "☠️ 12 Pomodoros deep work (25/5) before sleep",
-];
+const [challenge, setChallenge] = React.useState(() => {
+  const saved = localStorage.getItem("disrespectChallenge");
+  return saved ? JSON.parse(saved) : null;
+});
 
-function triggerDeathPunishment(reason = "Challenge failed") {
-  const pick = DEATH_PUNISHMENTS[Math.floor(Math.random() * DEATH_PUNISHMENTS.length)];
-  addPunishment({
-    type: "death",
-    text: `☠️ Disrespect Challenge FAILED: ${reason}\nDeath Punishment: ${pick}`,
-    deathMode: true
-  });
-  if (typeof increaseDebt === "function") increaseDebt(10);   // existing debt system
-  setAngerLevel((v) => Math.min(100, v + 20));
-  setDisrespectMode(false);
-  setChallenge(null);
-}
+React.useEffect(() => {
+  if (challenge) {
+    localStorage.setItem("disrespectChallenge", JSON.stringify(challenge));
+  } else {
+    localStorage.removeItem("disrespectChallenge");
+  }
+}, [challenge]);
 
-// ---- START Challenge (call when user sets it) ----
+// ---- Start Challenge ----
 function startChallenge(type, target, duration) {
   const base = { type, target, startDate: Date.now() };
+
   if (type === "streak") {
-    setChallenge({ ...base, days: Array(target).fill(false) }); // each index = one day complete?
+    setChallenge({ ...base, days: Array(target).fill(false) });
   } else if (type === "percentile") {
-    // logs = {score:number|null, passed:boolean}
-    setChallenge({ ...base, logs: Array(target).fill({ score: null, passed: false }), duration: target }); // validity = target days
+    setChallenge({
+      ...base,
+      logs: Array(target).fill({ score: null, passed: false }),
+      duration: target, // validity = number of mocks
+    });
   } else if (type === "tasks") {
-    setChallenge({ ...base, progress: 0, duration }); // duration in days
+    setChallenge({ ...base, progress: 0, duration });
   }
-  setDisrespectMode(true);
-  setAngerLevel(70);
-  addPunishment({
-    type: "disrespect",
-    text: `🔥 Disrespect Challenge Started → ${type} (target ${target}${duration ? `, duration ${duration}d` : ""})`,
-    deathMode: true
-  });
 }
 
-// ---- DAILY / EVENT CHECKERS ----
+// ---- Update Helpers ----
+function markStreakDayComplete(i) {
+  const updated = [...challenge.days];
+  updated[i] = true;
+  setChallenge({ ...challenge, days: updated });
+}
 
-// call this at day rollover OR when user clicks "Close Day"
-function checkStreakFailAtDayEnd() {
-  if (!challenge || challenge.type !== "streak") return;
-  // Days elapsed since start (floor)
-  const daysElapsed = Math.floor((Date.now() - challenge.startDate) / (24*60*60*1000));
-  // If there exists any day index < daysElapsed that is still false -> missed day -> fail
-  for (let i = 0; i < Math.min(daysElapsed, challenge.days.length); i++) {
-    if (!challenge.days[i]) {
-      triggerDeathPunishment(`Missed study on Day ${i+1}/${challenge.days.length}`);
-      return;
+function saveMockPercentile(i, score) {
+  const logs = [...challenge.logs];
+  logs[i] = { score, passed: score >= 90 };
+  setChallenge({ ...challenge, logs });
+}
+
+function addOneTask() {
+  setChallenge({ ...challenge, progress: challenge.progress + 1 });
+  }
+  
+  // ---- Fail Detection ----
+function checkChallengeFail(challenge) {
+  if (!challenge) return false;
+
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  // 1) Streak Fail → agar koi din miss ho gaya
+  if (challenge.type === "streak") {
+    // streak shuru hone ke baad kitne din ho gaye
+    const daysPassed = Math.floor((now - challenge.startDate) / oneDay);
+
+    // agar daysPassed > 0 aur kisi din tak mark nahi kiya gaya
+    for (let i = 0; i < Math.min(daysPassed, challenge.target); i++) {
+      if (!challenge.days[i]) {
+        return true; // fail
+      }
     }
   }
-  // If completed all days → win handled elsewhere
-}
 
-// call whenever a mock percentile is saved OR at day rollover
-function checkPercentileFail() {
-  if (!challenge || challenge.type !== "percentile") return;
-  const validityDays = challenge.duration; // equals target
-  const daysElapsed = Math.floor((Date.now() - challenge.startDate) / (24*60*60*1000));
-  const passedCount = challenge.logs.filter(x => x.passed).length;
-  const remainingDays = validityDays - daysElapsed;
-  const remainingNeeded = challenge.target - passedCount;
-
-  // Fast-fail if mathematically impossible
-  if (remainingDays < remainingNeeded) {
-    triggerDeathPunishment(`Not enough days left for remaining mocks (${remainingNeeded} needed)`);
-    return;
+  // 2) Percentile Fail → validity khatam ho gayi aur sab pass nahi
+  if (challenge.type === "percentile") {
+    const deadline = challenge.startDate + challenge.duration * oneDay;
+    if (now > deadline) {
+      // check all mocks
+      const allPassed = challenge.logs.every((log) => log.passed);
+      if (!allPassed) return true;
+    }
   }
-  // Hard deadline reached
-  if (daysElapsed >= validityDays && passedCount < challenge.target) {
-    triggerDeathPunishment(`Validity over: ${passedCount}/${challenge.target} mocks ≥ 90%`);
+
+  // 3) Tasks Fail → duration khatam hone ke baad target nahi complete
+  if (challenge.type === "tasks") {
+    const deadline = challenge.startDate + challenge.duration * oneDay;
+    if (now > deadline && challenge.progress < challenge.target) {
+      return true;
+    }
   }
-}
 
-// call at deadline or timer tick
-function checkTasksFail() {
-  if (!challenge || challenge.type !== "tasks") return;
-  const deadline = challenge.startDate + challenge.duration * 24*60*60*1000;
-  if (Date.now() > deadline && challenge.progress < challenge.target) {
-    triggerDeathPunishment(`Only ${challenge.progress}/${challenge.target} tasks done within ${challenge.duration} days`);
+  return false;
   }
-}
-
-// ---- VICTORY CHECK (call after any update) ----
-function checkVictory() {
-  if (!challenge) return;
-  if (challenge.type === "streak") {
-    const allDone = challenge.days.every(Boolean);
-    if (allDone) onChallengeWin();
-  } else if (challenge.type === "percentile") {
-    const passed = challenge.logs.filter(x => x.passed).length;
-    if (passed >= challenge.target) onChallengeWin();
-  } else if (challenge.type === "tasks") {
-    if (challenge.progress >= challenge.target) onChallengeWin();
-  }
-}
-
-function onChallengeWin() {
-  setDisrespectMode(false);
-  setAngerLevel(0);
-  setXP?.((v) => v + 50);
-  setFogLevel?.((v) => Math.max(0, v - 30));
-  setDopamineLevel?.((v) => Math.min(100, v + 20));
-  alert("🏆 Disrespect avenged! Challenge cleared.");
-  setChallenge(null);
-}
-
-// ---- EXAMPLES: how to update logs ----
-
-// STREAK: mark today complete
-function markStreakTodayComplete() {
-  if (!challenge || challenge.type !== "streak") return;
-  const daysElapsed = Math.floor((Date.now() - challenge.startDate) / (24*60*60*1000));
-  if (daysElapsed >= challenge.days.length) return; // already beyond
-  const updated = [...challenge.days];
-  updated[daysElapsed] = true;
-  setChallenge({ ...challenge, days: updated });
-  checkVictory();
-}
-
-// PERCENTILE: save a mock score into next empty slot (one per day recommended)
-function saveMockPercentile(score) {
-  if (!challenge || challenge.type !== "percentile") return;
-  const idx = challenge.logs.findIndex(l => l.score === null);
-  if (idx === -1) return; // all filled
-  const newLogs = [...challenge.logs];
-  newLogs[idx] = { score, passed: score >= 90 };
-  setChallenge({ ...challenge, logs: newLogs });
-  checkPercentileFail();
-  checkVictory();
-}
-
-// TASKS: increment progress
-function addOneTask() {
-  if (!challenge || challenge.type !== "tasks") return;
-  setChallenge(prev => {
-    const next = { ...prev, progress: prev.progress + 1 };
-    return next;
-  });
-  checkVictory();
-}
-
-// ---- ROLLOVER TIMER (optional)
-// Run once per hour or on app open to evaluate deadlines
+  // Auto-check challenge fail every minute
 React.useEffect(() => {
-  if (!challenge) return;
-  const t = setInterval(() => {
-    if (challenge.type === "streak") checkStreakFailAtDayEnd();
-    if (challenge.type === "percentile") checkPercentileFail();
-    if (challenge.type === "tasks") checkTasksFail();
-  }, 60 * 60 * 1000); // hourly
-  return () => clearInterval(t);
+  const interval = setInterval(() => {
+    if (checkChallengeFail(challenge)) {
+      // punishment trigger
+      alert("💀 Disrespect Challenge FAILED!");
+      setChallenge(null); // reset
+    }
+  }, 60 * 1000); // check every 1 minute
+
+  return () => clearInterval(interval);
 }, [challenge]);
-  
   function handleUrgeComplete() {
   setShowUrgeModal(false);
   setXP(prevXP => prevXP + 3); // Reward +3 XP
