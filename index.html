@@ -916,17 +916,21 @@ useEffect(() => {
   const giveDailyRivalXP = () => {
     setRivalXP(prevXP => {
   let newXP = prevXP + DAILY_RIVAL_XP;
+  let leveledUp = false;
 
   setRivalLevel(prevLevel => {
     let newLevel = prevLevel;
+
     while (newXP >= getXPForLevel(newLevel)) {
-      newXP -= getXPForLevel(newLevel);
+      newXP -= getXPForLevel(newLevel); // ⚡ yahan reset karo
       newLevel++;
+      leveledUp = true;
     }
+
     return newLevel;
   });
 
-  return newXP;
+  return newXP; // bacha hua XP rival ke bar me dikhega
 });
 
     localStorage.setItem("lastRivalUpdate", Date.now());
