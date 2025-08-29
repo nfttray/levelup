@@ -30,45 +30,7 @@
 
   </style>
 
-<style>
-.aura-only {
-  position: relative;
-  padding: 40px 80px;
-  border-radius: 20px;
-  background: rgba(20,20,20,0.8);
-  z-index: 0;
-  overflow: hidden;
-}
 
-/* Glowing aura ring */
-.aura-only::before {
-  content: "";
-  position: absolute;
-  top: -30%;
-  left: -30%;
-  width: 160%;
-  height: 160%;
-  background: conic-gradient(red, orange, yellow, red);
-  border-radius: 50%;
-  animation: spin 6s linear infinite;
-  z-index: -2;
-}
-
-/* Dark layer inside */
-.aura-only::after {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  background: rgba(20,20,20,0.95);
-  border-radius: 16px;
-  z-index: -1;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-</style>
   <style>
 @keyframes slowGlow {
   0%, 100% { filter: drop-shadow(0 0 3px #ff0000); }
@@ -953,17 +915,18 @@ useEffect(() => {
 useEffect(() => {
   const giveDailyRivalXP = () => {
     setRivalXP(prevXP => {
-      let newXP = prevXP + DAILY_RIVAL_XP;
-      let level = rivalLevel;
+  let newXP = prevXP + DAILY_RIVAL_XP;
+  let level = rivalLevel;
 
-      while (newXP >= getXPForLevel(level)) {
-        newXP -= getXPForLevel(level);
-        level++;
-      }
+  // jab tak XP enough hai, level up karte raho
+  while (newXP >= getXPForLevel(level)) {
+    newXP -= getXPForLevel(level); // XP kharch karo
+    level++;                       // level badao
+  }
 
-      setRivalLevel(level);
-      return newXP;
-    });
+  setRivalLevel(level);
+  return newXP; // bacha hua XP save karo
+});
 
     localStorage.setItem("lastRivalUpdate", Date.now());
     console.log("🎯 Daily Rival XP Added at", new Date().toLocaleTimeString());
@@ -1517,7 +1480,7 @@ function runArchitectDailyReport(testMode = false) {
 }
   
   return (
-    <div class="aura-only" className={"p-4 max-w-md mx-auto bg-black bg-opacity-70 rounded-lg mt-4 shadow-lg "+(showLevelUp?'flash':'')}>
+    <div className={"p-4 max-w-md mx-auto bg-black bg-opacity-70 rounded-lg mt-4 shadow-lg "+(showLevelUp?'flash':'')}>
       {/* Header */}
       <header className="text-center mb-4">
         <div className="max-w-sm mx-auto p-5 bg-gray-900 rounded-xl shadow-lg text-center text-white">
