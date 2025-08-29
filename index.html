@@ -29,6 +29,56 @@
     }
   </style>
   <style>
+  #dragon-layer {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    width: 100%;
+    height: 120px;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  .dragon {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    animation: fly 15s linear infinite;
+  }
+
+  .dragon1 { top: 0; left: -200px; animation-delay: 0s; }
+  .dragon2 { top: 40px; left: -250px; animation-delay: 4s; }
+  .dragon3 { top: 80px; left: -300px; animation-delay: 8s; }
+
+  .dragon-img {
+    height: 60px;
+    width: auto;
+  }
+
+  @keyframes fly {
+    0%   { transform: translateX(0) scale(1); opacity: 1; }
+    100% { transform: translateX(110vw) scale(1.1); opacity: 1; }
+  }
+
+  /* 🔥 Fire breath */
+  .fire {
+    position: absolute;
+    left: 50px; /* dragon mouth ke approx */
+    top: 20px;
+    width: 40px;
+    height: auto;
+    opacity: 0;
+    animation: firebreath 2s infinite;
+  }
+
+  @keyframes firebreath {
+    0%   { opacity: 0; transform: scale(0.5) translateX(0); }
+    30%  { opacity: 1; transform: scale(1) translateX(20px); }
+    60%  { opacity: 1; transform: scale(1.2) translateX(50px); }
+    100% { opacity: 0; transform: scale(0.8) translateX(80px); }
+  }
+  </style>
+  <style>
 @keyframes slowGlow {
   0%, 100% { filter: drop-shadow(0 0 3px #ff0000); }
   50% { filter: drop-shadow(0 0 15px #ff1a1a); }
@@ -1511,6 +1561,21 @@ function runArchitectDailyReport(testMode = false) {
       ? "🔥 Rival is ahead of you!"
       : "✅ You are ahead of your rival"}
   </p>       
+
+   <div id="dragon-layer">
+  <div class="dragon dragon1">
+    <img src="https://www.clipartmax.com/png/middle/1-12498_do-dragons-exhale-fire-fire-breathing-dragon.png" class="dragon-img" />
+    <div class="fire">🔥</div>
+  </div>
+  <div class="dragon dragon2">
+    <img src="https://www.clipartmax.com/png/middle/171-1713312_gifs-rigolos-fire-breathing-dragon-png-dragon-spitting-fire.png" class="dragon-img" />
+    <div class="fire">🔥</div>
+  </div>
+     <div class="dragon dragon3">
+    <img src="https://www.clipartmax.com/png/middle/40-405938_rabitt-dragon-snake-cartoon-fire-breathing-dragon.png" class="dragon-img" />
+    <div class="fire">🔥</div>
+  </div>
+</div>       
   <img
     src={characterImages[Math.min(level - 1, characterImages.length - 1)]}
     alt="Character"
