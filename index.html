@@ -27,19 +27,37 @@
       0% { background-color: rgba(255,255,255,0.4); }
       100% { background-color: transparent; }
     }
-    .glow-card {
+    .aura-card {
   position: relative;
   border-radius: 20px;
-  padding: 20px;
-  background: #111;
-  color: white;
-  box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
-  animation: glow 2s infinite alternate;
+  overflow: hidden;
+  z-index: 1;
 }
 
-@keyframes glow {
-  from { box-shadow: 0 0 15px red, 0 0 30px rgba(255, 0, 0, 0.6); }
-  to   { box-shadow: 0 0 25px orange, 0 0 50px rgba(255, 140, 0, 0.8); }
+.aura-card::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(red, orange, yellow, red);
+  animation: spin 6s linear infinite;
+  z-index: -2;
+}
+
+.aura-card::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background: #111;
+  border-radius: 16px;
+  z-index: -1;
+}
+
+@keyframes spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
   </style>
 
@@ -1494,7 +1512,7 @@ function runArchitectDailyReport(testMode = false) {
     <div className={"p-4 max-w-md mx-auto bg-black bg-opacity-70 rounded-lg mt-4 shadow-lg "+(showLevelUp?'flash':'')}>
       {/* Header */}
       <header className="text-center mb-4">
-        <div class="glow-card" className="max-w-sm mx-auto p-5 bg-gray-900 rounded-xl shadow-lg text-center text-white">
+        <div class="card aura-card" className="max-w-sm mx-auto p-5 bg-gray-900 rounded-xl shadow-lg text-center text-white">
 
 <h1 style={{ display: "flex", alignItems: "center", gap: "10px" }}>
   SHADOW MONARCH
@@ -1628,7 +1646,7 @@ function runArchitectDailyReport(testMode = false) {
       </header>
         
       {/* Dopamine Detox Section */}
-      <div class="glow-card"  className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
+      <div  className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
     Dopamine Detox
   </h2>
@@ -1670,7 +1688,7 @@ function runArchitectDailyReport(testMode = false) {
     }
   `}</style>
 </div>
-<div class="glow-card"   className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg">
+<div className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg">
   <h2 className="text-xl font-semibold mb-4">🌅 Wake Up Log</h2>
 
   <div className="flex items-center gap-2 mb-3">
