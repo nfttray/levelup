@@ -920,23 +920,30 @@ useEffect(() => {
   const giveDailyRivalXP = () => {
   setRivalXP(prevXP => {
     let newXP = prevXP + DAILY_RIVAL_XP;
-    let newLevel = rivalLevel;
+    let updatedLevel = rivalLevel;
 
-    // ✅ functional update se stale value ka issue solve hoga
+    // functional update to avoid stale level
     setRivalLevel(prevLevel => {
       let lvl = prevLevel;
       while (newXP >= getXPForLevel(lvl)) {
-        newXP -= getXPForLevel(lvl); // XP kharch karo
+        newXP -= getXPForLevel(lvl); // XP reset after each level-up
         lvl++;
       }
+      updatedLevel = lvl;
+
+      // 👇 save updated level
+      localStorage.setItem("rivalLevel", updatedLevel);
       return lvl;
     });
 
-    return newXP; // XP state update hoga
-  });
+    // 👇 save XP after level-up reset
+    localStorage.setItem("rivalXP", newXP);
+    localStorage.setItem("lastRivalUpdate", Date.now());
 
-  localStorage.setItem("lastRivalUpdate", Date.now());
-  console.log("🎯 Daily Rival XP Added at", new Date().toLocaleTimeString());
+    console.log(`🎯 Rival: Level ${updatedLevel} | XP ${newXP}/${getXPForLevel(updatedLevel)}`);
+
+    return newXP; // final XP state
+  });
 };
   const lastUpdate = parseInt(localStorage.getItem("lastRivalUpdate") || 0, 10);
   const todayMidnight = new Date();
@@ -1507,9 +1514,9 @@ function runArchitectDailyReport(testMode = false) {
 
 
 
-   <p className="mt-3 text-sm text-gray-400">
-    Rival: Level {rivalLevel} | XP: {Math.floor(rivalXP)}
-  </p>
+  <p className="text-sm text-purple-400 mt-2">
+  ⚔️ Rival: Level {rivalLevel} | XP {rivalXP}/{getXPForLevel(rivalLevel)}
+</p>
   <p
     className={`mt-1 text-sm font-bold ${
       rivalLevel > level || (rivalLevel === level && rivalXP > xp)
