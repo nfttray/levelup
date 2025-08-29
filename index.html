@@ -27,40 +27,58 @@
       0% { background-color: rgba(255,255,255,0.4); }
       100% { background-color: transparent; }
     }
-    .aura-card {
-  position: relative;
-  border-radius: 20px;
-  overflow: hidden;
-  z-index: 1;
+
+  </style>
+
+<style>
+body {
+  background: #0d0d0d;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: white;
+  font-family: Arial, sans-serif;
 }
 
-.aura-card::before {
+.aura-only {
+  position: relative;
+  padding: 40px 80px;
+  border-radius: 20px;
+  background: rgba(20,20,20,0.8);
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Glowing aura ring */
+.aura-only::before {
   content: "";
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: -30%;
+  left: -30%;
+  width: 160%;
+  height: 160%;
   background: conic-gradient(red, orange, yellow, red);
+  border-radius: 50%;
   animation: spin 6s linear infinite;
   z-index: -2;
 }
 
-.aura-card::after {
+/* Dark layer inside */
+.aura-only::after {
   content: "";
   position: absolute;
-  inset: 4px;
-  background: #111;
+  inset: 6px;
+  background: rgba(20,20,20,0.95);
   border-radius: 16px;
   z-index: -1;
 }
 
 @keyframes spin {
-  0%   { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
-  </style>
-
+</style>
   <style>
 @keyframes slowGlow {
   0%, 100% { filter: drop-shadow(0 0 3px #ff0000); }
@@ -1512,7 +1530,7 @@ function runArchitectDailyReport(testMode = false) {
     <div className={"p-4 max-w-md mx-auto bg-black bg-opacity-70 rounded-lg mt-4 shadow-lg "+(showLevelUp?'flash':'')}>
       {/* Header */}
       <header className="text-center mb-4">
-        <div class="card aura-card" className="max-w-sm mx-auto p-5 bg-gray-900 rounded-xl shadow-lg text-center text-white">
+        <div class="aura-only" className="max-w-sm mx-auto p-5 bg-gray-900 rounded-xl shadow-lg text-center text-white">
 
 <h1 style={{ display: "flex", alignItems: "center", gap: "10px" }}>
   SHADOW MONARCH
