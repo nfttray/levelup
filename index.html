@@ -263,6 +263,10 @@ const [architectNegativeStreak, setArchitectNegativeStreak] = useState(parseInt(
   }, 10000);
   }
 // ---- STATE (add with your other states) ----
+  const [showDisrespectModal, setShowDisrespectModal] = React.useState(false);
+const [challengeType, setChallengeType] = React.useState("");
+const [challengeTarget, setChallengeTarget] = React.useState(0);
+const [challengeDuration, setChallengeDuration] = React.useState(0);
 const [disrespectMode, setDisrespectMode] = React.useState(false);
 const [angerLevel, setAngerLevel] = React.useState(0);
 const [challenge, setChallenge] = React.useState(null); 
@@ -1715,35 +1719,129 @@ function runArchitectDailyReport(testMode = false) {
   )}
 </div>
 {/* Trigger Button */}
+{/* ---- Trigger Button ---- */}
 <button 
   onClick={() => setShowDisrespectModal(true)}
-  className="bg-red-600 px-4 py-2 rounded shadow-md w-full">
+  className="bg-red-600 px-4 py-2 rounded shadow-md w-full text-white font-bold">
   ⚡ Disrespect Trigger
 </button>
 
-{/* Modal */}
+{/* ---- Modal ---- */}
 {showDisrespectModal && (
-  <div className="bg-gray-900 p-4 rounded-lg">
-    <h2 className="text-xl font-bold mb-3">Set Disrespect Challenge</h2>
-    <select onChange={(e) => setChallengeType(e.target.value)} className="p-2 rounded w-full text-black">
-      <option value="">-- Select Challenge --</option>
-      <option value="streak">Days Streak</option>
-      <option value="tasks">Tasks Count</option>
-      <option value="percentile">Mock Percentile</option>
-    </select>
-    <input type="number" placeholder="Enter Target" 
-      onChange={(e) => setChallengeTarget(Number(e.target.value))}
-      className="mt-2 p-2 rounded w-full text-black" />
-    <button 
-      onClick={() => {
-        startDisrespectChallenge(challengeType, challengeTarget);
-        setShowDisrespectModal(false);
-      }}
-      className="bg-green-600 mt-3 px-4 py-2 rounded w-full">
-      Start Challenge
-    </button>
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60">
+    <div className="bg-gray-900 p-6 rounded-2xl w-96 text-white">
+      <h2 className="text-xl font-bold mb-4">🔥 Set Disrespect Challenge</h2>
+
+      {/* Select Type */}
+      <label className="block mb-2">Select Challenge Type:</label>
+      <select 
+        value={challengeType}
+        onChange={(e) => setChallengeType(e.target.value)} 
+        className="p-2 rounded w-full text-black mb-3"
+      >
+        <option value="">-- Choose Type --</option>
+        <option value="streak">Days Streak</option>
+        <option value="percentile">Mock Percentile</option>
+        <option value="tasks">Tasks Count</option>
+      </select>
+
+      {/* Target Input */}
+      <label className="block mb-2">Enter Target:</label>
+      <input 
+        type="number"
+        placeholder="Target value"
+        value={challengeTarget}
+        onChange={(e) => setChallengeTarget(Number(e.target.value))}
+        className="p-2 rounded w-full text-black mb-3"
+      />
+
+      {/* Duration input only for Tasks */}
+      {challengeType === "tasks" && (
+        <>
+          <label className="block mb-2">Duration (days):</label>
+          <input 
+            type="number"
+            placeholder="e.g. 7"
+            value={challengeDuration}
+            onChange={(e) => setChallengeDuration(Number(e.target.value))}
+            className="p-2 rounded w-full text-black mb-3"
+          />
+        </>
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex justify-between mt-4">
+        <button 
+          onClick={() => setShowDisrespectModal(false)}
+          className="bg-gray-600 px-4 py-2 rounded">
+          Cancel
+        </button>
+        <button 
+          onClick={() => {
+            startChallenge(challengeType, challengeTarget, challengeDuration);
+            setShowDisrespectModal(false);
+          }}
+          className="bg-green-600 px-4 py-2 rounded">
+          Start
+        </button>
+      </div>
+    </div>
   </div>
 )}
+  {challenge && (
+  <div className="bg-gray-800 p-4 mt-4 rounded-xl text-white">
+    <h2 className="text-lg font-bold mb-2">🔥 Active Challenge</h2>
+
+    {/* Streak */}
+    {challenge.type === "streak" && (
+      <div>
+        <p>{challenge.target}-Day Study Streak</p>
+        {challenge.days.map((done, i) => (
+          <button 
+            key={i} 
+            onClick={() => markStreakTodayComplete(i)}
+            disabled={done}
+            className={`mt-2 w-full p-2 rounded ${done ? "bg-green-600" : "bg-red-600"}`}
+          >
+            Day {i+1}: {done ? "✅ Complete" : "❌ Pending"}
+          </button>
+        ))}
+      </div>
+    )}
+
+    {/* Percentile */}
+    {challenge.type === "percentile" && (
+      <div>
+        <p>{challenge.target} Mocks ≥ 90%</p>
+        {challenge.logs.map((log, i) => (
+          <input
+            key={i}
+            type="number"
+            placeholder={`Mock ${i+1} Score`}
+            className="w-full mt-2 p-2 text-black rounded"
+            onBlur={(e) => saveMockPercentile(Number(e.target.value))}
+          />
+        ))}
+      </div>
+    )}
+
+    {/* Tasks */}
+    {challenge.type === "tasks" && (
+      <div>
+        <p>{challenge.target} Tasks in {challenge.duration} Days</p>
+        <p className="mt-2">Progress: {challenge.progress}/{challenge.target}</p>
+        <button 
+          onClick={addOneTask}
+          className="bg-blue-600 mt-2 px-4 py-2 rounded w-full"
+        >
+          +1 Task
+        </button>
+      </div>
+    )}
+  </div>
+)}
+
+  
      {/* === Mock Test Tracker === */}
 <div className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-yellow-400">📊 Mock Test Tracker</h2>
