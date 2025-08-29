@@ -1562,26 +1562,26 @@ function runArchitectDailyReport(testMode = false) {
       : "✅ You are ahead of your rival"}
   </p>       
 
-   <div id="dragon-layer">
-  <div class="dragon dragon1">
-    <img src="https://www.clipartmax.com/png/middle/1-12498_do-dragons-exhale-fire-fire-breathing-dragon.png" class="dragon-img" />
-    <div class="fire">🔥</div>
-  </div>
-  <div class="dragon dragon2">
-    <img src="https://www.clipartmax.com/png/middle/171-1713312_gifs-rigolos-fire-breathing-dragon-png-dragon-spitting-fire.png" class="dragon-img" />
-    <div class="fire">🔥</div>
-  </div>
-     <div class="dragon dragon3">
-    <img src="https://www.clipartmax.com/png/middle/40-405938_rabitt-dragon-snake-cartoon-fire-breathing-dragon.png" class="dragon-img" />
-    <div class="fire">🔥</div>
-  </div>
-</div>       
+
   <img
     src={characterImages[Math.min(level - 1, characterImages.length - 1)]}
     alt="Character"
     className="mx-auto w-28 h-28 mt-4 rounded-full border-4 border-purple-400 shadow-lg object-cover transition-transform duration-300 hover:scale-105"
   />
-
+<div id="dragon-layer">
+  <div class="dragon dragon1">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/0/0c/Dragon_red.svg" class="dragon-img" />
+    <div class="fire">🔥</div>
+  </div>
+  <div class="dragon dragon2">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6a/Dragon_green.svg" class="dragon-img" />
+    <div class="fire">🔥</div>
+  </div>
+  <div class="dragon dragon3">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Dragon_black.svg" class="dragon-img" />
+    <div class="fire">🔥</div>
+  </div>
+</div>
     <p className="mt-1 text-lg font-semibold text-gray-300">
     Level {level} ({getRank(level)})
   </p>
