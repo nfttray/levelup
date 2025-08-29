@@ -192,12 +192,12 @@ function App(){
   const [showAddModal,setShowAddModal]=useState(false);
   const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
   const [bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
-//  const [rivalXP,setRivalXP]=useState(parseFloat(localStorage.getItem('rivalXP'))||0);
-//  const [rivalLevel,setRivalLevel]=useState(parseInt(localStorage.getItem('rivalLevel'))||1);
-  const [rival, setRival] = useState(() => ({
-  xp: parseFloat(localStorage.getItem("rivalXP")) || 0,
-  level: parseFloat(localStorage.getItem("rivalLevel")) || 1
-}));
+ const [rivalXP,setRivalXP]=useState(parseFloat(localStorage.getItem('rivalXP'))||0);
+  const [rivalLevel,setRivalLevel]=useState(parseInt(localStorage.getItem('rivalLevel'))||1);
+//  const [rival, setRival] = useState(() => ({
+//  xp: parseFloat(localStorage.getItem("rivalXP")) || 0,
+//  level: parseFloat(localStorage.getItem("rivalLevel")) || 1
+// }));
   const now = Date.now();
 //const lastUpdate = parseInt(localStorage.getItem('lastRivalUpdate')) || now;
   const [behindDays,setBehindDays]=useState(parseInt(localStorage.getItem('behindDays'))||0);
@@ -918,26 +918,26 @@ useEffect(() => {
 
 useEffect(() => {
   const giveDailyRivalXP = () => {
-  setRival(prev => {
-    let newXP = prev.xp + DAILY_RIVAL_XP;
-    let newLevel = prev.level;
+  setRivalXP(prevXP => {
+    let newXP = prevXP + DAILY_RIVAL_XP;
+    let newLevel = rivalLevel;
 
-    while (newXP >= getXPForLevel(newLevel)) {
-      newXP -= getXPForLevel(newLevel);
-      newLevel++;
-    }
+    // ✅ functional update se stale value ka issue solve hoga
+    setRivalLevel(prevLevel => {
+      let lvl = prevLevel;
+      while (newXP >= getXPForLevel(lvl)) {
+        newXP -= getXPForLevel(lvl); // XP kharch karo
+        lvl++;
+      }
+      return lvl;
+    });
 
-    // localStorage update
-    localStorage.setItem("rivalXP", newXP);
-    localStorage.setItem("rivalLevel", newLevel);
-
-    return { xp: newXP, level: newLevel };
+    return newXP; // XP state update hoga
   });
 
   localStorage.setItem("lastRivalUpdate", Date.now());
   console.log("🎯 Daily Rival XP Added at", new Date().toLocaleTimeString());
 };
-
   const lastUpdate = parseInt(localStorage.getItem("lastRivalUpdate") || 0, 10);
   const todayMidnight = new Date();
   todayMidnight.setHours(0, 0, 0, 0);
