@@ -1684,9 +1684,18 @@ function runArchitectDailyReport(testMode = false) {
 {!challenge && (
   <button
     onClick={() => setShowDisrespectModal(true)}
-    className="bg-red-600 px-4 py-2 rounded shadow-md w-full font-bold text-white"
+    className="relative w-full px-6 py-3 font-extrabold text-lg text-white 
+               rounded-xl shadow-lg overflow-hidden
+               bg-gradient-to-r from-red-800 via-red-600 to-orange-500
+               hover:from-red-900 hover:via-red-700 hover:to-orange-600
+               transition-all duration-300 ease-in-out
+               animate-pulse flex items-center justify-center gap-2"
   >
-    ⚡ Disrespect Trigger
+    <span className="text-2xl">💀</span>
+    <span className="animate-bounce">⚡</span>
+    <span>DISRESPECT TRIGGER</span>
+    <span className="animate-bounce">⚡</span>
+    <span className="text-2xl">🔥</span>
   </button>
 )}
 
