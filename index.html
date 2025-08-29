@@ -918,34 +918,24 @@ useEffect(() => {
 
 useEffect(() => {
   const giveDailyRivalXP = () => {
-  setRivalXP(prevXP => {
-    let newXP = prevXP + DAILY_RIVAL_XP;
-    let updatedLevel = rivalLevel;
+  let newXP = rivalXP + DAILY_RIVAL_XP;
+  let newLevel = rivalLevel;
 
-    // functional update to avoid stale level
-    setRivalLevel(prevLevel => {
-      let lvl = prevLevel;
-      while (newXP >= getXPForLevel(lvl)) {
-        newXP -= getXPForLevel(lvl); // XP reset after each level-up
-        lvl++;
-      }
-      updatedLevel = lvl;
+  while (newXP >= getXPForLevel(newLevel)) {
+    newXP -= getXPForLevel(newLevel);
+    newLevel++;
+  }
 
-      // 👇 save updated level
-      localStorage.setItem("rivalLevel", updatedLevel);
-      return lvl;
-    });
+  setRivalXP(newXP);
+  setRivalLevel(newLevel);
 
-    // 👇 save XP after level-up reset
-    localStorage.setItem("rivalXP", newXP);
-    localStorage.setItem("lastRivalUpdate", Date.now());
+  localStorage.setItem("rivalXP", newXP);
+  localStorage.setItem("rivalLevel", newLevel);
+  localStorage.setItem("lastRivalUpdate", Date.now());
 
-    console.log(`🎯 Rival: Level ${updatedLevel} | XP ${newXP}/${getXPForLevel(updatedLevel)}`);
-
-    return newXP; // final XP state
-  });
+  console.log(`🎯 Rival: Level ${newLevel} | XP ${newXP}/${getXPForLevel(newLevel)}`);
 };
-  const lastUpdate = parseInt(localStorage.getItem("lastRivalUpdate") || 0, 10);
+    const lastUpdate = parseInt(localStorage.getItem("lastRivalUpdate") || 0, 10);
   const todayMidnight = new Date();
   todayMidnight.setHours(0, 0, 0, 0);
 
