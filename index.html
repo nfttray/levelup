@@ -262,6 +262,42 @@ const [architectNegativeStreak, setArchitectNegativeStreak] = useState(parseInt(
     }
   }, 10000);
   }
+
+  const [disrespectMode, setDisrespectMode] = useState(false);
+const [angerLevel, setAngerLevel] = useState(0);
+const [customChallenge, setCustomChallenge] = useState(null);
+
+function startDisrespectChallenge(type, target) {
+  setCustomChallenge({ type, target, progress: 0, startDate: Date.now() });
+  setDisrespectMode(true);
+  setAngerLevel(70); // Starting anger
+  addPunishment({
+    type: "disrespect",
+    text: `🔥 Disrespect Challenge Started!\nType: ${type}, Target: ${target}`,
+    deathMode: true
+  });
+}
+
+function updateChallengeProgress(done = 1) {
+  if (!customChallenge) return;
+
+  let progress = customChallenge.progress + done;
+  if (progress >= customChallenge.target) {
+    // Victory
+    setDisrespectMode(false);
+    setAngerLevel(0);
+    setCustomChallenge(null);
+
+    setXP(prev => prev + 50);
+    setFogLevel(prev => Math.max(0, prev - 30));
+    setDopamineLevel(prev => Math.min(100, prev + 20));
+
+    alert("🏆 Disrespect avenged! Challenge cleared.");
+  } else {
+    setCustomChallenge({ ...customChallenge, progress });
+    setAngerLevel(prev => Math.min(100, prev + 5));
+  }
+}
   function handleUrgeComplete() {
   setShowUrgeModal(false);
   setXP(prevXP => prevXP + 3); // Reward +3 XP
@@ -1550,7 +1586,36 @@ function runArchitectDailyReport(testMode = false) {
     </button>
   )}
 </div>
+{/* Trigger Button */}
+<button 
+  onClick={() => setShowDisrespectModal(true)}
+  className="bg-red-600 px-4 py-2 rounded shadow-md w-full">
+  ⚡ Disrespect Trigger
+</button>
 
+{/* Modal */}
+{showDisrespectModal && (
+  <div className="bg-gray-900 p-4 rounded-lg">
+    <h2 className="text-xl font-bold mb-3">Set Disrespect Challenge</h2>
+    <select onChange={(e) => setChallengeType(e.target.value)} className="p-2 rounded w-full text-black">
+      <option value="">-- Select Challenge --</option>
+      <option value="streak">Days Streak</option>
+      <option value="tasks">Tasks Count</option>
+      <option value="percentile">Mock Percentile</option>
+    </select>
+    <input type="number" placeholder="Enter Target" 
+      onChange={(e) => setChallengeTarget(Number(e.target.value))}
+      className="mt-2 p-2 rounded w-full text-black" />
+    <button 
+      onClick={() => {
+        startDisrespectChallenge(challengeType, challengeTarget);
+        setShowDisrespectModal(false);
+      }}
+      className="bg-green-600 mt-3 px-4 py-2 rounded w-full">
+      Start Challenge
+    </button>
+  </div>
+)}
      {/* === Mock Test Tracker === */}
 <div className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-yellow-400">📊 Mock Test Tracker</h2>
