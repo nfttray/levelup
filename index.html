@@ -915,25 +915,32 @@ useEffect(() => {
   // === Rival XP Auto Update ===
 
   const DAILY_RIVAL_XP = 35;
-
+// ✅ Auto-fix rival level whenever XP crosses threshold
 useEffect(() => {
-  const giveDailyRivalXP = () => {
-  let newXP = rivalXP + DAILY_RIVAL_XP;
-  let newLevel = rivalLevel;
+  let xp = rivalXP;
+  let lvl = rivalLevel;
+  let changed = false;
 
-  while (newXP >= getXPForLevel(newLevel)) {
-    newXP -= getXPForLevel(newLevel);
-    newLevel++;
+  while (xp >= getXPForLevel(lvl)) {
+    xp -= getXPForLevel(lvl); // spend XP for this level
+    lvl++;                    // level up
+    changed = true;
   }
 
+  if (changed) {
+    setRivalXP(xp);
+    setRivalLevel(lvl);
+    localStorage.setItem("rivalXP", String(xp));
+    localStorage.setItem("rivalLevel", String(lvl));
+  }
+}, [rivalXP, rivalLevel]);
+  
+useEffect(() => {
+  const giveDailyRivalXP = () => {
+  const newXP = rivalXP + DAILY_RIVAL_XP;
   setRivalXP(newXP);
-  setRivalLevel(newLevel);
-
-  localStorage.setItem("rivalXP", newXP);
-  localStorage.setItem("rivalLevel", newLevel);
+  localStorage.setItem("rivalXP", String(newXP));
   localStorage.setItem("lastRivalUpdate", Date.now());
-
-  console.log(`🎯 Rival: Level ${newLevel} | XP ${newXP}/${getXPForLevel(newLevel)}`);
 };
     const lastUpdate = parseInt(localStorage.getItem("lastRivalUpdate") || 0, 10);
   const todayMidnight = new Date();
