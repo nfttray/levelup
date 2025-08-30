@@ -291,7 +291,24 @@ React.useEffect(() => {
     localStorage.removeItem("disrespectChallenge");
   }
 }, [challenge]);
+function spawnWeeklyBoss() {
+  const now = Date.now();
+  const lastSpawn = parseInt(localStorage.getItem("lastBossSpawn") || "0", 10);
 
+  // 7 din ka interval (ms me)
+  const oneWeek = 7 * 24 * 60 * 60 * 1000;
+
+  if (now - lastSpawn >= oneWeek) {
+    // 👇 yahan boss ko active karna
+    setBossActive(true);
+
+    // localStorage update
+    localStorage.setItem("lastBossSpawn", String(now));
+    console.log("⚔️ Weekly Boss Spawned!");
+  } else {
+    console.log("⏳ Boss not ready yet");
+  }
+    }
 // ---- Start Challenge ----
 function startChallenge(type, target, duration) {
   const base = { type, target, startDate: Date.now() };
