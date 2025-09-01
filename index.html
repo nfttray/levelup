@@ -1247,8 +1247,8 @@ React.useEffect(() => {
   localStorage.setItem('debt', String(debt));
 }, [debt]);
   
-// calender 
-  function saveDailySummary() {
+// Calendar
+function saveDailySummary() {
   const today = new Date().toISOString().split("T")[0];
   const history = JSON.parse(localStorage.getItem("history") || "[]");
 
@@ -1268,7 +1268,11 @@ React.useEffect(() => {
     tasksCompleted: taskLog,
     relapseHua: relapseHua, // 🔹 store relapse status
     dopamineActive: dopamineActive, // 🔹 store dopamine toggle
-    dopamineLevel: dopamineLevel // 🔹 store dopamine level %
+    dopamineLevel: dopamineLevel, // 🔹 store dopamine level %
+
+    // 🆕 New fields for Architect & Calendar
+    wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
+    mockPercentile: parseInt(localStorage.getItem("mockPercentile")) || 0
   };
 
   const existingIndex = history.findIndex(h => h.date === today);
@@ -1282,7 +1286,8 @@ React.useEffect(() => {
 
   // Reset xpStartValue for tomorrow's calculation
   localStorage.setItem('xpStartValue', String(xp));
-        }
+}
+
   // === Add / Complete Tasks ===
   function addPunishment(p){
     setPunishments([...punishments,p]);
@@ -2462,7 +2467,14 @@ function runArchitectDailyReport(testMode = false) {
         <strong>Daily Quest:</strong>{" "}
         {selectedHistoryDay.dailyQuestCompleted ? "✅ Completed" : "❌ Failed"}
       </p>
-      <p><strong>Punishments:</strong> {selectedHistoryDay.punishments}</p>
+      
+      <p>
+  <strong>Wake Up:</strong>{" "}
+  {selectedHistoryDay.wakeUpOnTime ? "✅ On Time" : "❌ Late/Not Logged"}
+</p>
+<p>
+  <strong>Mock Percentile:</strong> {selectedHistoryDay.mockPercentile || 0}%
+</p>
        <div className="mt-3">
     <h4 className="font-semibold">✅ Tasks Completed:</h4>
     <ul className="list-disc list-inside text-sm">
