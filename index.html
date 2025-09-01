@@ -670,8 +670,8 @@ useEffect(() => {
 
   // Abhi se agle midnight ka time nikal lo
   const now = new Date();
-  const millisTillMidnight =
-    new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5) - now;
+  const millisTillMidnight =10000;
+//    new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5) - now;
 
   // Pehli reset midnight pe
   const midnightTimeout = setTimeout(() => {
