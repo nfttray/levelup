@@ -140,18 +140,18 @@ const rankBadges = {
 // Gamified RPG-style images for each level
 // 11 यूनिक HD गेम-स्टाइल कैरेक्टर इमेजेस
 
-const characterImag = [
-  "https://i.imgur.com/y5aRkTf.jpg", // Level 1 (Weak E-Rank)
-  "https://i.imgur.com/XXD4VUw.jpg", // Level 2
-  "https://i.imgur.com/FzE3mYo.jpg", // Level 3
-  "https://i.imgur.com/dQ1GL9x.jpg", // Level 4
-  "https://i.imgur.com/X5u0xRk.jpg", // Level 5
-  "https://i.imgur.com/8lC1nxQ.jpg", // Level 6
-  "https://i.imgur.com/ndKfHZV.jpg", // Level 7
-  "https://i.imgur.com/vvU6YQb.jpg", // Level 8
-  "https://i.imgur.com/j3FRdhN.jpg", // Level 9
-  "https://i.imgur.com/rML4xDf.jpg", // Level 10
-  "https://i.imgur.com/t7fT5t7.jpg"  // Level 11 (Shadow Monarch Final)
+const characterImages = [
+  "images/jin1.png",  // Level 1 (Weak E-Rank)
+  "images/jin2.png",  // Level 2
+  "images/jin3.png",  // Level 3
+  "images/jin4.png",  // Level 4
+  "images/jin5.png",  // Level 5
+  "images/jin6.png",  // Level 6
+  "images/jin7.png",  // Level 7
+  "images/jin8.png",  // Level 8
+  "images/jin9.png",  // Level 9
+  "images/jin10.png", // Level 10
+  "images/jin11.png"  // Level 11 (Final Shadow Monarch)
 ];
 const rewards = [
   "Watch 1 anime episode",
@@ -238,12 +238,7 @@ const fogReduceOptions = [
 
 // === XP SYSTEM ===
 const rankTitles = ['E-Rank Hunter','D-Rank','C-Rank','B-Rank','A-Rank','S-Rank'];
-const characterImages = [
-  'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/45.png',
-  'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/male/20.png',
-  'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/68.png',
-  'https://cdn.jsdelivr.net/gh/Ashwinvalento/cartoon-avatar@master/lib/images/female/21.png'
-];
+
 
 function getXPForLevel(level){ return level*level*100; }
 function getRank(level){
@@ -1760,12 +1755,15 @@ function runArchitectDailyReport(testMode = false) {
       ? "🔥 Rival is ahead of you!"
       : "✅ You are ahead of your rival"}
   </p>       
-<img
-  src={characterImag[Math.min(level - 1, characterImag.length - 1)]}
-  alt="Character"
-  className="mx-auto w-20 h-20 rounded-full shadow-lg"
-/>
-
+<div className="flex justify-center mt-4">
+  <div className="w-28 h-28 rounded-full border-4 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.8)] animate-pulse flex items-center justify-center">
+    <img
+      src={characterImages[Math.min(level - 1, characterImages.length - 1)]}
+      alt="Jinwoo Evolution"
+      className="w-24 h-24 rounded-full object-cover"
+    />
+  </div>
+</div>
 
 {/* Rank Badge */}
 {(() => {
