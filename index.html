@@ -29,6 +29,32 @@
     }
 
   </style>
+
+<style>
+@keyframes fly1 {
+  0%   { top: 0%; left: 50%; transform: rotate(0deg); }
+  25%  { top: 20%; left: 90%; transform: rotate(90deg); }
+  50%  { top: 80%; left: 60%; transform: rotate(180deg); }
+  75%  { top: 40%; left: 10%; transform: rotate(270deg); }
+  100% { top: 0%; left: 50%; transform: rotate(360deg); }
+}
+
+@keyframes fly2 {
+  0%   { top: 80%; left: 20%; transform: rotate(0deg); }
+  25%  { top: 10%; left: 80%; transform: rotate(120deg); }
+  50%  { top: 60%; left: 90%; transform: rotate(240deg); }
+  75%  { top: 30%; left: 30%; transform: rotate(300deg); }
+  100% { top: 80%; left: 20%; transform: rotate(360deg); }
+}
+
+@keyframes fly3 {
+  0%   { top: 50%; left: 100%; transform: rotate(0deg); }
+  25%  { top: 90%; left: 50%; transform: rotate(180deg); }
+  50%  { top: 50%; left: 0%; transform: rotate(270deg); }
+  75%  { top: 10%; left: 40%; transform: rotate(360deg); }
+  100% { top: 50%; left: 100%; transform: rotate(720deg); }
+}
+</style>
 <style>
   @keyframes premiumGlow {
   0% {
@@ -1755,8 +1781,9 @@ function runArchitectDailyReport(testMode = false) {
       ? "🔥 Rival is ahead of you!"
       : "✅ You are ahead of your rival"}
   </p>       
-
-<div className="flex justify-center mt-4">
+  <div class="relative w-40 h-40 flex items-center justify-center">
+  <!-- Main Character -->
+ <div className="flex justify-center mt-4">
   <div className="w-28 h-28 rounded-full border-4 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.8)] animate-pulse flex items-center justify-center">
     <img
       src={characterImages[Math.min(level - 1, characterImages.length - 1)]}
@@ -1765,6 +1792,17 @@ function runArchitectDailyReport(testMode = false) {
     />
   </div>
 </div>
+
+  <!-- Dagger Animations -->
+  <img src="images/dagger.png"
+       class="absolute w-8 h-8 animate-[fly1_4s_linear_infinite]" />
+  <img src="images/dagger.png"
+       class="absolute w-8 h-8 animate-[fly2_5s_linear_infinite]" />
+  <img src="images/dagger.png"
+       class="absolute w-8 h-8 animate-[fly3_6s_linear_infinite]" />
+</div>
+  
+
 
 {/* Rank Badge */}
 {(() => {
