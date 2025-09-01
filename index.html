@@ -140,7 +140,7 @@ const rankBadges = {
 // Gamified RPG-style images for each level
 // 11 यूनिक HD गेम-स्टाइल कैरेक्टर इमेजेस
 
-const characterImages = [
+const characterImag = [
   "https://i.imgur.com/y5aRkTf.jpg", // Level 1 (Weak E-Rank)
   "https://i.imgur.com/XXD4VUw.jpg", // Level 2
   "https://i.imgur.com/FzE3mYo.jpg", // Level 3
@@ -1761,7 +1761,7 @@ function runArchitectDailyReport(testMode = false) {
       : "✅ You are ahead of your rival"}
   </p>       
 <img
-  src={characterImages[Math.min(level - 1, characterImages.length - 1)]}
+  src={characterImag[Math.min(level - 1, characterImag.length - 1)]}
   alt="Character"
   className="mx-auto w-20 h-20 rounded-full shadow-lg"
 />
