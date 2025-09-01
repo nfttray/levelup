@@ -541,15 +541,19 @@ function handleUrgeSkip() {
       setXP(Math.max(0,xp-50));
     }
   }
-function getRankInfo(level) {
-  if (level < 5) return {url: "https://img.icons8.com/color/96/rock.png", color: "#A0A0A0"};       // E
-  if (level < 10) return {url: "https://img.icons8.com/color/96/shield.png", color: "#B0C4DE"};    // D
-  if (level < 15) return {url: "https://img.icons8.com/color/96/bronze-medal.png", color: "#CD7F32"}; // C
-  if (level < 20) return {url: "https://img.icons8.com/color/96/silver-medal.png", color: "#C0C0C0"}; // B
-  if (level < 25) return {url: "https://img.icons8.com/color/96/gold-medal.png", color: "#FFD700"};  // A
-  return {url: "https://img.icons8.com/color/96/christmas-star.png", color: "#FF4500"};              // S
-    }
-  
+  function getRankInfo(level) {
+  if (level < 5)  
+    return {url: "https://static.thenounproject.com/png/4461072-512.png", color: "#A0A0A0"}; // E Rank (stone feel)
+  if (level < 10) 
+    return {url: "https://static.thenounproject.com/png/7507584-512.png", color: "#B0C4DE"}; // D Rank (steel/shield)
+  if (level < 15) 
+    return {url: "https://static.thenounproject.com/png/4385102-512.png", color: "#CD7F32"}; // C Rank (bronze)
+  if (level < 20) 
+    return {url: "https://static.thenounproject.com/png/4385101-512.png", color: "#C0C0C0"}; // B Rank (silver)
+  if (level < 25) 
+    return {url: "https://static.thenounproject.com/png/4385100-512.png", color: "#FFD700"}; // A Rank (gold)
+  return {url: "https://static.thenounproject.com/png/4385099-512.png", color: "#FF4500"};     // S Rank (premium star)
+  }
 function getAuraColor(level) {
   if (level < 5) return "gray";     // E-Rank
   if (level < 10) return "blue";    // D-Rank
