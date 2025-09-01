@@ -140,20 +140,19 @@ const rankBadges = {
 // Gamified RPG-style images for each level
 // 11 यूनिक HD गेम-स्टाइल कैरेक्टर इमेजेस
 
-const characterForms = [
-  "https://oaidalleapiprodscus.blob.core.windows.net/.../jinwoo_stage1.png",
-  "https://oaidalleapiprodscus.blob.core.windows.net/.../jinwoo_stage2.png",
-  "https://oaidalleapiprodscus.blob.core.windows.net/.../jinwoo_stage3.png",
-  "https://oaidalleapiprodscus.blob.core.windows.net/.../jinwoo_stage4.png",
-  "https://oaidalleapiprodscus.blob.core.windows.net/.../jinwoo_stage5.png",
-  "https://oaidalleapiprodscus.blob.core.windows.net/.../jinwoo_stage6.png",
-  "https://oaidalleapiprodscus.blob.core.windows.net/.../jinwoo_stage7.png",
-  "https://oaidalleapiprodscus.blob.core.windows.net/.../jinwoo_stage8.png",
-  "https://oaidalleapiprodscus.blob.core.windows.net/.../jinwoo_stage9.png",
-  "https://oaidalleapiprodscus.blob.core.windows.net/.../jinwoo_stage10.png",
-  "https://oaidalleapiprodscus.blob.core.windows.net/.../jinwoo_stage11.png"
+const characterImages = [
+  "https://i.imgur.com/y5aRkTf.jpg", // Level 1 (Weak E-Rank)
+  "https://i.imgur.com/XXD4VUw.jpg", // Level 2
+  "https://i.imgur.com/FzE3mYo.jpg", // Level 3
+  "https://i.imgur.com/dQ1GL9x.jpg", // Level 4
+  "https://i.imgur.com/X5u0xRk.jpg", // Level 5
+  "https://i.imgur.com/8lC1nxQ.jpg", // Level 6
+  "https://i.imgur.com/ndKfHZV.jpg", // Level 7
+  "https://i.imgur.com/vvU6YQb.jpg", // Level 8
+  "https://i.imgur.com/j3FRdhN.jpg", // Level 9
+  "https://i.imgur.com/rML4xDf.jpg", // Level 10
+  "https://i.imgur.com/t7fT5t7.jpg"  // Level 11 (Shadow Monarch Final)
 ];
-
 const rewards = [
   "Watch 1 anime episode",
   "Eat your favorite snack",
@@ -1761,12 +1760,10 @@ function runArchitectDailyReport(testMode = false) {
       ? "🔥 Rival is ahead of you!"
       : "✅ You are ahead of your rival"}
   </p>       
-
 <img
-  src={getCharacterForm(level)}
+  src={characterImages[Math.min(level - 1, characterImages.length - 1)]}
   alt="Character"
-  className="mx-auto w-28 h-28 mt-4 rounded-full border-4 border-purple-400 
-             shadow-lg object-cover transition-transform duration-500 hover:scale-110"
+  className="mx-auto w-20 h-20 rounded-full shadow-lg"
 />
 
 
