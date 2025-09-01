@@ -652,17 +652,19 @@ useEffect(() => {
  
   return () => clearInterval(interval);
 }, []);
-  // Habits daily reset (midnight only, not on reload)
+  
+
+// Habits daily reset (midnight only, recurring every day)
 useEffect(() => {
   function resetHabits() {
     const today = new Date().toDateString();
-    const updated = habits.map(h => ({
-      ...h,
-      done: false,     // reset everyday
-      lastReset: today // track last reset
-    }));
-    setHabits(updated);
-    localStorage.setItem("habits", JSON.stringify(updated));
+    setHabits(prev =>
+      prev.map(h => ({
+        ...h,
+        done: false,     // reset everyday
+        lastReset: today // track last reset
+      }))
+    );
     console.log("♻️ Habits reset at midnight:", today);
   }
 
@@ -674,12 +676,12 @@ useEffect(() => {
   // Pehli reset midnight pe
   const midnightTimeout = setTimeout(() => {
     resetHabits();
-    // Phir har 24 ghante repeat hoga
+    // ✅ Ab har 24 ghante repeat hoga
     setInterval(resetHabits, 24 * 60 * 60 * 1000);
   }, millisTillMidnight);
 
   return () => clearTimeout(midnightTimeout);
-}, [habits]);
+}, []); // ✅ sirf mount pe chalega, habits change pe nahi
   
 // === Decay System Effect ===
   useEffect(() => {
