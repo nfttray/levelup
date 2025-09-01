@@ -30,7 +30,17 @@
 
   </style>
 
+<style>
+@keyframes auraPulse {
+  0%, 100% { box-shadow: 0 0 15px var(--aura-color), 0 0 30px var(--aura-color); }
+  50% { box-shadow: 0 0 30px var(--aura-color), 0 0 60px var(--aura-color); }
+}
 
+.aura {
+  animation: auraPulse 3s infinite alternate;
+  border-radius: 9999px;
+}
+  </style>
   <style>
 @keyframes slowGlow {
   0%, 100% { filter: drop-shadow(0 0 3px #ff0000); }
@@ -513,7 +523,14 @@ function handleUrgeSkip() {
       setXP(Math.max(0,xp-50));
     }
   }
-
+function getAuraColor(level) {
+  if (level < 5) return "gray";     // E-Rank
+  if (level < 10) return "blue";    // D-Rank
+  if (level < 15) return "green";   // C-Rank
+  if (level < 20) return "purple";  // B-Rank
+  if (level < 25) return "gold";    // A-Rank
+  return "red";                     // S-Rank
+    }
   function logMockPercentile(percentile) {
   const today = new Date().toISOString().split("T")[0];
   const newEntry = { date: today, percentile: Number(percentile) };
@@ -1665,12 +1682,12 @@ function runArchitectDailyReport(testMode = false) {
       : "✅ You are ahead of your rival"}
   </p>       
 
-
-  <img
-    src={characterImages[Math.min(level - 1, characterImages.length - 1)]}
-    alt="Character"
-    className="mx-auto w-28 h-28 mt-4 rounded-full border-4 border-purple-400 shadow-lg object-cover transition-transform duration-300 hover:scale-105"
-  />
+<img
+  src={characterImages[Math.min(level - 1, characterImages.length - 1)]}
+  alt="Character"
+  style={{ "--aura-color": getAuraColor(level) }}
+  className="aura mx-auto w-28 h-28 mt-4 rounded-full border-4 border-purple-400 shadow-lg object-cover transition-transform duration-300 hover:scale-105"
+/>
 
 
     <p className="mt-1 text-lg font-semibold text-gray-300">
