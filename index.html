@@ -30,13 +30,30 @@
 
   </style>
 <style>
-  @keyframes badgeGlow {
-    0%, 100% { filter: drop-shadow(0 0 8px var(--badge-color)); }
-    50% { filter: drop-shadow(0 0 16px var(--badge-color)); }
+  @keyframes premiumGlow {
+  0% {
+    filter: drop-shadow(0 0 6px var(--badge-color)) 
+            drop-shadow(0 0 12px var(--badge-color));
+    transform: scale(1);
   }
-  .badge {
-    animation: badgeGlow 2.5s infinite alternate;
+  50% {
+    filter: drop-shadow(0 0 14px var(--badge-color)) 
+            drop-shadow(0 0 28px var(--badge-color));
+    transform: scale(1.1);
   }
+  100% {
+    filter: drop-shadow(0 0 6px var(--badge-color)) 
+            drop-shadow(0 0 12px var(--badge-color));
+    transform: scale(1);
+  }
+}
+
+.badge {
+  animation: premiumGlow 2.5s infinite ease-in-out;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+
 </style>
 <style>
 @keyframes auraPulse {
@@ -120,7 +137,19 @@ const rankBadges = {
   A: "https://yourcdn.com/badge-gold.png",
   S: "https://yourcdn.com/badge-crystal.png"
 };
-
+const characterForms = [
+  "https://img.icons8.com/color/256/person-male.png",        // L1 Human
+  "https://img.icons8.com/color/256/user-shield.png",        // L2 Faint Aura
+  "https://img.icons8.com/color/256/ghost.png",              // L3 Strong Aura
+  "https://img.icons8.com/color/256/gladiator.png",          // L4 Armor 1
+  "https://img.icons8.com/color/256/swordman.png",           // L5 Weapon
+  "https://img.icons8.com/color/256/ninja.png",              // L6 Dark Eyes
+  "https://img.icons8.com/color/256/knight.png",             // L7 Armor 2
+  "https://img.icons8.com/color/256/superhero.png",          // L8 Weapon Glow
+  "https://img.icons8.com/color/256/spartan-helmet.png",     // L9 Full Armor
+  "https://img.icons8.com/color/256/crown.png",              // L10 Crown Outline
+  "https://img.icons8.com/color/256/phoenix.png"             // L11+ Shadow Monarch
+];
 
 const rewards = [
   "Watch 1 anime episode",
@@ -541,6 +570,19 @@ function handleUrgeSkip() {
       setXP(Math.max(0,xp-50));
     }
   }
+  function getCharacterForm(level) {
+  if (level < 2) return characterForms[0];
+  if (level < 3) return characterForms[1];
+  if (level < 4) return characterForms[2];
+  if (level < 5) return characterForms[3];
+  if (level < 6) return characterForms[4];
+  if (level < 7) return characterForms[5];
+  if (level < 8) return characterForms[6];
+  if (level < 9) return characterForms[7];
+  if (level < 10) return characterForms[8];
+  if (level < 11) return characterForms[9];
+  return characterForms[10];
+    }
   function getRankInfo(level) {
   if (level < 5)  
     return {url: "https://static.thenounproject.com/png/4461072-512.png", color: "#A0A0A0"}; // E Rank (stone feel)
@@ -1714,10 +1756,10 @@ function runArchitectDailyReport(testMode = false) {
   </p>       
 
 <img
-  src={characterImages[Math.min(level - 1, characterImages.length - 1)]}
+  src={getCharacterForm(level)}
   alt="Character"
-  style={{ "--aura-color": getAuraColor(level) }}
-  className="aura mx-auto w-28 h-28 mt-4 rounded-full border-4 border-purple-400 shadow-lg object-cover transition-transform duration-300 hover:scale-105"
+  className="mx-auto w-28 h-28 mt-4 rounded-full border-4 border-purple-400 
+             shadow-lg object-cover transition-transform duration-500 hover:scale-110"
 />
 
 
