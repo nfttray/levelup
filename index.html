@@ -1705,11 +1705,15 @@ function runArchitectDailyReport(testMode = false) {
     {xp} / {getXPForLevel(level)} XP
   </p>
 
-  <button
+<button
   onClick={handleRelapse}
-  className="bg-orange-500 hover:bg-orange-600 transition-colors duration-200 mt-5 px-5 py-2 rounded-full w-full font-semibold shadow-md"
+  className="bg-gradient-to-r from-red-500 via-pink-500 to-yellow-500 
+             hover:from-red-600 hover:via-pink-600 hover:to-yellow-600
+             transition-all duration-300 mt-5 px-5 py-2 
+             rounded-full w-full font-semibold shadow-lg 
+             text-white tracking-wide animate-pulse"
 >
-  Relapse (-50 XP)
+  Lost Focus (-50 XP)
 </button>
 
 <button
