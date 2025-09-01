@@ -137,20 +137,20 @@ const rankBadges = {
   A: "https://yourcdn.com/badge-gold.png",
   S: "https://yourcdn.com/badge-crystal.png"
 };
+// Gamified RPG-style images for each level
 const characterForms = [
   "https://cdn-icons-png.flaticon.com/512/1995/1995539.png", // L1 Villager
   "https://cdn-icons-png.flaticon.com/512/1164/1164954.png", // L2 Apprentice
   "https://cdn-icons-png.flaticon.com/512/1995/1995574.png", // L3 Swordsman
-  "https://cdn-icons-png.flaticon.com/512/1995/1995574.png", // L4 Swordsman (same but aura CSS add karna)
+  "https://cdn-icons-png.flaticon.com/512/1995/1995574.png", // L4 Swordsman (glow/aura CSS)
   "https://cdn-icons-png.flaticon.com/512/1164/1164956.png", // L5 Warrior
-  "https://cdn-icons-png.flaticon.com/512/1164/1164956.png", // L6 Warrior upgrade (CSS glow)
+  "https://cdn-icons-png.flaticon.com/512/1164/1164956.png", // L6 Warrior (glow/aura CSS)
   "https://cdn-icons-png.flaticon.com/512/1164/1164955.png", // L7 Knight
-  "https://cdn-icons-png.flaticon.com/512/1164/1164955.png", // L8 Knight glow
+  "https://cdn-icons-png.flaticon.com/512/1164/1164955.png", // L8 Knight (glow/aura CSS)
   "https://cdn-icons-png.flaticon.com/512/1164/1164957.png", // L9 Paladin
-  "https://cdn-icons-png.flaticon.com/512/1164/1164957.png", // L10 Paladin aura
+  "https://cdn-icons-png.flaticon.com/512/1164/1164957.png", // L10 Paladin (glow/aura CSS)
   "https://cdn-icons-png.flaticon.com/512/1164/1164958.png"  // L11+ Legendary Hero
 ];
-
 
 
 const rewards = [
@@ -572,11 +572,23 @@ function handleUrgeSkip() {
       setXP(Math.max(0,xp-50));
     }
   }
-  function getCharacterForm(level) {
-  if (level <= 0) return characterForms[0];
-  if (level >= 11) return characterForms[10];
-  return characterForms[level - 1];
+  // Function to get character image element with glow for certain levels
+function getCharacterForm(level) {
+  const img = document.createElement("img");
+
+  // Keep level in range 1-11
+  if (level <= 0) level = 1;
+  if (level >= 11) level = 11;
+
+  img.src = characterForms[level - 1];
+
+  // Add glow/aura for certain levels
+  if ([4,6,8,10,11].includes(level)) {
+    img.classList.add("glow");
   }
+
+  return img;
+}
   function getRankInfo(level) {
   if (level < 5)  
     return {url: "https://static.thenounproject.com/png/4461072-512.png", color: "#A0A0A0"}; // E Rank (stone feel)
