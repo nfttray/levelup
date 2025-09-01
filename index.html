@@ -235,6 +235,16 @@ function App(){
 //  level: parseFloat(localStorage.getItem("rivalLevel")) || 1
   
 // }));
+  // Wake up tracking
+const [wakeUpOnTime, setWakeUpOnTime] = useState(
+  JSON.parse(localStorage.getItem("wakeUpOnTime")) || false
+);
+
+// Mock percentile tracking
+const [mockPercentile, setMockPercentile] = useState(
+  parseInt(localStorage.getItem("mockPercentile")) || 0
+);
+  
   const now = Date.now();
 //const lastUpdate = parseInt(localStorage.getItem('lastRivalUpdate')) || now;
   const [behindDays,setBehindDays]=useState(parseInt(localStorage.getItem('behindDays'))||0);
@@ -784,6 +794,8 @@ useEffect(() => {
   localStorage.setItem('taskLog', JSON.stringify(taskLog));
   localStorage.setItem('behindDays', behindDays);
   localStorage.setItem('dailyQuestList', JSON.stringify(dailyQuestList));
+  localStorage.setItem('wakeUpOnTime', JSON.stringify(wakeUpOnTime));   
+  localStorage.setItem('mockPercentile', mockPercentile);           
     
 
   // Architect persistence
