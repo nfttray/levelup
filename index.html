@@ -29,7 +29,15 @@
     }
 
   </style>
-
+<style>
+  @keyframes badgeGlow {
+    0%, 100% { filter: drop-shadow(0 0 8px var(--badge-color)); }
+    50% { filter: drop-shadow(0 0 16px var(--badge-color)); }
+  }
+  .badge {
+    animation: badgeGlow 2.5s infinite alternate;
+  }
+</style>
 <style>
 @keyframes auraPulse {
   0%, 100% { box-shadow: 0 0 15px var(--aura-color), 0 0 30px var(--aura-color); }
@@ -104,6 +112,15 @@ const deathModePunishments = [
   "Revise 200 screenshot"
   
 ];
+const rankBadges = {
+  E: "https://yourcdn.com/badge-stone.png",
+  D: "https://yourcdn.com/badge-steel.png",
+  C: "https://yourcdn.com/badge-bronze.png",
+  B: "https://yourcdn.com/badge-silver.png",
+  A: "https://yourcdn.com/badge-gold.png",
+  S: "https://yourcdn.com/badge-crystal.png"
+};
+
 
 const rewards = [
   "Watch 1 anime episode",
@@ -511,7 +528,8 @@ React.useEffect(() => {
   setShowUrgeModal(false);
   setXP(prevXP => prevXP + 3); // Reward +3 XP
 }
-
+  
+  
 function handleUrgeSkip() {
   setShowUrgeModal(false);
   setXP(prevXP => Math.max(0, prevXP - 5)); // -5 XP
@@ -523,6 +541,16 @@ function handleUrgeSkip() {
       setXP(Math.max(0,xp-50));
     }
   }
+
+  function getRankInfo(level) {
+  if (level < 5) return {url: "https://yourcdn.com/badge-stone.png", color: "#A0A0A0"};
+  if (level < 10) return {url: "https://yourcdn.com/badge-steel.png", color: "#B0C4DE"};
+  if (level < 15) return {url: "https://yourcdn.com/badge-bronze.png", color: "#CD7F32"};
+  if (level < 20) return {url: "https://yourcdn.com/badge-silver.png", color: "#C0C0C0"};
+  if (level < 25) return {url: "https://yourcdn.com/badge-gold.png", color: "#FFD700"};
+  return {url: "https://yourcdn.com/badge-crystal.png", color: "#FF4500"};
+  }
+  
 function getAuraColor(level) {
   if (level < 5) return "gray";     // E-Rank
   if (level < 10) return "blue";    // D-Rank
@@ -1688,7 +1716,24 @@ function runArchitectDailyReport(testMode = false) {
   style={{ "--aura-color": getAuraColor(level) }}
   className="aura mx-auto w-28 h-28 mt-4 rounded-full border-4 border-purple-400 shadow-lg object-cover transition-transform duration-300 hover:scale-105"
 />
+<img
+  src={characterImages[Math.min(level - 1, characterImages.length - 1)]}
+  alt="Character"
+  className="aura mx-auto w-28 h-28 mt-4 rounded-full border-4 border-purple-400 shadow-lg object-cover transition-transform duration-300 hover:scale-105"
+/>
 
+{/* Rank Badge */}
+{(() => {
+  const rank = getRankInfo(level);
+  return (
+    <img
+      src={rank.url}
+      alt="Rank Badge"
+      className="badge mx-auto mt-3 w-12 h-12"
+      style={{ "--badge-color": rank.color }}
+    />
+  );
+})()}
 
     <p className="mt-1 text-lg font-semibold text-gray-300">
     Level {level} ({getRank(level)})
