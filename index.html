@@ -768,19 +768,19 @@ addPunishment({
   }
 // === MOTIVATION SYSTEM ===
 
-
-
-// Trigger every 3 hours
+// === MOTIVATION SYSTEM (works even if app closed) ===
 useEffect(() => {
-  const interval = setInterval(() => {
+  const now = Date.now();
+  const lastTime = parseInt(localStorage.getItem("lastMotivationTime") || 0, 10);
+
+  // Agar 3 ghante ho gaye ya pehli baar hai → naya message dikhado
+  if (!lastTime || now - lastTime >= 3 * 60 * 60 * 1000) {
     const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
     setMotivationText(randomQuote);
     setShowMotivation(true);
-  }, 3 * 60 * 60 * 1000); // ⏳ every 3 hrs
- 
-  return () => clearInterval(interval);
+    localStorage.setItem("lastMotivationTime", String(now));
+  }
 }, []);
-  
 
 // Habits daily reset (midnight only, recurring every day)
 useEffect(() => {
