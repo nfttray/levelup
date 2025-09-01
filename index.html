@@ -583,9 +583,10 @@ useEffect(() => {
   const interval = setInterval(() => {
     const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
     setMotivationText(randomQuote);
-    setShowMotivation(true);
-  }, 3 * 60 * 60 * 1000); // ⏳ every 3 hrs
-
+//    setShowMotivation(true);
+//  }, 3 * 60 * 60 * 1000); // ⏳ every 3 hrs
+setShowMotivation(true);
+  }, 10000); 
   return () => clearInterval(interval);
 }, []);
   // Habits daily reset (midnight only, not on reload)
