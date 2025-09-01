@@ -323,16 +323,34 @@ const [challenge, setChallenge] = React.useState(() => {
 const [status, setStatus] = React.useState(""); // "", "completed", "failed"
 
 
+// === REWARD SYSTEM ===
 
-  // === REWARD SYSTEM ===
-
-
+// Reward states
 const [showReward, setShowReward] = useState(false);
 const [rewardText, setRewardText] = useState("");
 const [rewardTime, setRewardTime] = useState(0);
 const [rewardActive, setRewardActive] = useState(false);
+const [tasksCompletedCount, setTasksCompletedCount] = useState(0);
 
-// Reward timer effect
+// ✅ Handle Task Completion
+function handleTaskCompletion() {
+  setTasksCompletedCount(prevCount => {
+    const newCount = prevCount + 1;
+
+    // Har 3 task complete hone par reward trigger
+    if (newCount % 3 === 0) {
+      const randomReward = rewardMessages[Math.floor(Math.random() * rewardMessages.length)];
+      setRewardText(randomReward);
+      setShowReward(true);
+      setRewardTime(0);
+      setRewardActive(false);
+    }
+
+    return newCount;
+  });
+}
+
+// ✅ Reward timer countdown
 useEffect(() => {
   let interval;
   if (rewardActive && rewardTime > 0) {
@@ -349,35 +367,8 @@ useEffect(() => {
   }
   return () => clearInterval(interval);
 }, [rewardActive, rewardTime]);
-// === STATE ===
-const [tasksCompletedCount, setTasksCompletedCount] = useState(0);
 
-// --- Modified completeTask ---
-function completeTask(id) {
-  const completedTask = tasks.find(t => t.id === id);
-  setTasks(tasks.filter(t => t.id !== id));
-  setXP(xp + 2);
 
-  setTaskLog(prev => [...prev, completedTask.title]);
-
-  // ✅ Task counter badhao
-  setTasksCompletedCount(prevCount => {
-    const newCount = prevCount + 1;
-
-    // Har 3 task complete hone pe reward trigger
-    if (newCount % 3 === 0) {
-      const randomReward = rewardMessages[Math.floor(Math.random() * rewardMessages.length)];
-      setRewardText(randomReward);
-      setShowReward(true);
-      setRewardTime(0);
-      setRewardActive(false);
-    }
-
-    return newCount;
-  });
-
-  setBossCountdown(bossCountdown + 1);
-  }
 
 
 // Save to localStorage
@@ -1365,6 +1356,7 @@ React.useEffect(() => {
   }
 
   setBossCountdown(bossCountdown + 1);
+    handleTaskCompletion();
     }
 
   function completeHabit(id){
@@ -1752,7 +1744,7 @@ function runArchitectDailyReport(testMode = false) {
 
       
 
-{showReward && (
+  {showReward && (
   <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
     <div className="bg-gray-900 p-6 rounded-2xl text-center shadow-2xl border border-yellow-500 max-w-sm">
       <h2 className="text-2xl font-bold mb-4 text-yellow-400">🏆 Reward Unlocked</h2>
