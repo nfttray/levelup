@@ -138,18 +138,20 @@ const rankBadges = {
   S: "https://yourcdn.com/badge-crystal.png"
 };
 const characterForms = [
-  "https://img.icons8.com/color/256/person-male.png",        // L1 Human
-  "https://img.icons8.com/color/256/user-shield.png",        // L2 Faint Aura
-  "https://img.icons8.com/color/256/ghost.png",              // L3 Strong Aura
-  "https://img.icons8.com/color/256/gladiator.png",          // L4 Armor 1
-  "https://img.icons8.com/color/256/swordman.png",           // L5 Weapon
-  "https://img.icons8.com/color/256/ninja.png",              // L6 Dark Eyes
-  "https://img.icons8.com/color/256/knight.png",             // L7 Armor 2
-  "https://img.icons8.com/color/256/superhero.png",          // L8 Weapon Glow
-  "https://img.icons8.com/color/256/spartan-helmet.png",     // L9 Full Armor
-  "https://img.icons8.com/color/256/crown.png",              // L10 Crown Outline
-  "https://img.icons8.com/color/256/phoenix.png"             // L11+ Shadow Monarch
+  "https://cdn-icons-png.flaticon.com/512/1995/1995539.png", // L1 Villager
+  "https://cdn-icons-png.flaticon.com/512/1164/1164954.png", // L2 Apprentice
+  "https://cdn-icons-png.flaticon.com/512/1995/1995574.png", // L3 Swordsman
+  "https://cdn-icons-png.flaticon.com/512/1995/1995574.png", // L4 Swordsman (same but aura CSS add karna)
+  "https://cdn-icons-png.flaticon.com/512/1164/1164956.png", // L5 Warrior
+  "https://cdn-icons-png.flaticon.com/512/1164/1164956.png", // L6 Warrior upgrade (CSS glow)
+  "https://cdn-icons-png.flaticon.com/512/1164/1164955.png", // L7 Knight
+  "https://cdn-icons-png.flaticon.com/512/1164/1164955.png", // L8 Knight glow
+  "https://cdn-icons-png.flaticon.com/512/1164/1164957.png", // L9 Paladin
+  "https://cdn-icons-png.flaticon.com/512/1164/1164957.png", // L10 Paladin aura
+  "https://cdn-icons-png.flaticon.com/512/1164/1164958.png"  // L11+ Legendary Hero
 ];
+
+
 
 const rewards = [
   "Watch 1 anime episode",
@@ -571,18 +573,10 @@ function handleUrgeSkip() {
     }
   }
   function getCharacterForm(level) {
-  if (level < 2) return characterForms[0];
-  if (level < 3) return characterForms[1];
-  if (level < 4) return characterForms[2];
-  if (level < 5) return characterForms[3];
-  if (level < 6) return characterForms[4];
-  if (level < 7) return characterForms[5];
-  if (level < 8) return characterForms[6];
-  if (level < 9) return characterForms[7];
-  if (level < 10) return characterForms[8];
-  if (level < 11) return characterForms[9];
-  return characterForms[10];
-    }
+  if (level <= 0) return characterForms[0];
+  if (level >= 11) return characterForms[10];
+  return characterForms[level - 1];
+  }
   function getRankInfo(level) {
   if (level < 5)  
     return {url: "https://static.thenounproject.com/png/4461072-512.png", color: "#A0A0A0"}; // E Rank (stone feel)
