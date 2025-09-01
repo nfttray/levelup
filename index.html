@@ -349,27 +349,36 @@ useEffect(() => {
   }
   return () => clearInterval(interval);
 }, [rewardActive, rewardTime]);
+// === STATE ===
+const [tasksCompletedCount, setTasksCompletedCount] = useState(0);
 
-// --- Modify completeTask ---
+// --- Modified completeTask ---
 function completeTask(id) {
   const completedTask = tasks.find(t => t.id === id);
   setTasks(tasks.filter(t => t.id !== id));
   setXP(xp + 2);
 
-  const updatedLog = [...taskLog, completedTask.title];
-  setTaskLog(updatedLog);
+  setTaskLog(prev => [...prev, completedTask.title]);
 
-  // ✅ Reward trigger every 3 tasks
-  if (updatedLog.length % 3 === 0) {
-    const randomReward = rewardMessages[Math.floor(Math.random() * rewardMessages.length)];
-    setRewardText(randomReward);
-    setShowReward(true);
-    setRewardTime(0);
-    setRewardActive(false);
-  }
+  // ✅ Task counter badhao
+  setTasksCompletedCount(prevCount => {
+    const newCount = prevCount + 1;
+
+    // Har 3 task complete hone pe reward trigger
+    if (newCount % 3 === 0) {
+      const randomReward = rewardMessages[Math.floor(Math.random() * rewardMessages.length)];
+      setRewardText(randomReward);
+      setShowReward(true);
+      setRewardTime(0);
+      setRewardActive(false);
+    }
+
+    return newCount;
+  });
 
   setBossCountdown(bossCountdown + 1);
-}
+  }
+
 
 // Save to localStorage
 React.useEffect(() => {
