@@ -541,15 +541,14 @@ function handleUrgeSkip() {
       setXP(Math.max(0,xp-50));
     }
   }
-
-  function getRankInfo(level) {
-  if (level < 5) return {url: "https://yourcdn.com/badge-stone.png", color: "#A0A0A0"};
-  if (level < 10) return {url: "https://yourcdn.com/badge-steel.png", color: "#B0C4DE"};
-  if (level < 15) return {url: "https://yourcdn.com/badge-bronze.png", color: "#CD7F32"};
-  if (level < 20) return {url: "https://yourcdn.com/badge-silver.png", color: "#C0C0C0"};
-  if (level < 25) return {url: "https://yourcdn.com/badge-gold.png", color: "#FFD700"};
-  return {url: "https://yourcdn.com/badge-crystal.png", color: "#FF4500"};
-  }
+function getRankInfo(level) {
+  if (level < 5) return {url: "https://img.icons8.com/color/96/rock.png", color: "#A0A0A0"};       // E
+  if (level < 10) return {url: "https://img.icons8.com/color/96/shield.png", color: "#B0C4DE"};    // D
+  if (level < 15) return {url: "https://img.icons8.com/color/96/bronze-medal.png", color: "#CD7F32"}; // C
+  if (level < 20) return {url: "https://img.icons8.com/color/96/silver-medal.png", color: "#C0C0C0"}; // B
+  if (level < 25) return {url: "https://img.icons8.com/color/96/gold-medal.png", color: "#FFD700"};  // A
+  return {url: "https://img.icons8.com/color/96/christmas-star.png", color: "#FF4500"};              // S
+    }
   
 function getAuraColor(level) {
   if (level < 5) return "gray";     // E-Rank
@@ -1716,11 +1715,7 @@ function runArchitectDailyReport(testMode = false) {
   style={{ "--aura-color": getAuraColor(level) }}
   className="aura mx-auto w-28 h-28 mt-4 rounded-full border-4 border-purple-400 shadow-lg object-cover transition-transform duration-300 hover:scale-105"
 />
-<img
-  src={characterImages[Math.min(level - 1, characterImages.length - 1)]}
-  alt="Character"
-  className="aura mx-auto w-28 h-28 mt-4 rounded-full border-4 border-purple-400 shadow-lg object-cover transition-transform duration-300 hover:scale-105"
-/>
+
 
 {/* Rank Badge */}
 {(() => {
