@@ -307,6 +307,68 @@ const [challenge, setChallenge] = React.useState(() => {
 
 const [status, setStatus] = React.useState(""); // "", "completed", "failed"
 
+
+
+  // === REWARD SYSTEM ===
+const rewardMessages = [
+  "☕ Take a coffee/tea break — you earned it!",
+  "🎵 Listen to 1 song guilt-free.",
+  "🍫 Eat a small snack you like.",
+  "🚶 Go for a 5 min walk.",
+  "📱 10 minutes social media allowed.",
+  "🧘 Stretch or meditate for 2 min.",
+  "📖 Read 2 pages of your fav book.",
+  "🌳 Go outside, breathe fresh air.",
+  "💧 Drink water and stretch your back.",
+  "🔥 Quick dopamine refill: watch 1 short anime clip.",
+  "🛡️ Shadow Monarch grants you a rest — but only 10 min!",
+  "⚡ Reward unlocked: write a random thought in your journal.",
+];
+
+const [showReward, setShowReward] = useState(false);
+const [rewardText, setRewardText] = useState("");
+const [rewardTime, setRewardTime] = useState(0);
+const [rewardActive, setRewardActive] = useState(false);
+
+// Reward timer effect
+useEffect(() => {
+  let interval;
+  if (rewardActive && rewardTime > 0) {
+    interval = setInterval(() => {
+      setRewardTime(prev => {
+        if (prev <= 1) {
+          setShowReward(false);
+          setRewardActive(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
+  return () => clearInterval(interval);
+}, [rewardActive, rewardTime]);
+
+// --- Modify completeTask ---
+function completeTask(id) {
+  const completedTask = tasks.find(t => t.id === id);
+  setTasks(tasks.filter(t => t.id !== id));
+  setXP(xp + 2);
+
+  const updatedLog = [...taskLog, completedTask.title];
+  setTaskLog(updatedLog);
+
+  // ✅ Reward trigger every 3 tasks
+  if (updatedLog.length % 3 === 0) {
+    const randomReward = rewardMessages[Math.floor(Math.random() * rewardMessages.length)];
+    setRewardText(randomReward);
+    setShowReward(true);
+    setRewardTime(0);
+    setRewardActive(false);
+  }
+
+  setBossCountdown(bossCountdown + 1);
+}
+
 // Save to localStorage
 React.useEffect(() => {
   if (challenge) {
@@ -315,7 +377,7 @@ React.useEffect(() => {
     localStorage.removeItem("disrespectChallenge");
   }
 }, [challenge]);
-
+  
 // ---- Start Challenge ----
 function startChallenge(type, target, duration) {
   const base = { type, target, startDate: Date.now() };
@@ -1672,6 +1734,43 @@ function runArchitectDailyReport(testMode = false) {
         className="bg-blue-600 px-5 py-2 rounded-lg shadow-md"
       >
         OK
+      </button>
+    </div>
+  </div>
+)}
+
+      
+// === REWARD MODAL ===
+{showReward && (
+  <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+    <div className="bg-gray-900 p-6 rounded-2xl text-center shadow-2xl border border-yellow-500 max-w-sm">
+      <h2 className="text-2xl font-bold mb-4 text-yellow-400">🏆 Reward Unlocked</h2>
+      <p className="mb-4 text-lg text-white">{rewardText}</p>
+
+      {!rewardActive ? (
+        <button
+          onClick={() => {
+            setRewardTime(600); // 600 sec = 10 min
+            setRewardActive(true);
+          }}
+          className="bg-yellow-500 hover:bg-yellow-600 text-black px-6 py-2 rounded-lg font-bold shadow-md"
+        >
+          Start 10 min Reward
+        </button>
+      ) : (
+        <p className="text-lg font-bold text-green-400 animate-pulse">
+          ⏳ {Math.floor(rewardTime / 60)}:{String(rewardTime % 60).padStart(2, "0")}
+        </p>
+      )}
+
+      <button
+        onClick={() => {
+          setShowReward(false);
+          setRewardActive(false);
+        }}
+        className="mt-4 bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg shadow-md font-semibold"
+      >
+        End Reward Early
       </button>
     </div>
   </div>
