@@ -102,7 +102,28 @@ const rewards = [
   "Take a relaxing walk for 20 minutes",
   "Watch Instagram for 20 minutes guilt-free"
 ];
-
+const motivationalQuotes = [
+  "⚔️ Keep grinding, Shadow Monarch!",
+  "🔥 Your rival is training harder – don’t fall behind!",
+  "💀 Comfort is death, rise up!",
+  "⚡ Push limits, break chains!",
+  "🏆 Discipline > Motivation. Act now!",
+  "🩸 Sacrifice today, glory tomorrow!",
+  "📚 Every solved question is a sword strike against weakness.",
+  "⏳ Time is running… act before regret catches you.",
+  "👑 You are the ruler of your fate — don’t kneel before laziness.",
+  "💡 Small progress daily > random bursts of energy.",
+  "🌑 Darkness is closing in — light your fire with effort.",
+  "🔥 Train like your rival is watching every second.",
+  "💀 If you stop, your rival wins instantly.",
+  "⚡ The harder you grind, the stronger you evolve.",
+  "🏹 Aim sharp, strike precise — distractions are your true enemy.",
+  "🕛 1 wasted hour = rival getting ahead forever.",
+  "🩸 Pain is proof that you are still alive in the battle.",
+  "⚔️ A hunter never sleeps — rise again, no excuses.",
+  "👁️ The future you want is watching — don’t betray it.",
+  "🔥 Discipline is the highest form of power.",
+];
 // === DAILY QUEST EXERCISES (7 Days) ===
 const weeklyQuestExercises = [
   ["Curl Bar Overhead Press – 4 × 12","Dumbbell Lateral Raise – 4 × 15","Dumbbell Shrugs – 3 × 20","Reverse Fly – 3 × 15","Yoga: Bhujangasana – 2 × 30 sec"],
@@ -270,6 +291,9 @@ const [architectNegativeStreak, setArchitectNegativeStreak] = useState(parseInt(
   }, 10000);
   }
 // ---- STATE (add with your other states) ----
+  const [showMotivation, setShowMotivation] = useState(false);
+const [motivationText, setMotivationText] = useState("");
+  
   // ---- States ----
 const [showDisrespectModal, setShowDisrespectModal] = React.useState(false);
 const [challengeType, setChallengeType] = React.useState("");
@@ -550,7 +574,20 @@ addPunishment({
     const secs=totalSeconds%60;
     return `${hrs}h ${mins}m ${secs}s`;
   }
+// === MOTIVATION SYSTEM ===
 
+
+
+// Trigger every 3 hours
+useEffect(() => {
+  const interval = setInterval(() => {
+    const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+    setMotivationText(randomQuote);
+    setShowMotivation(true);
+  }, 3 * 60 * 60 * 1000); // ⏳ every 3 hrs
+
+  return () => clearInterval(interval);
+}, []);
   // Habits daily reset (midnight only, not on reload)
 useEffect(() => {
   function resetHabits() {
@@ -1625,7 +1662,20 @@ function runArchitectDailyReport(testMode = false) {
   </div>
 )}
       </header>
-        
+        {showMotivation && (
+  <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+    <div className="bg-gray-900 p-6 rounded-xl text-center shadow-lg max-w-sm">
+      <h2 className="text-lg font-bold mb-4 text-green-400">🔥 Motivation</h2>
+      <p className="mb-6">{motivationText}</p>
+      <button
+        onClick={() => setShowMotivation(false)}
+        className="bg-blue-600 px-5 py-2 rounded-lg shadow-md"
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
       {/* Dopamine Detox Section */}
       <div  className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
