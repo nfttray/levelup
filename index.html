@@ -124,6 +124,21 @@ const motivationalQuotes = [
   "👁️ The future you want is watching — don’t betray it.",
   "🔥 Discipline is the highest form of power.",
 ];
+
+  const rewardMessages = [
+  "☕ Take a coffee/tea break — you earned it!",
+  "🎵 Listen to 1 song guilt-free.",
+  "🍫 Eat a small snack you like.",
+  "🚶 Go for a 5 min walk.",
+  "📱 10 minutes social media allowed.",
+  "🧘 Stretch or meditate for 2 min.",
+  "📖 Read 2 pages of your fav book.",
+  "🌳 Go outside, breathe fresh air.",
+  "💧 Drink water and stretch your back.",
+  "🔥 Quick dopamine refill: watch 1 short anime clip.",
+  "🛡️ Shadow Monarch grants you a rest — but only 10 min!",
+  "⚡ Reward unlocked: write a random thought in your journal.",
+];
 // === DAILY QUEST EXERCISES (7 Days) ===
 const weeklyQuestExercises = [
   ["Curl Bar Overhead Press – 4 × 12","Dumbbell Lateral Raise – 4 × 15","Dumbbell Shrugs – 3 × 20","Reverse Fly – 3 × 15","Yoga: Bhujangasana – 2 × 30 sec"],
@@ -310,20 +325,7 @@ const [status, setStatus] = React.useState(""); // "", "completed", "failed"
 
 
   // === REWARD SYSTEM ===
-const rewardMessages = [
-  "☕ Take a coffee/tea break — you earned it!",
-  "🎵 Listen to 1 song guilt-free.",
-  "🍫 Eat a small snack you like.",
-  "🚶 Go for a 5 min walk.",
-  "📱 10 minutes social media allowed.",
-  "🧘 Stretch or meditate for 2 min.",
-  "📖 Read 2 pages of your fav book.",
-  "🌳 Go outside, breathe fresh air.",
-  "💧 Drink water and stretch your back.",
-  "🔥 Quick dopamine refill: watch 1 short anime clip.",
-  "🛡️ Shadow Monarch grants you a rest — but only 10 min!",
-  "⚡ Reward unlocked: write a random thought in your journal.",
-];
+
 
 const [showReward, setShowReward] = useState(false);
 const [rewardText, setRewardText] = useState("");
