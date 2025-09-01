@@ -233,6 +233,7 @@ function App(){
 //  const [rival, setRival] = useState(() => ({
 //  xp: parseFloat(localStorage.getItem("rivalXP")) || 0,
 //  level: parseFloat(localStorage.getItem("rivalLevel")) || 1
+  
 // }));
   const now = Date.now();
 //const lastUpdate = parseInt(localStorage.getItem('lastRivalUpdate')) || now;
@@ -783,6 +784,7 @@ useEffect(() => {
   localStorage.setItem('taskLog', JSON.stringify(taskLog));
   localStorage.setItem('behindDays', behindDays);
   localStorage.setItem('dailyQuestList', JSON.stringify(dailyQuestList));
+    
 
   // Architect persistence
   localStorage.setItem('architectThreshold', String(architectThreshold));
@@ -1106,8 +1108,10 @@ function logWakeUp() {
   const now = new Date();
   const hours = now.getHours();
   const minutes = now.getMinutes();
-  const timeStr = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
-  
+  const timeStr = `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}`;
+
   setWakeUpTime(timeStr);
   localStorage.setItem("wakeUpTime", timeStr);
   localStorage.setItem("wakeUpLoggedToday", new Date().toDateString());
@@ -1118,21 +1122,32 @@ function logWakeUp() {
   goalDate.setHours(goalH, goalM, 0, 0);
 
   if (now <= goalDate) {
-    setXP(prev => prev + 5);
-    setFogLevel(prev => Math.max(0, prev - 10));
-    alert(`🌅 Early wake up! Goal ${goalWakeUp}, You: ${timeStr}\n+5 XP, -10% Fog`);
+    // ✅ Mark success in state + storage
+    setWakeUpOnTime(true);
+    localStorage.setItem("wakeUpOnTime", "true");
+
+    setXP((prev) => prev + 5);
+    setFogLevel((prev) => Math.max(0, prev - 10));
+    alert(
+      `🌅 Early wake up! Goal ${goalWakeUp}, You: ${timeStr}\n+5 XP, -10% Fog`
+    );
   } else {
-    setXP(prev => Math.max(0, prev - 5));
-    setFogLevel(prev => Math.min(100, prev + 10));
+    // ❌ Mark fail in state + storage
+    setWakeUpOnTime(false);
+    localStorage.setItem("wakeUpOnTime", "false");
+
+    setXP((prev) => Math.max(0, prev - 5));
+    setFogLevel((prev) => Math.min(100, prev + 10));
     addPunishment({
       type: "lateWake",
       text: `⏰ You woke up late! Goal ${goalWakeUp}, You: ${timeStr}\nPunishment: Solve 50 questions or 20 push-ups`,
-      deathMode: false
+      deathMode: false,
     });
-    alert(`⚠️ Late wake up! Goal ${goalWakeUp}, You: ${timeStr}\n-5 XP, +10% Fog`);
+    alert(
+      `⚠️ Late wake up! Goal ${goalWakeUp}, You: ${timeStr}\n-5 XP, +10% Fog`
+    );
   }
-     
-}
+  }
 
   // === Wake Up Auto Penalty Check (midnight reset style) ===
 // === Wake Up Miss Punishment (Midnight Check Only, Once per Day) ===
@@ -1253,6 +1268,8 @@ React.useEffect(() => {
 function saveDailySummary() {
   const today = new Date().toISOString().split("T")[0];
   const history = JSON.parse(localStorage.getItem("history") || "[]");
+  const latestMock =
+  mockHistory.length > 0 ? mockHistory[mockHistory.length - 1].percentile : 0;
 
   // Calculate XP gained today from xpStartValue
   const xpStartValue = parseInt(localStorage.getItem('xpStartValue')) || xp;
@@ -1271,10 +1288,9 @@ function saveDailySummary() {
     relapseHua: relapseHua, // 🔹 store relapse status
     dopamineActive: dopamineActive, // 🔹 store dopamine toggle
     dopamineLevel: dopamineLevel, // 🔹 store dopamine level %
+wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
+  mockPercentile: latestMock || 0
 
-    // 🆕 New fields for Architect & Calendar
-    wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
-    mockPercentile: parseInt(localStorage.getItem("mockPercentile")) || 0
   };
 
   const existingIndex = history.findIndex(h => h.date === today);
