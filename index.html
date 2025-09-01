@@ -1755,14 +1755,17 @@ function runArchitectDailyReport(testMode = false) {
       ? "🔥 Rival is ahead of you!"
       : "✅ You are ahead of your rival"}
   </p>       
-function XPProgressRing({ xp, level }) {
+
+function XPProgressRing(props) {
+  const xp = props.xp;
+  const level = props.level;
+
   const radius = 54;                // circle radius
   const circumference = 2 * Math.PI * radius;
   const progress = (xp / getXPForLevel(level)) * circumference;
 
   return (
     <div className="relative flex justify-center items-center">
-      {/* Background circle */}
       <svg className="absolute -rotate-90" width="120" height="120">
         <circle
           cx="60"
@@ -1772,7 +1775,6 @@ function XPProgressRing({ xp, level }) {
           strokeWidth="8"
           fill="none"
         />
-        {/* Progress circle */}
         <circle
           cx="60"
           cy="60"
@@ -1784,16 +1786,14 @@ function XPProgressRing({ xp, level }) {
           strokeDashoffset={circumference - progress}
           className="transition-all duration-700 ease-in-out"
         />
-        {/* Gradient definition */}
         <defs>
           <linearGradient id="xpGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#3b82f6" /> {/* blue-500 */}
-            <stop offset="100%" stopColor="#9333ea" /> {/* purple-600 */}
+            <stop offset="0%" stopColor="#3b82f6" />
+            <stop offset="100%" stopColor="#9333ea" />
           </linearGradient>
         </defs>
       </svg>
 
-      {/* Character in center */}
       <div className="w-24 h-24 rounded-full border-4 border-red-500 
                       shadow-[0_0_25px_10px_rgba(239,68,68,0.7)] animate-pulse flex items-center justify-center">
         <img
