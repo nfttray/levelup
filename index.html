@@ -785,15 +785,17 @@ useEffect(() => {
 // Habits daily reset (midnight only, recurring every day)
 useEffect(() => {
   function resetHabits() {
-    const today = new Date().toDateString();
-    setHabits(prev =>
-      prev.map(h => ({
-        ...h,
-        done: false,     // reset everyday
-        lastReset: today // track last reset
-      }))
-    );
-    console.log("♻️ Habits reset at midnight:", today);
+  const today = new Date().toDateString();
+  setHabits(prev => {
+    const updated = prev.map(h => ({
+      ...h,
+      done: false,
+      lastReset: today
+    }));
+    localStorage.setItem("habits", JSON.stringify(updated)); // 🟢 FIX
+    return updated;
+  });
+  console.log("♻️ Habits reset at midnight:", today);
   }
 
   // Abhi se agle midnight ka time nikal lo
