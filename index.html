@@ -782,36 +782,36 @@ useEffect(() => {
   }
 }, []);
 
-// Habits daily reset (midnight only, recurring every day)
 useEffect(() => {
   function resetHabits() {
-  const today = new Date().toDateString();
-  setHabits(prev => {
-    const updated = prev.map(h => ({
-      ...h,
-      done: false,
-      lastReset: today
-    }));
-    localStorage.setItem("habits", JSON.stringify(updated)); // 🟢 FIX
-    return updated;
-  });
-  console.log("♻️ Habits reset at midnight:", today);
+    const today = new Date().toDateString();
+    setHabits(prev => {
+      const updated = prev.map(h => ({
+        ...h,
+        done: false,
+        lastReset: today,
+      }));
+      localStorage.setItem("habits", JSON.stringify(updated));
+      return updated;
+    });
+    console.log("♻️ Habits reset at midnight:", today);
   }
 
-  // Abhi se agle midnight ka time nikal lo
   const now = new Date();
   const millisTillMidnight =
-  new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5) - now;
+    new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5) - now;
 
-  // Pehli reset midnight pe
   const midnightTimeout = setTimeout(() => {
     resetHabits();
-    // ✅ Ab har 24 ghante repeat hoga
-    setInterval(resetHabits, 24 * 60 * 60 * 1000);
+    // Interval ka ref store karna zaroori hai
+    intervalRef.current = setInterval(resetHabits, 24 * 60 * 60 * 1000);
   }, millisTillMidnight);
 
-  return () => clearTimeout(midnightTimeout);
-}, []); // ✅ sirf mount pe chalega, habits change pe nahi
+  return () => {
+    clearTimeout(midnightTimeout);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
+}, []);
   
 // === Decay System Effect ===
   useEffect(() => {
