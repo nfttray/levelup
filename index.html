@@ -1024,6 +1024,28 @@ useEffect(() => {
     return () => clearTimeout(timer); // Cleanup if modal closes early
   }
 }, [selectedHistoryDay]);
+  
+  useEffect(() => {
+  const today = new Date().toDateString();
+  setHabits(prev => {
+    // Agar empty array ya pehla habit ho
+    if (prev.length === 0) return prev;
+
+    // Check karo lastReset
+    const needsReset = prev.some(h => h.lastReset !== today);
+    if (needsReset) {
+      const updated = prev.map(h => ({
+        ...h,
+        done: false,
+        lastReset: today,
+      }));
+      localStorage.setItem("habits", JSON.stringify(updated));
+      console.log("⚡ Immediate reset on app start:", today);
+      return updated;
+    }
+    return prev;
+  });
+}, []);
 
   // Dopamine Detox System
 
