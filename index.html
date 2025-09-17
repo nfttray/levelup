@@ -1199,7 +1199,7 @@ useEffect(() => {
   // Boss Fight Check
 useEffect(() => {
   // === Small Boss after 7 tasks ===
-  if (bossCountdown >= 7 && !punishments.some(p => p.type === 'smallBoss')) {
+  if (bossCountdown >= 6 && !punishments.some(p => p.type === 'smallBoss')) {
   addPunishment({
     type: 'smallBoss',
     text: "Small Boss Fight! Complete within 3 hrs!",
