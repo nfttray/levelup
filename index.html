@@ -476,6 +476,7 @@ const [rewardText, setRewardText] = useState("");
 const [rewardTime, setRewardTime] = useState(0);
 const [rewardActive, setRewardActive] = useState(false);
 const [tasksCompletedCount, setTasksCompletedCount] = useState(0);
+  
 
 // ✅ Handle Task Completion
 function handleTaskCompletion() {
@@ -665,6 +666,33 @@ function getCharacterForm(level) {
 
   return img;
 }
+
+  function getTaskRemainingTime(task) {
+  if (!task.start || !task.end) return null;
+
+  const now = new Date();
+  const [startH, startM] = task.start.split(":").map(Number);
+  const [endH, endM] = task.end.split(":").map(Number);
+
+  const startTime = new Date();
+  startTime.setHours(startH, startM, 0, 0);
+
+  const endTime = new Date();
+  endTime.setHours(endH, endM, 0, 0);
+
+  if (now < startTime) {
+    return `Starts at ${task.start}`;
+  } else if (now >= startTime && now <= endTime) {
+    const diff = endTime - now;
+    const hrs = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+    return `${hrs}h ${mins}m ${secs}s left`;
+  } else {
+    return "Expired!";
+  }
+  }
+  
   function getRankInfo(level) {
   if (level < 5)  
     return {url: "https://static.thenounproject.com/png/4461072-512.png", color: "#A0A0A0"}; // E Rank (stone feel)
@@ -821,7 +849,19 @@ addPunishment({
     const secs=totalSeconds%60;
     return `${hrs}h ${mins}m ${secs}s`;
   }
-// === MOTIVATION SYSTEM ===
+const [taskTimers, setTaskTimers] = useState({});
+
+useEffect(() => {
+  const interval = setInterval(() => {
+    let updatedTimers = {};
+    tasks.forEach(task => {
+      updatedTimers[task.id] = getTaskRemainingTime(task);
+    });
+    setTaskTimers(updatedTimers);
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [tasks]);
 
 // === MOTIVATION SYSTEM (works even if app closed) ===
 useEffect(() => {
@@ -2579,6 +2619,9 @@ function runArchitectDailyReport(testMode = false) {
     ? `Time: ${task.start}-${task.end}`
     : getRemainingDays(task)}
 </p>
+          <p className="text-xs text-yellow-400">
+      {taskTimers[task.id] || ""}
+    </p>
         </div>
         {!lockdown && (
           <button
