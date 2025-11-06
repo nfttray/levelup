@@ -1766,7 +1766,7 @@ const activeDayContracts = contracts
   .filter(c => {
     const start = new Date(c.start);
     const end = new Date(c.end);
-    const today = new Date(selectedDate || Date.now());
+    const today = new Date();
     return today >= start && today <= end;
   })
   .map(c => ({
