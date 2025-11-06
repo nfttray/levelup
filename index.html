@@ -1762,23 +1762,6 @@ function saveDailySummary() {
   // Calculate XP gained today from xpStartValue
   const xpStartValue = parseInt(localStorage.getItem('xpStartValue')) || xp;
   const xpGainedToday = Math.max(0, xp - xpStartValue);
-const activeDayContracts = contracts
-  .filter(c => {
-    const start = new Date(c.start);
-    const end = new Date(c.end);
-    const today = new Date();
-    return today >= start && today <= end;
-  })
-  .map(c => ({
-    goal: c.goal,
-    progress: c.progress.filter(Boolean).length,
-    days: c.days,
-    done: c.done,
-    failed: c.failed
-  }));
-
-summary.contracts = activeDayContracts;
-  
   const newEntry = {
     date: today,
     xp,
