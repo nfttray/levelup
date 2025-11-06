@@ -370,6 +370,14 @@ function App(){
   
 // }));
   // Wake up tracking
+  // ----- Shadow Contracts state -----
+const [contracts, setContracts] = useState(
+  JSON.parse(localStorage.getItem("shadowContracts")) || []
+);
+const [showNewContract, setShowNewContract] = useState(false);
+const [contractGoalInput, setContractGoalInput] = useState("");
+const [contractDaysInput, setContractDaysInput] = useState("");
+const [uiLockedByContract, setUiLockedByContract] = useState(false); // locks UI when no active contract
 const [wakeUpOnTime, setWakeUpOnTime] = useState(
   JSON.parse(localStorage.getItem("wakeUpOnTime")) || false
 );
@@ -525,7 +533,127 @@ React.useEffect(() => {
     localStorage.removeItem("disrespectChallenge");
   }
 }, [challenge]);
-  
+
+  // Save contracts to localStorage
+function saveContracts(arr) {
+  setContracts(arr);
+  localStorage.setItem("shadowContracts", JSON.stringify(arr));
+}
+
+// Create a new contract (manual)
+function createContractFromInputs() {
+  if (!contractGoalInput.trim() || !contractDaysInput) {
+    alert("⚠️ Enter goal and days");
+    return;
+  }
+  const days = Number(contractDaysInput);
+  const start = Date.now();
+  const end = start + days * 24 * 60 * 60 * 1000;
+  const progress = Array(days).fill(false);
+  const newContract = {
+    id: Date.now(),
+    goal: contractGoalInput.trim(),
+    start,
+    end,
+    days,
+    progress,
+    done: false,
+    failed: false
+  };
+  const updated = [...contracts, newContract];
+  saveContracts(updated);
+  setContractGoalInput("");
+  setContractDaysInput("");
+  setShowNewContract(false);
+  alert(`🕯️ Contract created: "${newContract.goal}" (${days} days)`);
+  ensureContractsActive(updated);
+}
+
+// Mark today's progress for a contract
+function markContractProgress(id) {
+  const now = Date.now();
+  const updated = contracts.map(c => {
+    if (c.id !== id || c.done || c.failed) return c;
+    const dayIndex = Math.floor((now - c.start) / (24*60*60*1000));
+    if (dayIndex >= 0 && dayIndex < c.days) {
+      const newProg = [...c.progress];
+      newProg[dayIndex] = true;
+      return { ...c, progress: newProg };
+    }
+    return c;
+  });
+  saveContracts(updated);
+}
+
+// Force contract end (call on success)
+function completeContract(id) {
+  const updated = contracts.map(c => c.id === id ? { ...c, done: true } : c);
+  saveContracts(updated);
+  // rewards
+  setXP(prev => prev + 15);
+  setFogLevel(prev => Math.max(0, prev - 20));
+  alert("✅ Contract completed! +15 XP, -20% Fog");
+  handleContractsPostEnd(updated);
+}
+
+// Force fail on contract id
+function failContract(id) {
+  const target = contracts.find(c => c.id === id);
+  const updated = contracts.map(c => c.id === id ? { ...c, failed: true } : c);
+  saveContracts(updated);
+  addPunishment({
+    type: "contractFail",
+    text: `💀 Contract failed: "${target?.goal || 'unknown'}"`,
+    deathMode: true
+  });
+  increaseDebt(10);
+  setXP(prev => Math.max(0, prev - 10));
+  alert(`💀 Contract failed: "${target?.goal}" — punishment added.`);
+  handleContractsPostEnd(updated);
+}
+
+// Check if there is at least one active (not done/failed) contract
+function hasActiveContract(arr = contracts) {
+  return arr.some(c => !c.done && !c.failed);
+  }
+
+  // Whenever contracts change, ensure at least one active contract exists
+function ensureContractsActive(arr = contracts) {
+  if (!hasActiveContract(arr)) {
+    // lock UI and force new-contract modal
+    setUiLockedByContract(true);
+    setShowNewContract(true);
+    // optionally set app-level lockdown too
+    setLockdown(true);
+    alert("⚔️ No active contract! Forge a new Contract now — app locked until you do.");
+  } else {
+    setUiLockedByContract(false);
+    // if no punishments and not otherwise locked, unlock UI
+    if (punishments.length === 0) setLockdown(false);
+  }
+}
+
+// run once on load to enforce rule
+useEffect(() => {
+  ensureContractsActive();
+}, []);
+
+  function handleContractsPostEnd(updatedContracts) {
+  // Save already called by caller; just ensure chain continues
+  if (!hasActiveContract(updatedContracts)) {
+    // Force prompt for new contract
+    setTimeout(() => {
+      setShowNewContract(true);
+      setUiLockedByContract(true);
+      setLockdown(true);
+      alert("🕯️ Contract cycle ended. Forge the next one immediately.");
+    }, 800);
+  } else {
+    // unlock if there is at least one active contract
+    setUiLockedByContract(false);
+    if (punishments.length === 0) setLockdown(false);
+  }
+  }
 // ---- Start Challenge ----
 function startChallenge(type, target, duration) {
   const base = { type, target, startDate: Date.now() };
@@ -907,6 +1035,83 @@ useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
 }, []);
+
+  // DAILY midnight check and also run immediate on load
+useEffect(() => {
+  function checkContractsForDayMissesAndExpire() {
+    const now = Date.now();
+    let updated = [...contracts];
+    let changed = false;
+
+    updated = updated.map(c => {
+      if (c.done || c.failed) return c;
+
+      // Compute day index for "yesterday" to check whether yesterday was logged.
+      const dayIndexNow = Math.floor((now - c.start) / (24*60*60*1000));
+      // If dayIndexNow >=1 and yesterday not marked → mark penalty
+      const yesterdayIndex = dayIndexNow - 1;
+      if (yesterdayIndex >= 0 && c.progress[yesterdayIndex] === false) {
+        // Missed yesterday's log → immediate penalty
+        addPunishment({
+          type: "dailyMiss",
+          text: `❌ Missed daily log for "${c.goal}"`,
+          deathMode: false
+        });
+        increaseDebt(5);
+        setXP(prev => Math.max(0, prev - 3));
+        // Mark it as "noted" so that we don't punish for same day repeatedly:
+        const newProg = [...c.progress];
+        // optional: leave false but we could tag; for simplicity we won't flip progress
+        changed = true;
+      }
+
+      // Expiration check
+      if (now >= c.end) {
+        const completedDays = c.progress.filter(Boolean).length;
+        if (completedDays >= c.days) {
+          c = { ...c, done: true };
+          setXP(prev => prev + 15);
+          setFogLevel(prev => Math.max(0, prev - 20));
+          alert(`✅ Contract "${c.goal}" completed on expiry.`);
+          changed = true;
+        } else {
+          c = { ...c, failed: true };
+          addPunishment({
+            type: "contractFail",
+            text: `💀 Contract failed on expiry: "${c.goal}"`,
+            deathMode: true
+          });
+          increaseDebt(10);
+          setXP(prev => Math.max(0, prev - 10));
+          alert(`💀 Contract "${c.goal}" failed on expiry.`);
+          changed = true;
+        }
+      }
+      return c;
+    });
+
+    if (changed) {
+      saveContracts(updated);
+      handleContractsPostEnd(updated);
+    }
+  }
+
+  // Run at load
+  checkContractsForDayMissesAndExpire();
+
+  // schedule: run at midnight and also every 6 hours as fallback
+  const now = new Date();
+  const millisTillMidnight =
+    new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5) - now;
+
+  const midnightTimeout = setTimeout(() => {
+    checkContractsForDayMissesAndExpire();
+    setInterval(checkContractsForDayMissesAndExpire, 6 * 60 * 60 * 1000);
+  }, millisTillMidnight);
+
+  return () => clearTimeout(midnightTimeout);
+}, [contracts]);
+
   
 // === Decay System Effect ===
   useEffect(() => {
@@ -2081,6 +2286,81 @@ function runArchitectDailyReport(testMode = false) {
     </div>
   </div>
 )}
+
+      {/* NEW CONTRACT MODAL (locks other UI when shown) */}
+{showNewContract && (
+  <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
+    <div className="bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-sm text-center text-white relative">
+      <h3 className="text-xl font-bold mb-4">✍️ Forge New Shadow Contract</h3>
+      <input
+        type="text"
+        placeholder="Goal (e.g. 300 English words)"
+        className="w-full p-2 rounded mb-3 text-black"
+        value={contractGoalInput}
+        onChange={e => setContractGoalInput(e.target.value)}
+      />
+      <input
+        type="number"
+        placeholder="Days to complete"
+        className="w-full p-2 rounded mb-3 text-black"
+        value={contractDaysInput}
+        onChange={e => setContractDaysInput(e.target.value)}
+      />
+      <div className="flex gap-2 justify-center">
+        <button
+          onClick={createContractFromInputs}
+          className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg"
+        >Forge</button>
+        <button
+          onClick={() => {
+            // If user tries to cancel but UI is locked, prevent cancel
+            if (uiLockedByContract || !hasActiveContract()) {
+              alert("⚠️ You must create a contract now — no rest allowed.");
+              return;
+            }
+            setShowNewContract(false);
+          }}
+          className="bg-gray-600 px-4 py-2 rounded-lg"
+        >Cancel</button>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* CONTRACTS LIST */}
+<div className="bg-gray-900 p-4 rounded-xl mt-4">
+  <h3 className="text-lg font-bold text-purple-400">⚔️ Active Shadow Contracts</h3>
+  {contracts.length === 0 && <p className="text-sm text-gray-400">No contracts yet.</p>}
+  {contracts.map(c => (
+    <div key={c.id} className="bg-gray-800 p-3 rounded-lg mb-3">
+      <div className="flex justify-between items-center">
+        <div>
+          <p className="text-yellow-400 font-semibold">{c.goal}</p>
+          <p className="text-xs">Ends: {new Date(c.end).toLocaleString()}</p>
+          <p className="text-xs">Progress: {c.progress.filter(Boolean).length}/{c.days}</p>
+        </div>
+        <div className="text-right">
+          {!c.done && !c.failed && (
+            <>
+              <button onClick={() => markContractProgress(c.id)} className="bg-green-600 px-2 py-1 rounded text-xs mr-1">Mark Today</button>
+              <button onClick={() => completeContract(c.id)} className="bg-blue-600 px-2 py-1 rounded text-xs mr-1">Force Complete</button>
+              <button onClick={() => failContract(c.id)} className="bg-red-600 px-2 py-1 rounded text-xs">Force Fail</button>
+            </>
+          )}
+          {c.done && <span className="text-green-400">✅ Completed</span>}
+          {c.failed && <span className="text-red-400">💀 Failed</span>}
+        </div>
+      </div>
+
+      {/* Visual daily progress dots */}
+      <div className="flex gap-1 overflow-auto mt-3">
+        {c.progress.map((p,i) => (
+          <div key={i} className={`h-3 w-3 rounded-full ${p ? 'bg-green-400' : 'bg-red-500'}`} title={`Day ${i+1}`}/>
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
       {/* Dopamine Detox Section */}
       <div  className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
