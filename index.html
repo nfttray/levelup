@@ -1133,7 +1133,15 @@ useEffect(() => {
   return () => clearTimeout(midnightTimeout);
 }, [contracts]);
 
-  
+  const activeDayContracts = contracts.filter(c => {
+  const end = new Date(c.end);
+  const today = new Date();
+  // store only if today == completion/fail date
+  return (
+    (c.done && end.toDateString() === today.toDateString()) ||
+    (c.failed && end.toDateString() === today.toDateString())
+  );
+});
 // === Decay System Effect ===
   useEffect(() => {
   const testMode = false;
@@ -1754,7 +1762,23 @@ function saveDailySummary() {
   // Calculate XP gained today from xpStartValue
   const xpStartValue = parseInt(localStorage.getItem('xpStartValue')) || xp;
   const xpGainedToday = Math.max(0, xp - xpStartValue);
+const activeDayContracts = contracts
+  .filter(c => {
+    const start = new Date(c.start);
+    const end = new Date(c.end);
+    const today = new Date(selectedDate || Date.now());
+    return today >= start && today <= end;
+  })
+  .map(c => ({
+    goal: c.goal,
+    progress: c.progress.filter(Boolean).length,
+    days: c.days,
+    done: c.done,
+    failed: c.failed
+  }));
 
+summary.contracts = activeDayContracts;
+  
   const newEntry = {
     date: today,
     xp,
@@ -3091,6 +3115,19 @@ function runArchitectDailyReport(testMode = false) {
       ))}
     </ul>
   </div>
+      {selectedDayData.contracts && selectedDayData.contracts.length > 0 && (
+  <div className="mt-3">
+    <p className="font-bold text-gray-300">⚔️ Contracts:</p>
+    <ul className="ml-4 list-disc text-sm">
+      {selectedDayData.contracts.map((c, i) => (
+        <li key={i}>
+          {c.done ? "✅" : c.failed ? "💀" : "🕓"} {c.goal}
+          <span className="text-gray-400"> ({c.progress}/{c.days} days)</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
     </div>
   </div>
 )}
