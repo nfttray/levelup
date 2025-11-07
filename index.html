@@ -686,23 +686,7 @@ useEffect(() => {
   });
   saveContracts(updated);
   }
-  function checkMissedAnchorsOnOpen() {
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  anchorTimes.forEach(a => {
-    const [h, m] = a.time.split(":").map(Number);
-    const anchorMinutes = h * 60 + m;
-    if (nowMinutes > anchorMinutes && !anchorsDone[a.id]) {
-      // missed anchor -> auto mark "no" and XP penalty
-      anchorsDone[a.id] = "no";
-      xp = Math.max(0, xp - 5);
-      console.warn(`Missed ${a.label}, -5 XP`);
-    }
-  });
-  localStorage.setItem("shadowAnchors", JSON.stringify(anchorsDone));
-  localStorage.setItem("xp", xp);
-}
-checkMissedAnchorsOnOpen();
+  
   
   function showAnchorPopup(anchor) {
   const answer = confirm(`🕯️ ${anchor.label} Anchor\nDid you honour your contracts?`);
@@ -1090,6 +1074,32 @@ useEffect(() => {
 
   return () => clearInterval(interval);
 }, []);
+
+  useEffect(() => {
+  const now = new Date();
+  const minutesNow = now.getHours() * 60 + now.getMinutes();
+
+  let missed = {};
+  let penalty = 0;
+
+  anchorTimes.forEach(a => {
+    const [h, m] = a.time.split(":").map(Number);
+    const anchorMinutes = h * 60 + m;
+
+    // If this anchor time has already passed today and no record yet → mark missed
+    if (minutesNow > anchorMinutes && !anchorsDone[a.id]) {
+      missed[a.id] = "no"; // missed
+      penalty += 5;
+    }
+  });
+
+  if (Object.keys(missed).length > 0) {
+    const updated = { ...anchorsDone, ...missed };
+    setAnchorsDone(updated);
+    localStorage.setItem("anchorsDone", JSON.stringify(updated));
+    addXP(-penalty); // apply XP penalty for missed anchors
+  }
+}, []); // only run once when app loads
 // === MOTIVATION SYSTEM (works even if app closed) ===
 useEffect(() => {
   const now = Date.now();
