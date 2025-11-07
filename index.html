@@ -370,6 +370,16 @@ function App(){
   
 // }));
   // Wake up tracking
+  const anchorTimes = [
+  { id: 1, time: "06:00", label: "Dawn" },
+  { id: 2, time: "12:00", label: "Noon" },
+  { id: 3, time: "18:00", label: "Dusk" },
+  { id: 4, time: "22:00", label: "Nightfall" }
+];
+
+const [anchorsDone, setAnchorsDone] = useState(
+  JSON.parse(localStorage.getItem("anchorsDone")) || {}
+);
   // ----- Shadow Contracts state -----
 const [contracts, setContracts] = useState(
   JSON.parse(localStorage.getItem("shadowContracts")) || []
@@ -674,6 +684,20 @@ useEffect(() => {
     return c;
   });
   saveContracts(updated);
+  }
+
+  function showAnchorPopup(anchor) {
+  const answer = confirm(`🕯️ ${anchor.label} Anchor\nDid you honour your contracts?`);
+
+  const newStatus = { ...anchorsDone, [anchor.id]: answer ? "yes" : "no" };
+  setAnchorsDone(newStatus);
+  localStorage.setItem("anchorsDone", JSON.stringify(newStatus));
+
+  if (answer) {
+    addXP(2);                  // reward
+  } else {
+    addXP(-5);                 // ❌ XP penalty instead of fog
+  }
   }
   
 // ---- Start Challenge ----
@@ -1018,6 +1042,36 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, [tasks]);
 
+  useEffect(() => {
+  const checkAnchor = () => {
+    const now = new Date();
+    const minutesNow = now.getHours() * 60 + now.getMinutes();
+
+    anchorTimes.forEach(a => {
+      const [h, m] = a.time.split(":").map(Number);
+      const anchorMinutes = h * 60 + m;
+
+      if (Math.abs(minutesNow - anchorMinutes) <= 2) {
+        // only trigger once per anchor per day
+        if (!anchorsDone[a.id]) showAnchorPopup(a);
+      }
+    });
+  };
+
+  const interval = setInterval(checkAnchor, 60 * 1000);
+  return () => clearInterval(interval);
+}, [anchorsDone]);
+  useEffect(() => {
+  const interval = setInterval(() => {
+    const now = new Date();
+    if (now.getHours() === 0 && now.getMinutes() === 0) {
+      setAnchorsDone({});
+      localStorage.removeItem("anchorsDone");
+    }
+  }, 60 * 1000);
+
+  return () => clearInterval(interval);
+}, []);
 // === MOTIVATION SYSTEM (works even if app closed) ===
 useEffect(() => {
   const now = Date.now();
