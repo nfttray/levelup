@@ -743,7 +743,26 @@ useEffect(() => {
   // backwards compatible wrapper
   openAnchorModal(anchor);
   }
-  
+  // === Automatic cleanup of old proof images ===
+function autoCleanOldProofs(days = 5) {
+  const now = Date.now();
+  const limit = days * 24 * 60 * 60 * 1000; // convert days to ms
+  const tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+  let cleaned = false;
+
+  const updated = tasks.map(t => {
+    if (t.proofImage && t.missedAt && now - t.missedAt > limit) {
+      cleaned = true;
+      return { ...t, proofImage: null };
+    }
+    return t;
+  });
+
+  if (cleaned) {
+    localStorage.setItem("tasks", JSON.stringify(updated));
+    console.log("🧹 Old proof images cleaned (older than " + days + " days)");
+  }
+  }
 // ---- Start Challenge ----
 function startChallenge(type, target, duration) {
   const base = { type, target, startDate: Date.now() };
@@ -1175,6 +1194,14 @@ useEffect(() => {
   };
 }, [anchorsDone]);
 
+  useEffect(() => {
+  // existing app-start code ...
+  checkTaskDeadlines();
+
+  // 🧹 clean up old proof images automatically
+  autoCleanOldProofs(5);
+}, []);
+  
 // === MOTIVATION SYSTEM (works even if app closed) ===
 useEffect(() => {
   const now = Date.now();
