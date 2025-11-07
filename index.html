@@ -380,6 +380,11 @@ function App(){
   
 // }));
   // Wake up tracking
+  // === Emergency Day State ===
+const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+const [emergencyUsed, setEmergencyUsed] = useState(
+  JSON.parse(localStorage.getItem("emergencyUsed") || "false")
+);
   // === Focus Mode & Break states ===
 const [focusActive, setFocusActive] = useState(false);
 const [focusStartTime, setFocusStartTime] = useState(null);
@@ -894,6 +899,69 @@ useEffect(() => {
     }
   } catch (e) {}
 }, []); // run once on mount 
+
+  // -------------------- EMERGENCY SYSTEM --------------------
+function triggerEmergencyDay() {
+  if (emergencyUsed) return alert("⚠️ Emergency already used today!");
+  // Optional monthly limit check:
+  const log = JSON.parse(localStorage.getItem("emergencyLog") || "[]");
+  const month = new Date().getMonth();
+  const uses = log.filter(e => new Date(e.date).getMonth() === month).length;
+  if (uses >= 2) {
+    return alert("⚠️ You already used 2 emergency days this month.");
+  }
+  setShowEmergencyModal(true);
+}
+
+function confirmEmergencyDay() {
+  const today = new Date().toLocaleDateString();
+
+  // ✅ Log this emergency
+  const log = JSON.parse(localStorage.getItem("emergencyLog") || "[]");
+  log.push({ date: today });
+  localStorage.setItem("emergencyLog", JSON.stringify(log));
+
+  // ✅ Mark as used for today
+  setEmergencyUsed(true);
+  localStorage.setItem("emergencyUsed", "true");
+  localStorage.setItem("emergencyDate", today);
+
+  try {
+    // === Nullify everything ===
+    // Tasks
+    setTasks([]);
+    localStorage.setItem("tasks", JSON.stringify([]));
+
+    // Contracts & Mocks
+    localStorage.removeItem("activeContract");
+    localStorage.removeItem("mockData");
+
+    // Punishments
+    localStorage.setItem("punishments", JSON.stringify([]));
+
+    // Focus / Break sessions
+    localStorage.removeItem("focusSession");
+    localStorage.removeItem("breakSession");
+
+    // Proof-related
+    localStorage.removeItem("proofPending");
+
+    // Optional fog/debt reset
+    if (typeof setFog === "function") setFog(0);
+    if (typeof setDebt === "function") setDebt(0);
+  } catch (err) {
+    console.error("Emergency reset failed:", err);
+  }
+
+  // 🎁 Reward +38 XP for surviving day
+  setXP(prev => (prev || 0) + 38);
+
+  // Close modal
+  setShowEmergencyModal(false);
+
+  alert("🚨 Emergency Day declared! All features nullified, +38 XP awarded.");
+  }
+  
 // ---- Start Challenge ----
 function startChallenge(type, target, duration) {
   const base = { type, target, startDate: Date.now() };
@@ -1350,6 +1418,15 @@ useEffect(() => {
   }
   return () => clearInterval(interval);
 }, [focusActive, focusRemaining]);
+
+  useEffect(() => {
+  const today = new Date().toLocaleDateString();
+  const last = localStorage.getItem("emergencyDate");
+  if (last !== today) {
+    setEmergencyUsed(false);
+    localStorage.setItem("emergencyUsed", "false");
+  }
+}, []);
   
 // === MOTIVATION SYSTEM (works even if app closed) ===
 useEffect(() => {
@@ -2812,6 +2889,57 @@ function runArchitectDailyReport(testMode = false) {
       >
         End Reward Early
       </button>
+    </div>
+  </div>
+)}
+
+{/* ===== EMERGENCY BUTTON ===== */}
+<div className="mt-6 flex flex-col items-center">
+  <button
+    onClick={triggerEmergencyDay}
+    disabled={emergencyUsed}
+    className={`px-6 py-3 font-bold rounded-xl shadow-lg transition ${
+      emergencyUsed
+        ? "bg-gray-700 text-gray-300 cursor-not-allowed"
+        : "bg-red-600 hover:bg-red-700 text-white animate-pulse"
+    }`}
+  >
+    🚨 {emergencyUsed ? "Emergency Used Today" : "Emergency Button"}
+  </button>
+
+  {/* optional monthly log info */}
+  <p className="text-sm text-gray-400 mt-2">
+    Used this month: {
+      JSON.parse(localStorage.getItem("emergencyLog") || "[]")
+        .filter(e => new Date(e.date).getMonth() === new Date().getMonth()).length
+    } / 2
+  </p>
+</div>
+      {showEmergencyModal && (
+  <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+    <div className="bg-gray-900 text-white rounded-2xl p-6 w-96 text-center border border-red-500/50 shadow-2xl">
+      <h2 className="text-2xl font-bold mb-3">🚨 Declare Emergency Day?</h2>
+      <p className="text-sm text-gray-300 mb-4">
+        This will <b>nullify all today's</b> tasks, contracts, mocks, punishments, focus sessions, and debts.
+        <br /><br />
+        You will get <b>+38 XP</b> but no rewards or punishments today.
+        <br /><br />
+        <span className="text-red-400">Use only for genuine emergencies.</span>
+      </p>
+      <div className="flex justify-center gap-3 mt-4">
+        <button
+          onClick={() => setShowEmergencyModal(false)}
+          className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={confirmEmergencyDay}
+          className="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700"
+        >
+          Confirm
+        </button>
+      </div>
     </div>
   </div>
 )}
