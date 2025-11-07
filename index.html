@@ -675,6 +675,7 @@ useEffect(() => {
   });
   saveContracts(updated);
   }
+  
 // ---- Start Challenge ----
 function startChallenge(type, target, duration) {
   const base = { type, target, startDate: Date.now() };
@@ -692,7 +693,12 @@ function startChallenge(type, target, duration) {
   }
   setStatus("");
 }
-
+// ---- Delete Contract Manually ----
+function deleteContract(id) {
+  const updated = contracts.filter(c => c.id !== id);
+  setContracts(updated);
+  localStorage.setItem("shadowContracts", JSON.stringify(updated));
+  }
 // ---- Update Helpers ----
 function markStreakDayComplete(i) {
   const updated = [...challenge.days];
@@ -2360,6 +2366,23 @@ function runArchitectDailyReport(testMode = false) {
   <h3 className="text-lg font-bold text-purple-400">⚔️ Active Shadow Contracts</h3>
   {contracts.length === 0 && <p className="text-sm text-gray-400">No contracts yet.</p>}
   {contracts.map(c => (
+  <div key={c.id} className="bg-gray-800 p-3 rounded-lg mb-2 flex justify-between items-center">
+  <div>
+    <p className="text-yellow-300">{c.goal}</p>
+    <p className="text-xs">
+      {c.done ? "✅ Completed" : c.failed ? "💀 Failed" : "🕓 Active"} | 
+      Days: {c.progress.filter(Boolean).length}/{c.days}
+    </p>
+  </div>
+
+  {/* 🗑️ Delete Button */}
+  <button
+    onClick={() => deleteContract(c.id)}
+    className="text-red-400 hover:text-red-600 ml-3 text-sm font-bold"
+  >
+    ✖
+  </button>
+</div>
     <div key={c.id} className="bg-gray-800 p-3 rounded-lg mb-3">
       <div className="flex justify-between items-center">
         <div>
