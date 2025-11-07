@@ -540,6 +540,111 @@ const [showAnchorModal, setShowAnchorModal] = useState(false);
 const [currentAnchor, setCurrentAnchor] = useState(null);
 const [anchorQueueLock, setAnchorQueueLock] = useState(false); // prevent double popups
 
+  // ==========================================================
+// 🔮 JOURNAL OF RESOLVE - FUNCTIONS
+// ==========================================================
+
+// 🧱 STATES (define these in App() state section)
+const [showJournalModal, setShowJournalModal] = React.useState(false);
+const [viewEntryModal, setViewEntryModal] = React.useState(null);
+const [editEntryId, setEditEntryId] = React.useState(null);
+const [crystals, setCrystals] = React.useState([]);
+const [situation, setSituation] = React.useState("");
+const [lesson, setLesson] = React.useState("");
+const [resolveText, setResolveText] = React.useState("");
+const [journalToast, setJournalToast] = React.useState("");
+
+// 🧩 Load crystals from localStorage
+function loadCrystals() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("crystals") || "[]");
+    setCrystals(saved);
+  } catch (e) {
+    console.error("Error loading crystals", e);
+  }
+}
+
+// 💾 Save crystals to localStorage
+function saveCrystalsToLocal(data) {
+  localStorage.setItem("crystals", JSON.stringify(data));
+}
+
+// ➕ Add or Update Journal Entry
+function saveJournalEntry() {
+  if (!lesson.trim() || !resolveText.trim()) return;
+
+  if (editEntryId) {
+    // update existing entry
+    const updated = crystals.map(c =>
+      c.id === editEntryId
+        ? { ...c, situation, lesson, resolve: resolveText, date: new Date().toLocaleDateString() }
+        : c
+    );
+    setCrystals(updated);
+    saveCrystalsToLocal(updated);
+    setEditEntryId(null);
+    showJournalToast("🪶 Entry updated");
+  } else {
+    // create new entry
+    const newCrystal = {
+      id: Date.now(),
+      date: new Date().toLocaleDateString(),
+      situation,
+      lesson,
+      resolve: resolveText,
+      xpValue: 5,
+    };
+    const updated = [...crystals, newCrystal];
+    setCrystals(updated);
+    saveCrystalsToLocal(updated);
+    setXP(xp + 3);
+    setFogLevel(Math.max(0, fogLevel - 3));
+    showJournalToast("💎 Crystal forged! Fog –3%, +3 XP");
+  }
+
+  clearJournalInputs();
+  setShowJournalModal(false);
+}
+
+// 🧹 Clear all input fields
+function clearJournalInputs() {
+  setSituation("");
+  setLesson("");
+  setResolveText("");
+}
+
+// 🧠 Edit an existing entry
+function editJournalEntry(entry) {
+  setSituation(entry.situation);
+  setLesson(entry.lesson);
+  setResolveText(entry.resolve);
+  setEditEntryId(entry.id);
+  setShowJournalModal(true);
+}
+
+// 👁 View entry (read-only)
+function viewJournalEntry(entry) {
+  setViewEntryModal(entry);
+}
+
+// 💎 Absorb Crystal (gain XP & remove)
+function absorbCrystal(id) {
+  const crystal = crystals.find(c => c.id === id);
+  if (!crystal) return;
+  const updated = crystals.filter(c => c.id !== id);
+  setCrystals(updated);
+  saveCrystalsToLocal(updated);
+  setXP(xp + crystal.xpValue);
+  setFogLevel(Math.max(0, fogLevel - 2));
+  showJournalToast(`✨ Crystal absorbed +${crystal.xpValue} XP`);
+  navigator.vibrate?.([100, 50, 100]);
+}
+
+// 💬 Toast helper
+function showJournalToast(msg) {
+  setJournalToast(msg);
+  setTimeout(() => setJournalToast(""), 3000);
+  }
   
 function openAnchorModal(anchor) {
   // prevent opening multiple modals at once
@@ -1428,7 +1533,14 @@ useEffect(() => {
     localStorage.setItem("emergencyUsed", "false");
   }
 }, []);
-  
+  // ==========================================================
+// ⏱️ JOURNAL OF RESOLVE - EFFECTS
+// ==========================================================
+
+React.useEffect(() => {
+  // Load saved crystals from localStorage at app start
+  loadCrystals();
+}, []);
 // === MOTIVATION SYSTEM (works even if app closed) ===
 useEffect(() => {
   const now = Date.now();
@@ -3186,6 +3298,148 @@ function runArchitectDailyReport(testMode = false) {
     Total minutes: {focusStats.reduce((a,b)=>a+(b.minutes||0),0)}
   </div>
 </div>
+
+{/* ==========================================================
+     🔮 JOURNAL OF RESOLVE - UI SECTION
+========================================================== */}
+
+{/* ✨ Floating Summon Journal Button */}
+<button
+  onClick={() => setShowJournalModal(true)}
+  className="fixed bottom-6 right-6 bg-indigo-700 hover:bg-indigo-800 
+             text-white px-5 py-3 rounded-full shadow-lg ring-2 ring-purple-500 animate-pulse z-50">
+  ✨ Summon Journal
+</button>
+
+{/* 💎 Crystals List */}
+<div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-6">
+  {crystals.length === 0 && (
+    <div className="col-span-full text-gray-400 text-center">
+      No crystals yet. Summon the Journal to forge one.
+    </div>
+  )}
+
+  {crystals.map(c => (
+    <div
+      key={c.id}
+      className="bg-indigo-700 p-3 rounded-xl shadow-md hover:shadow-indigo-400/40 transition-all"
+    >
+      <div className="text-xs text-yellow-300">{c.date}</div>
+      {c.situation && (
+        <div className="text-gray-300 text-xs">💭 {c.situation}</div>
+      )}
+      <div className="mt-1 font-semibold text-white truncate">⚙️ {c.lesson}</div>
+      <div className="text-sm italic text-gray-300 line-clamp-2">
+        🔮 {c.resolve}
+      </div>
+
+      <div className="flex flex-wrap gap-2 mt-2">
+        <button
+          onClick={() => viewJournalEntry(c)}
+          className="flex-1 bg-indigo-500 text-white px-2 py-1 rounded-md hover:bg-indigo-400 text-sm"
+        >
+          👁 View
+        </button>
+        <button
+          onClick={() => editJournalEntry(c)}
+          className="flex-1 bg-gray-700 text-gray-200 px-2 py-1 rounded-md hover:bg-gray-600 text-sm"
+        >
+          ✏️ Edit
+        </button>
+        <button
+          onClick={() => absorbCrystal(c.id)}
+          className="flex-1 bg-yellow-400 text-black font-semibold px-2 py-1 rounded-md hover:bg-yellow-300 text-sm"
+        >
+          💎 Absorb
+        </button>
+      </div>
+    </div>
+  ))}
+</div>
+
+{/* 📜 Add/Edit Modal */}
+{showJournalModal && (
+  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div className="bg-gray-900 p-6 rounded-2xl w-11/12 max-w-md border border-indigo-600 shadow-lg">
+      <h2 className="text-xl text-indigo-400 font-bold mb-3 text-center">
+        📜 Journal of Resolve
+      </h2>
+
+      <input
+        value={situation}
+        onChange={e => setSituation(e.target.value)}
+        placeholder="💭 Situation (optional)"
+        className="w-full p-2 mb-2 rounded-md bg-gray-800 border border-gray-700 text-sm focus:ring-2 focus:ring-indigo-500"
+      />
+      <textarea
+        value={lesson}
+        onChange={e => setLesson(e.target.value)}
+        placeholder="⚙️ Lesson Learned"
+        className="w-full p-2 mb-2 rounded-md bg-gray-800 border border-gray-700 text-sm h-16 focus:ring-2 focus:ring-indigo-500"
+      />
+      <textarea
+        value={resolveText}
+        onChange={e => setResolveText(e.target.value)}
+        placeholder="🔮 How I'll act next time"
+        className="w-full p-2 mb-3 rounded-md bg-gray-800 border border-gray-700 text-sm h-16 focus:ring-2 focus:ring-indigo-500"
+      />
+
+      <div className="flex gap-2">
+        <button
+          onClick={saveJournalEntry}
+          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md font-semibold"
+        >
+          {editEntryId ? "Update Entry" : "Forge Crystal"}
+        </button>
+        <button
+          onClick={() => setShowJournalModal(false)}
+          className="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-200 py-2 rounded-md font-semibold"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* 👁 View Modal */}
+{viewEntryModal && (
+  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div className="bg-gray-900 p-6 rounded-2xl w-11/12 max-w-md border border-indigo-600 shadow-lg">
+      <h2 className="text-xl text-yellow-400 font-bold mb-3 text-center">
+        💎 Resolved Entry
+      </h2>
+      <div className="text-sm text-gray-400 mb-2">{viewEntryModal.date}</div>
+      {viewEntryModal.situation && (
+        <div className="mb-2 text-gray-300">
+          💭 <b>Situation:</b> {viewEntryModal.situation}
+        </div>
+      )}
+      <div className="mb-2 text-indigo-300">
+        ⚙️ <b>Lesson:</b> {viewEntryModal.lesson}
+      </div>
+      <div className="text-green-300">
+        🔮 <b>Resolve:</b> {viewEntryModal.resolve}
+      </div>
+      <div className="text-right mt-4">
+        <button
+          onClick={() => setViewEntryModal(null)}
+          className="bg-yellow-500 text-black px-4 py-1 rounded-md hover:bg-yellow-400"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* ⚡ Toast */}
+{journalToast && (
+  <div className="fixed bottom-6 right-6 bg-yellow-500 text-black px-4 py-2 rounded-xl shadow-lg z-50">
+    {journalToast}
+  </div>
+)}
+      
       {/* Dopamine Detox Section */}
       <div  className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
