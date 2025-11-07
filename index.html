@@ -1075,36 +1075,31 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
-  useEffect(() => {
-  // run only after anchorsDone loaded
-  if (!anchorTimes || Object.keys(anchorsDone).length === 0) {
-    // wait one tick so that anchorsDone from localStorage settles
-    setTimeout(() => {
-      const now = new Date();
-      const minutesNow = now.getHours() * 60 + now.getMinutes();
-      const missed = {};
-      let penalty = 0;
+useEffect(() => {
+  // wait a bit after mount
+  setTimeout(() => {
+    const now = new Date();
+    const minutesNow = now.getHours() * 60 + now.getMinutes();
 
-      anchorTimes.forEach(a => {
-        const [h, m] = a.time.split(":").map(Number);
-        const anchorMinutes = h * 60 + m;
+    anchorTimes.forEach(a => {
+      const [h, m] = a.time.split(":").map(Number);
+      const anchorMinutes = h * 60 + m;
 
-        // If anchor already passed & not yet answered → mark as missed
-        if (minutesNow > anchorMinutes && !anchorsDone[a.id]) {
-          missed[a.id] = "no";
-          penalty += 5;
-        }
-      });
-
-      if (Object.keys(missed).length > 0) {
-        const updated = { ...anchorsDone, ...missed };
+      // agar time cross ho gaya aur ab tak confirm nahi hua
+      if (minutesNow > anchorMinutes && !anchorsDone[a.id]) {
+        // ab popup dikhayega even if late
+        const answer = window.confirm(
+          `🕯️ ${a.label} (missed earlier)\nDid you honour your contracts?`
+        );
+        const status = answer ? "yes" : "no";
+        const xpChange = answer ? 2 : -5;
+        const updated = { ...anchorsDone, [a.id]: status };
         setAnchorsDone(updated);
         localStorage.setItem("anchorsDone", JSON.stringify(updated));
-        addXP(-penalty);
-        console.log(`Missed anchors auto-penalised: −${penalty} XP`);
+        addXP(xpChange);
       }
-    }, 1000); // run 1 s after mount
-  }
+    });
+  }, 1000);
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
 // === MOTIVATION SYSTEM (works even if app closed) ===
