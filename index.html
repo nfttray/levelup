@@ -2590,7 +2590,7 @@ function closeArchitectModal() {
 function applyDynamicThreshold() {
   // Increase / decrease and clamp 65-85
   if (architectPositiveStreak >= 3) {
-    const next = Math.min(85, architectThreshold + 5);
+    const next = Math.min(80, architectThreshold + 5);
     setArchitectThreshold(next);
     localStorage.setItem('architectThreshold', String(next));
     setArchitectPositiveStreak(0);
@@ -2634,14 +2634,34 @@ function runArchitectDailyReport(testMode = false) {
   const dopamineOn = !!prevDayData.dopamineActive;
   const dopamineLevel = parseFloat(prevDayData.dopamineLevel) || 0;
 
+  // 🧠 NEW: focus session count (from localStorage)
+  const focusStats = JSON.parse(localStorage.getItem("focusStats") || "[]");
+  const today = new Date().toLocaleDateString();
+  const todayFocusCount = focusStats.filter(s => s.date === today).length;
+
+  // 🧠 NEW: percentile check
+  const mockHistory = JSON.parse(localStorage.getItem("mockHistory") || "[]");
+  const yesterdayMocks = mockHistory.filter(m => m.date === yesterdayKey);
+  const todayMocks = mockHistory.filter(m => m.date === todayKey);
+  const bestYesterday = yesterdayMocks.length
+    ? Math.max(...yesterdayMocks.map(m => m.percentile || 0))
+    : 0;
+  const bestToday = todayMocks.length
+    ? Math.max(...todayMocks.map(m => m.percentile || 0))
+    : 0;
+
   // --- Conditions ---
   const conditions = [
     { pass: !relapse, weight: 3, desc: "No relapse" },
-    { pass: xpToday >= 25, weight: 2, desc: "Earned 25+ XP" },
+    { pass: xpToday >= 55, weight: 2, desc: "Earned 55+ XP" },
     { pass: fog <= 70, weight: 2, desc: "Fog under control" },
     { pass: !(dopamineOn && dopamineLevel < 80), weight: 2, desc: "Detox level good" },
     { pass: dailyQuestDone === true, weight: 1, desc: "Daily quest completed" },
-    { pass: taskLogLocal.length > 0, weight: 1, desc: "Completed some tasks" }
+    { pass: taskLogLocal.length > 0, weight: 1, desc: "Completed some tasks" },
+
+    // 🆕 NEW Conditions
+    { pass: todayFocusCount >= 2, weight: 2, desc: "At least 2 Focus Sessions" },
+    { pass: bestToday > bestYesterday, weight: 2, desc: "Improved mock percentile" }
   ];
 
   let totalWeight = 0;
@@ -2657,7 +2677,7 @@ function runArchitectDailyReport(testMode = false) {
   const threshold = architectThreshold;
 
   if (percentage >= threshold) {
-    // Positive
+    // ✅ Positive Report
     setArchitectPositiveStreak(prev => {
       const next = prev + 1;
       localStorage.setItem('architectPositiveStreak', String(next));
@@ -2679,7 +2699,7 @@ function runArchitectDailyReport(testMode = false) {
       "positive"
     );
   } else {
-    // Negative
+    // ⚠️ Negative Report
     setArchitectNegativeStreak(prev => {
       const next = prev + 1;
       localStorage.setItem('architectNegativeStreak', String(next));
@@ -2696,6 +2716,13 @@ function runArchitectDailyReport(testMode = false) {
     setFogLevel(prev => Math.min(100, prev + 15));
     setDopamineLevel(prev => Math.max(0, prev - 15));
 
+    // 🆕 NEW: Increase Debt on negative report
+    setDebt(prev => {
+      const next = (prev || 0) + 3;
+      localStorage.setItem("debt", next);
+      return next;
+    });
+
     const deathList = (Array.isArray(deathModePunishments) && deathModePunishments.length)
       ? deathModePunishments
       : (Array.isArray(punishments) ? punishments : []);
@@ -2706,7 +2733,7 @@ function runArchitectDailyReport(testMode = false) {
     addPunishment({ type: 'architectPunish', text: `Architect's Judgment: ${punishText}`, deathMode: true });
 
     showArchitectModal(
-      `⚠️ Discipline low (Yesterday's Score: ${percentage}%)\n${fails.join("\n")}\nPunishment: ${punishText}`,
+      `⚠️ Discipline low (Yesterday's Score: ${percentage}%)\n${fails.join("\n")}\nPunishment: ${punishText}\n🩸 +3 Debt`,
       "negative"
     );
   }
@@ -2716,7 +2743,7 @@ function runArchitectDailyReport(testMode = false) {
   // Mark today's check as done
   localStorage.setItem('lastArchitectCheck', todayKey);
   localStorage.setItem('architectLastReport', JSON.stringify({ date: yesterdayKey, percentage }));
-}
+  }
 
 
   function HistoryCalendar({ debt, onSelectDay }) {
