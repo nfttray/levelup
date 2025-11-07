@@ -2360,30 +2360,27 @@ function runArchitectDailyReport(testMode = false) {
     </div>
   </div>
 )}
+{contracts.map(c => (
+  <>
+    <div key={`${c.id}-summary`} className="bg-gray-800 p-3 rounded-lg mb-2 flex justify-between items-center">
+      <div>
+        <p className="text-yellow-300">{c.goal}</p>
+        <p className="text-xs">
+          {c.done ? "✅ Completed" : c.failed ? "💀 Failed" : "🕓 Active"} | 
+          Days: {c.progress.filter(Boolean).length}/{c.days}
+        </p>
+      </div>
 
-{/* CONTRACTS LIST */}
-<div className="bg-gray-900 p-4 rounded-xl mt-4">
-  <h3 className="text-lg font-bold text-purple-400">⚔️ Active Shadow Contracts</h3>
-  {contracts.length === 0 && <p className="text-sm text-gray-400">No contracts yet.</p>}
-  {contracts.map(c => (
-  <div key={c.id} className="bg-gray-800 p-3 rounded-lg mb-2 flex justify-between items-center">
-  <div>
-    <p className="text-yellow-300">{c.goal}</p>
-    <p className="text-xs">
-      {c.done ? "✅ Completed" : c.failed ? "💀 Failed" : "🕓 Active"} | 
-      Days: {c.progress.filter(Boolean).length}/{c.days}
-    </p>
-  </div>
+      {/* 🗑️ Delete Button */}
+      <button
+        onClick={() => deleteContract(c.id)}
+        className="text-red-400 hover:text-red-600 ml-3 text-sm font-bold"
+      >
+        ✖
+      </button>
+    </div>
 
-  {/* 🗑️ Delete Button */}
-  <button
-    onClick={() => deleteContract(c.id)}
-    className="text-red-400 hover:text-red-600 ml-3 text-sm font-bold"
-  >
-    ✖
-  </button>
-</div>
-    <div key={c.id} className="bg-gray-800 p-3 rounded-lg mb-3">
+    <div key={`${c.id}-details`} className="bg-gray-800 p-3 rounded-lg mb-3">
       <div className="flex justify-between items-center">
         <div>
           <p className="text-yellow-400 font-semibold">{c.goal}</p>
@@ -2405,13 +2402,14 @@ function runArchitectDailyReport(testMode = false) {
 
       {/* Visual daily progress dots */}
       <div className="flex gap-1 overflow-auto mt-3">
-        {c.progress.map((p,i) => (
-          <div key={i} className={`h-3 w-3 rounded-full ${p ? 'bg-green-400' : 'bg-red-500'}`} title={`Day ${i+1}`}/>
+        {c.progress.map((p, i) => (
+          <div key={i} className={`h-3 w-3 rounded-full ${p ? 'bg-green-400' : 'bg-red-500'}`} title={`Day ${i + 1}`} />
         ))}
       </div>
     </div>
-  ))}
-</div>
+  </>
+))}
+
       {/* Dopamine Detox Section */}
       <div  className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
