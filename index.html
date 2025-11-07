@@ -921,13 +921,14 @@ function autoCleanOldProofs(days = 5) {
     setFocusStats(updated);
     localStorage.setItem("focusStats", JSON.stringify(updated));
 
-    // reward (change amount if chaho)
-    setXP(prev => (prev || 0) + 15);
+    // reward
+    setXP(prev => (prev || 0) + 5);
+
     // auto-start break (5 min)
     startBreak(5);
 
     // small notification
-    setTimeout(() => alert("✨ Focus session complete! +15 XP. Break started (5 min)."), 200);
+    setTimeout(() => alert("✨ Focus session complete! +5 XP. Break started (5 min)."), 200);
   } else {
     // early abort → punishment using your existing flow
     const randomPunishment = normalPunishments[Math.floor(Math.random() * normalPunishments.length)];
@@ -936,13 +937,21 @@ function autoCleanOldProofs(days = 5) {
       text: `You broke focus early!\nPunishment: ${randomPunishment}`,
       deathMode: false
     });
+
+    // 🩸 increase debt & fog when focus broken
+    setDebt(prev => (prev || 0) + 5);
+    setFogLevel(prev => (prev || 0) + 5);
+
+    // optional alert or toast
+    setTimeout(() => alert("⚠️ Focus broken early! +5 Debt, +5 Fog."), 300);
   }
 
   // reset local focus fields
   setFocusStartTime(null);
   setFocusDuration(0);
   setFocusRemaining(0);
-  }
+}
+  
 
 
  function startBreak(minutes) {
@@ -1623,7 +1632,7 @@ useEffect(() => {
         const completedDays = c.progress.filter(Boolean).length;
         if (completedDays >= c.days) {
           c = { ...c, done: true };
-          setXP(prev => prev + 15);
+          setXP(prev => prev + 10);
           setFogLevel(prev => Math.max(0, prev - 20));
           alert(`✅ Contract "${c.goal}" completed on expiry.`);
           changed = true;
@@ -2393,7 +2402,7 @@ function handleProofTimeout(taskId) {
   localStorage.setItem('tasks', JSON.stringify(updated));
 
   // reward XP (tune amount as you like)
-  setXP(prev => (prev || 0) + 10);
+  setXP(prev => (prev || 0) + 5);
 
   // cleanup modal & timeout
   if (proofTimeoutsRef.current[proofTask.id]) {
