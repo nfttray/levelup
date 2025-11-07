@@ -1071,13 +1071,13 @@ function confirmEmergencyDay() {
     console.error("Emergency reset failed:", err);
   }
 
-  // 🎁 Reward +38 XP for surviving day
-  setXP(prev => (prev || 0) + 38);
+  // 🎁 Reward +70 XP for surviving day
+  setXP(prev => (prev || 0) + 70);
 
   // Close modal
   setShowEmergencyModal(false);
 
-  alert("🚨 Emergency Day declared! All features nullified, +38 XP awarded.");
+  alert("🚨 Emergency Day declared! All features nullified, +70 XP awarded.");
   }
   
 // ---- Start Challenge ----
@@ -2055,7 +2055,7 @@ useEffect(() => {
 
   // === Rival XP Auto Update ===
 
-  const DAILY_RIVAL_XP = 38;
+  const DAILY_RIVAL_XP = 70;
 // ✅ Auto-fix rival level whenever XP crosses threshold
 useEffect(() => {
   let xp = rivalXP;
