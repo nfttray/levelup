@@ -605,33 +605,49 @@ const [currentAnchor, setCurrentAnchor] = useState(null);
 const [anchorQueueLock, setAnchorQueueLock] = useState(false); // prevent double popups
 
   function showNotification(title, body) {
-  if (!("Notification" in window)) {
-    alert("Notifications not supported on this browser.");
-    return;
-  }
-  if (Notification.permission !== "granted") {
-    alert("Please enable notifications first.");
-    return;
-  }
-
   try {
-    const n = new Notification(title, {
+    // --- Fallback 1: Check permission & API support ---
+    if (!("Notification" in window)) {
+      console.log("Notifications not supported");
+      showToast(title, body);
+      return;
+    }
+
+    if (Notification.permission !== "granted") {
+      console.log("Permission not granted:", Notification.permission);
+      showToast(title, body);
+      return;
+    }
+
+    // --- Main attempt ---
+    let n = new window.Notification(title, {
       body: body,
       icon: "https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png",
       vibrate: [100, 50, 100],
     });
-    console.log("✅ Notification triggered:", n);
-  } catch (err) {
-    console.error("❌ Notification failed:", err);
-    alert("⚠️ Browser blocked notification.\nTry enabling alerts in site settings.");
-  }
+    console.log("✅ Notification created:", n);
 
-  // always show toast so user knows it worked
-  const toast = document.createElement("div");
-  toast.textContent = title + " — " + body;
-  toast.className = "fixed bottom-24 right-6 bg-indigo-700 text-white p-3 rounded-xl shadow-lg animate-fadeIn";
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+    // optional sound
+    try {
+      const audio = new Audio("https://cdn.pixabay.com/download/audio/2021/08/04/audio_7f2c6e.mp3?filename=notification.mp3");
+      audio.volume = 0.4;
+      audio.play();
+    } catch (e) {}
+
+  } catch (err) {
+    console.warn("⚠️ Notification failed:", err);
+    // Fallback to toast UI if constructor blocked
+    showToast(title, body);
+  }
+}
+
+function showToast(title, body) {
+  const el = document.createElement("div");
+  el.className =
+    "fixed bottom-24 right-6 bg-indigo-700 text-white px-4 py-2 rounded-2xl shadow-lg animate-fadeIn";
+  el.innerHTML = `<strong>${title}</strong><br>${body}`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
   }
 
 function openAnchorModal(anchor) {
@@ -2986,7 +3002,8 @@ function runArchitectDailyReport(testMode = false) {
     </div>
   </div>
 )}
-
+<button onclick="showNotification('🔥 Focus Mode', 'Your focus ends in 5 minutes!')"
+class="bg-purple-700 p-2 rounded-lg mt-4">Test Notification</button>
 {/* ===== EMERGENCY BUTTON ===== */}
 <div className="mt-6 flex flex-col items-center">
   <button
