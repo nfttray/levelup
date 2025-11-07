@@ -495,6 +495,23 @@ const [rewardTime, setRewardTime] = useState(0);
 const [rewardActive, setRewardActive] = useState(false);
 const [tasksCompletedCount, setTasksCompletedCount] = useState(0);
   
+  function checkMissedAnchorsOnOpen() {
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  anchorTimes.forEach(a => {
+    const [h, m] = a.time.split(":").map(Number);
+    const anchorMinutes = h * 60 + m;
+    if (nowMinutes > anchorMinutes && !anchorsDone[a.id]) {
+      // missed anchor -> auto mark "no" and XP penalty
+      anchorsDone[a.id] = "no";
+      xp = Math.max(0, xp - 5);
+      console.warn(`Missed ${a.label}, -5 XP`);
+    }
+  });
+  localStorage.setItem("shadowAnchors", JSON.stringify(anchorsDone));
+  localStorage.setItem("xp", xp);
+}
+checkMissedAnchorsOnOpen();
 
 // ✅ Handle Task Completion
 function handleTaskCompletion() {
