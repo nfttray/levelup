@@ -604,6 +604,36 @@ const [showAnchorModal, setShowAnchorModal] = useState(false);
 const [currentAnchor, setCurrentAnchor] = useState(null);
 const [anchorQueueLock, setAnchorQueueLock] = useState(false); // prevent double popups
 
+  function showNotification(title, body) {
+  if (!("Notification" in window)) {
+    alert("Notifications not supported on this browser.");
+    return;
+  }
+  if (Notification.permission !== "granted") {
+    alert("Please enable notifications first.");
+    return;
+  }
+
+  try {
+    const n = new Notification(title, {
+      body: body,
+      icon: "https://upload.wikimedia.org/wikipedia/en/2/23/Solo_Leveling_logo.png",
+      vibrate: [100, 50, 100],
+    });
+    console.log("✅ Notification triggered:", n);
+  } catch (err) {
+    console.error("❌ Notification failed:", err);
+    alert("⚠️ Browser blocked notification.\nTry enabling alerts in site settings.");
+  }
+
+  // always show toast so user knows it worked
+  const toast = document.createElement("div");
+  toast.textContent = title + " — " + body;
+  toast.className = "fixed bottom-24 right-6 bg-indigo-700 text-white p-3 rounded-xl shadow-lg animate-fadeIn";
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+  }
+
 function openAnchorModal(anchor) {
   // prevent opening multiple modals at once
   if (anchorQueueLock) return;
