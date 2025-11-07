@@ -32,6 +32,11 @@
 
 <style>
   @keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-fadeIn { animation: fadeIn .22s ease-out both; }
+  @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px) scale(.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
@@ -375,6 +380,19 @@ function App(){
   
 // }));
   // Wake up tracking
+  // ---------- Proof modal / missed-task accountability ----------
+const [showProofModal, setShowProofModal] = useState(false);
+const [proofTask, setProofTask] = useState(null);
+const [proofText, setProofText] = useState("");
+const [proofImage, setProofImage] = useState(null);
+
+// track pending proof timeouts so we can clear them
+const proofTimeoutsRef = React.useRef({});
+
+// grace period (ms) to allow proof after task end — change if you want
+const PROOF_GRACE_MS = 15 * 60 * 1000; // 15 minutes
+
+  
   const anchorTimes = [
   { id: 1, time: "06:00", label: "Dawn" },
   { id: 2, time: "12:00", label: "Noon" },
@@ -983,46 +1001,7 @@ function getAuraColor(level) {
     alert(`ℹ️ Today's log updated to ${newEntry.percentile}%.`);
   }
   }
-  function checkTaskDeadlines() {
-  const now = new Date();
-  let updatedTasks = [...tasks];
-  let missedTasks = [];
-
-  updatedTasks.forEach(task => {
-    if (!task.done) {  // Ensure we only check incomplete tasks
-      if (task.type === 'daily') {
-        const [endH, endM] = task.end.split(':');
-        const endTime = new Date();
-        endTime.setHours(endH, endM, 0, 0);
-
-        if (now > endTime) missedTasks.push(task);
-      } else if (task.type === 'timed') {
-        const createdDate = new Date(task.created);
-        const deadline = new Date(createdDate);
-        deadline.setDate(createdDate.getDate() + parseInt(task.days || 0));
-        if (now > deadline) missedTasks.push(task);
-      }
-    }
-  });
-
-  if (missedTasks.length > 0) {
-    // Remove missed tasks
-    updatedTasks = updatedTasks.filter(t => !missedTasks.includes(t));
-    setTasks(updatedTasks);
-
-    // Lockdown and punishment
-    missedTasks.forEach(task => {
-      const randomPunishment = normalPunishments[Math.floor(Math.random() * normalPunishments.length)];
-addPunishment({
-  type: 'taskMissed',
-  text: `You missed: ${task.title}\nPunishment: ${randomPunishment}`,
-  deathMode: false
-});
-      // NEW: Add debt when task missed
-    increaseDebt(5);
-    });
-  }
-  }
+  
 
   function getRemainingDays(task) {
   if (task.type !== "timed") return null;
@@ -1041,6 +1020,75 @@ addPunishment({
     const endTime=Date.now()+hours*60*60*1000;
     localStorage.setItem('bossEndTime',endTime);
     setTimer(endTime-Date.now());
+  }
+  function checkTaskDeadlines() {
+  const now = new Date();
+  let updatedTasks = [...tasks];
+
+  updatedTasks.forEach((task, idx) => {
+    // only consider incomplete tasks
+    if (task.completed) return;
+
+    if (task.type === 'daily') {
+      const [endH, endM] = task.end.split(':').map(Number);
+      const endTime = new Date();
+      endTime.setHours(endH, endM, 0, 0);
+
+      if (now > endTime) {
+        // if proof already submitted, ignore
+        if (task.proof || task.completed) return;
+
+        // if we've already started proofPending for this task, ensure modal or timeout exists
+        if (!task.proofPending) {
+          // mark proof pending with timestamp
+          updatedTasks[idx] = { ...task, proofPending: true, missedAt: Date.now() };
+          // open modal for the first missed one right away
+          // but only open modal if no other modal is visible
+          if (!showProofModal) {
+            setProofTask(updatedTasks[idx]);
+            setShowProofModal(true);
+            // start grace timeout
+            startProofTimeout(updatedTasks[idx]);
+          }
+        } else {
+          // if proofPending exists already but no modal shown, show it (app reopened later)
+          if (!showProofModal) {
+            setProofTask(updatedTasks[idx]);
+            setShowProofModal(true);
+            // ensure a timeout exists (maybe app reopened after restart)
+            ensureProofTimeout(updatedTasks[idx]);
+          }
+        }
+      }
+    } else if (task.type === 'timed') {
+      // original logic: deadline = created + days
+      const createdDate = new Date(task.created);
+      const deadline = new Date(createdDate);
+      deadline.setDate(createdDate.getDate() + parseInt(task.days || 0 || 0));
+      if (now > deadline) {
+        if (task.proof || task.completed) return;
+
+        if (!task.proofPending) {
+          updatedTasks[idx] = { ...task, proofPending: true, missedAt: Date.now() };
+          if (!showProofModal) {
+            setProofTask(updatedTasks[idx]);
+            setShowProofModal(true);
+            startProofTimeout(updatedTasks[idx]);
+          }
+        } else {
+          if (!showProofModal) {
+            setProofTask(updatedTasks[idx]);
+            setShowProofModal(true);
+            ensureProofTimeout(updatedTasks[idx]);
+          }
+        }
+      }
+    }
+  });
+
+  // save tasks back (only if something changed)
+  setTasks(updatedTasks);
+  localStorage.setItem('tasks', JSON.stringify(updatedTasks));
   }
   function getRemainingBossTime(){
     const endTime=parseInt(localStorage.getItem('bossEndTime'))||0;
@@ -1463,6 +1511,19 @@ useEffect(() => {
   }
 }, []);
 
+  // Run an immediate check on app start to detect missed tasks and show modal
+useEffect(() => {
+  checkTaskDeadlines();
+
+  // Also, for any tasks already with proofPending (e.g., saved before), show modal for the first one
+  const pending = (tasks || []).find(t => t.proofPending && !t.proof && !t.completed);
+  if (pending) {
+    setProofTask(pending);
+    setShowProofModal(true);
+    ensureProofTimeout(pending);
+  }
+}, []); // run once on mount
+
 // === Toggle Logic ===
 useEffect(() => {
   localStorage.setItem("dopamineActive", JSON.stringify(dopamineActive));
@@ -1858,6 +1919,155 @@ function gainXP(amount) {
 React.useEffect(() => {
   localStorage.setItem('debt', String(debt));
 }, [debt]);
+
+  function startProofTimeout(task) {
+  // clear existing if any
+  if (!task || !task.id) return;
+  const id = task.id;
+
+  // clear prior timeout if present
+  if (proofTimeoutsRef.current[id]) {
+    clearTimeout(proofTimeoutsRef.current[id]);
+  }
+
+  // schedule auto-fail after PROOF_GRACE_MS
+  proofTimeoutsRef.current[id] = setTimeout(() => {
+    handleProofTimeout(id);
+  }, PROOF_GRACE_MS);
+}
+
+function ensureProofTimeout(task) {
+  // If timeout already exists in ref, leave it. Otherwise compute remaining time based on missedAt.
+  if (!task || !task.id) return;
+  const id = task.id;
+
+  if (proofTimeoutsRef.current[id]) return; // already set
+
+  const missedAt = task.missedAt || Date.now();
+  const elapsed = Date.now() - missedAt;
+  const remaining = Math.max(0, PROOF_GRACE_MS - elapsed);
+
+  proofTimeoutsRef.current[id] = setTimeout(() => {
+    handleProofTimeout(id);
+  }, remaining);
+}
+
+function handleProofTimeout(taskId) {
+  // get latest tasks
+  const curr = JSON.parse(localStorage.getItem('tasks') || '[]');
+  const task = curr.find(t => t.id === taskId);
+  if (!task) return;
+
+  // if user already submitted proof or task completed in the meantime, do nothing
+  if (task.proof || task.completed) {
+    // cleanup timeout
+    if (proofTimeoutsRef.current[taskId]) {
+      clearTimeout(proofTimeoutsRef.current[taskId]);
+      delete proofTimeoutsRef.current[taskId];
+    }
+    return;
+  }
+
+  // punishment: same format you used elsewhere
+  const randomPunishment = normalPunishments[Math.floor(Math.random() * normalPunishments.length)];
+  addPunishment({
+    type: 'taskMissed',
+    text: `You missed: ${task.title}\nPunishment: ${randomPunishment}`,
+    deathMode: false
+  });
+  increaseDebt(5);
+
+  // mark task as removed/expired to match old behavior (or you can keep it but mark expired)
+  const updated = curr.map(t => t.id === taskId ? { ...t, expired: true } : t).filter(t => !t.expired);
+  // save updated: remove expired like old behavior
+  setTasks(updated);
+  localStorage.setItem('tasks', JSON.stringify(updated));
+
+  // cleanup timeout ref
+  if (proofTimeoutsRef.current[taskId]) {
+    clearTimeout(proofTimeoutsRef.current[taskId]);
+    delete proofTimeoutsRef.current[taskId];
+  }
+
+  // close modal if it was open for this task
+  if (proofTask && proofTask.id === taskId) {
+    setShowProofModal(false);
+    setProofTask(null);
+    setProofText("");
+    setProofImage(null);
+  }
+  }
+
+  function submitProof() {
+  if (!proofTask) return;
+  if (!proofText.trim() && !proofImage) {
+    alert("Please provide text or photo proof before submitting.");
+    return;
+  }
+
+  // update tasks
+  const updated = tasks.map(t => {
+    if (t.id === proofTask.id) {
+      return {
+        ...t,
+        proof: proofText.trim() ? proofText.trim() : "Photo proof uploaded",
+        proofImage: proofImage || null,
+        completed: true,
+        proofPending: false,
+        missedAt: t.missedAt || null
+      };
+    }
+    return t;
+  });
+
+  setTasks(updated);
+  localStorage.setItem('tasks', JSON.stringify(updated));
+
+  // reward XP (tune amount as you like)
+  setXP(prev => (prev || 0) + 10);
+
+  // cleanup modal & timeout
+  if (proofTimeoutsRef.current[proofTask.id]) {
+    clearTimeout(proofTimeoutsRef.current[proofTask.id]);
+    delete proofTimeoutsRef.current[proofTask.id];
+  }
+
+  setShowProofModal(false);
+  setProofTask(null);
+  setProofText("");
+  setProofImage(null);
+}
+
+function skipProofAndPunish() {
+  if (!proofTask) {
+    setShowProofModal(false);
+    return;
+  }
+  // immediate punishment same as timeout
+  const randomPunishment = normalPunishments[Math.floor(Math.random() * normalPunishments.length)];
+  addPunishment({
+    type: 'taskMissed',
+    text: `You missed: ${proofTask.title}\nPunishment: ${randomPunishment}`,
+    deathMode: false
+  });
+  increaseDebt(5);
+
+  // remove task (mimic previous behavior)
+  const updated = tasks.filter(t => t.id !== proofTask.id);
+  setTasks(updated);
+  localStorage.setItem('tasks', JSON.stringify(updated));
+
+  // clear timeout
+  if (proofTimeoutsRef.current[proofTask.id]) {
+    clearTimeout(proofTimeoutsRef.current[proofTask.id]);
+    delete proofTimeoutsRef.current[proofTask.id];
+  }
+
+  setShowProofModal(false);
+  setProofTask(null);
+  setProofText("");
+  setProofImage(null);
+  }
   
 // Calendar
 function saveDailySummary() {
@@ -2519,6 +2729,70 @@ function runArchitectDailyReport(testMode = false) {
   </>
 ))}
 
+   {showProofModal && proofTask && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="absolute inset-0 bg-black/70"></div>
+
+    <div className="relative bg-gray-900 text-white rounded-2xl p-6 w-96 max-w-[92%] shadow-2xl border border-purple-600/40 animate-fadeIn">
+      <h3 className="text-lg font-bold mb-2">🧾 Proof: "{proofTask.title}"</h3>
+
+      <p className="text-sm mb-2 text-gray-300">
+        This task ended at{" "}
+        {(() => {
+          // display best effort end time
+          if (proofTask.type === 'daily' && proofTask.end) return proofTask.end;
+          if (proofTask.type === 'timed' && proofTask.created) {
+            const created = new Date(proofTask.created);
+            const deadline = new Date(created);
+            deadline.setDate(created.getDate() + parseInt(proofTask.days || 0));
+            return deadline.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+          return "";
+        })()}
+        . Provide a short proof (text or photo).
+      </p>
+
+      <textarea
+        value={proofText}
+        onChange={e => setProofText(e.target.value)}
+        placeholder="E.g., Revised 50 vocab words, wrote meanings & examples..."
+        className="w-full h-28 p-2 rounded-md text-black mb-3"
+      />
+
+      <div className="mb-3">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onloadend = () => setProofImage(reader.result);
+            reader.readAsDataURL(file);
+          }}
+        />
+        {proofImage && (
+          <img src={proofImage} alt="proof" className="mt-2 w-28 h-20 object-cover rounded-md" />
+        )}
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={skipProofAndPunish}
+          className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
+        >
+          Skip
+        </button>
+        <button
+          onClick={submitProof}
+          className="px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600"
+        >
+          Submit Proof
+        </button>
+      </div>
+    </div>
+  </div>
+)}   
       {/* Dopamine Detox Section */}
       <div  className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
