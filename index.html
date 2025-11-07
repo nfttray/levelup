@@ -1076,7 +1076,6 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  // wait a bit after mount
   setTimeout(() => {
     const now = new Date();
     const minutesNow = now.getHours() * 60 + now.getMinutes();
@@ -1085,23 +1084,14 @@ useEffect(() => {
       const [h, m] = a.time.split(":").map(Number);
       const anchorMinutes = h * 60 + m;
 
-      // agar time cross ho gaya aur ab tak confirm nahi hua
+      // check if time passed & anchor not answered
       if (minutesNow > anchorMinutes && !anchorsDone[a.id]) {
-        // ab popup dikhayega even if late
-        const answer = window.confirm(
-          `🕯️ ${a.label} (missed earlier)\nDid you honour your contracts?`
-        );
-        const status = answer ? "yes" : "no";
-        const xpChange = answer ? 2 : -5;
-        const updated = { ...anchorsDone, [a.id]: status };
-        setAnchorsDone(updated);
-        localStorage.setItem("anchorsDone", JSON.stringify(updated));
-        addXP(xpChange);
+        showAnchorPopup(a);
       }
     });
-  }, 1000);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, 2000); // 2 sec after app open
 }, []);
+
 // === MOTIVATION SYSTEM (works even if app closed) ===
 useEffect(() => {
   const now = Date.now();
