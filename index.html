@@ -31,6 +31,11 @@
   </style>
 
 <style>
+  @keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-fadeIn { animation: fadeIn .28s ease-out both; }
 @keyframes fly1 {
   0%   { top: 0%; left: 50%; transform: rotate(0deg); }
   25%  { top: 20%; left: 90%; transform: rotate(90deg); }
@@ -495,7 +500,35 @@ const [rewardTime, setRewardTime] = useState(0);
 const [rewardActive, setRewardActive] = useState(false);
 const [tasksCompletedCount, setTasksCompletedCount] = useState(0);
   
+// === Anchor modal (custom interactive) ===
+const [showAnchorModal, setShowAnchorModal] = useState(false);
+const [currentAnchor, setCurrentAnchor] = useState(null);
+const [anchorQueueLock, setAnchorQueueLock] = useState(false); // prevent double popups
 
+function openAnchorModal(anchor) {
+  // prevent opening multiple modals at once
+  if (anchorQueueLock) return;
+  setAnchorQueueLock(true);
+  setCurrentAnchor(anchor);
+  setShowAnchorModal(true);
+}
+
+function handleAnchorAnswer(answer) {
+  if (!currentAnchor) return;
+  const a = currentAnchor;
+  const newStatus = { ...anchorsDone, [a.id]: answer ? "yes" : "no" };
+  setAnchorsDone(newStatus);
+  localStorage.setItem("anchorsDone", JSON.stringify(newStatus));
+  setShowAnchorModal(false);
+  setCurrentAnchor(null);
+  setAnchorQueueLock(false);
+
+  if (answer) {
+    setXP(prev => prev + 2);  // reward
+  } else {
+    setXP(prev => Math.max(0, prev - 5)); // penalty
+  }
+  }
 
 // ✅ Handle Task Completion
 function handleTaskCompletion() {
@@ -689,17 +722,8 @@ useEffect(() => {
   
   
   function showAnchorPopup(anchor) {
-  const answer = confirm(`🕯️ ${anchor.label} Anchor\nDid you honour your contracts?`);
-
-  const newStatus = { ...anchorsDone, [anchor.id]: answer ? "yes" : "no" };
-  setAnchorsDone(newStatus);
-  localStorage.setItem("anchorsDone", JSON.stringify(newStatus));
-
-  if (answer) {
-    addXP(2);                  // reward
-  } else {
-    addXP(-5);                 // ❌ XP penalty instead of fog
-  }
+  // backwards compatible wrapper
+  openAnchorModal(anchor);
   }
   
 // ---- Start Challenge ----
@@ -2964,6 +2988,36 @@ function runArchitectDailyReport(testMode = false) {
       <h2 className="text-xl font-bold mb-3">Architect's Judgment</h2>
       <pre className="mb-3 whitespace-pre-wrap text-left">{architectMessage}</pre>
       <button onClick={closeArchitectModal} className="bg-gray-700 px-4 py-2 rounded mt-3 w-full">Continue</button>
+    </div>
+  </div>
+)}
+      {showAnchorModal && currentAnchor && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="absolute inset-0 bg-black/70"></div>
+
+    <div className="relative bg-gray-900 text-white rounded-2xl p-6 w-80 max-w-[90%] shadow-2xl border border-purple-600/40 animate-fadeIn">
+      <h3 className="text-lg font-bold mb-1">🕯️ {currentAnchor.label} Anchor</h3>
+      <p className="text-sm mb-4">Did you honour your contracts today?</p>
+
+      <div className="flex gap-3 justify-center">
+        <button
+          onClick={() => handleAnchorAnswer(true)}
+          className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 transform transition hover:scale-105 shadow-md"
+        >
+          Yes
+        </button>
+
+        <button
+          onClick={() => handleAnchorAnswer(false)}
+          className="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 transform transition hover:scale-105 shadow-md"
+        >
+          No
+        </button>
+      </div>
+
+      <div className="mt-4 text-xs text-gray-300 text-center">
+        (Auto-closes when you answer)
+      </div>
     </div>
   </div>
 )}
