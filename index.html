@@ -380,6 +380,18 @@ function App(){
   
 // }));
   // Wake up tracking
+  // === Focus Mode & Break states ===
+const [focusActive, setFocusActive] = useState(false);
+const [focusStartTime, setFocusStartTime] = useState(null);
+const [focusDuration, setFocusDuration] = useState(0); // minutes
+const [focusRemaining, setFocusRemaining] = useState(0); // seconds
+
+const [onBreak, setOnBreak] = useState(false);
+const [breakRemaining, setBreakRemaining] = useState(0); // seconds
+
+const [focusStats, setFocusStats] = useState(
+  JSON.parse(localStorage.getItem("focusStats") || "[]")
+);
   // ---------- Proof modal / missed-task accountability ----------
 const [showProofModal, setShowProofModal] = useState(false);
 const [proofTask, setProofTask] = useState(null);
@@ -763,6 +775,125 @@ function autoCleanOldProofs(days = 5) {
     console.log("🧹 Old proof images cleaned (older than " + days + " days)");
   }
   }
+
+
+  function startFocusSession(minutes) {
+  if (focusActive) return alert("Focus Mode already active!");
+  if (onBreak) return alert("Currently on break — finish break first.");
+
+  setFocusActive(true);
+  setFocusStartTime(Date.now());
+  setFocusDuration(minutes);
+  setFocusRemaining(minutes * 60); // convert to seconds
+
+  // persist so session can resume after reload
+  localStorage.setItem(
+    "focusSession",
+    JSON.stringify({ active: true, start: Date.now(), duration: minutes })
+  );
+
+  // optional: small motivational message
+  setTimeout(() => alert(`🕯️ Focus started for ${minutes} min — stay in the zone.`), 200);
+  }
+  function endFocusSession(success) {
+  // stop and cleanup
+  setFocusActive(false);
+  localStorage.removeItem("focusSession");
+
+  if (success) {
+    // record stat
+    const session = { date: new Date().toLocaleDateString(), minutes: focusDuration };
+    const updated = [...focusStats, session];
+    setFocusStats(updated);
+    localStorage.setItem("focusStats", JSON.stringify(updated));
+
+    // reward (change amount if chaho)
+    setXP(prev => (prev || 0) + 15);
+    // auto-start break (5 min)
+    startBreak(5);
+
+    // small notification
+    setTimeout(() => alert("✨ Focus session complete! +15 XP. Break started (5 min)."), 200);
+  } else {
+    // early abort → punishment using your existing flow
+    const randomPunishment = normalPunishments[Math.floor(Math.random() * normalPunishments.length)];
+    addPunishment({
+      type: "focusBreak",
+      text: `You broke focus early!\nPunishment: ${randomPunishment}`,
+      deathMode: false
+    });
+  }
+
+  // reset local focus fields
+  setFocusStartTime(null);
+  setFocusDuration(0);
+  setFocusRemaining(0);
+  }
+
+
+ function startBreak(minutes) {
+  setOnBreak(true);
+  setBreakRemaining(minutes * 60);
+  const endTime = Date.now() + minutes * 60 * 1000;
+  localStorage.setItem("breakSession", JSON.stringify({ active: true, endTime }));
+}
+
+useEffect(() => {
+  let interval;
+  if (onBreak && breakRemaining > 0) {
+    interval = setInterval(() => {
+      setBreakRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          finishBreak();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
+  return () => clearInterval(interval);
+}, [onBreak, breakRemaining]);
+
+function finishBreak() {
+  setOnBreak(false);
+  localStorage.removeItem("breakSession");
+  setBreakRemaining(0);
+  setTimeout(() => alert("☕ Break over — back to work."), 200);
+}
+
+// restore focus or break on app load
+useEffect(() => {
+  // restore focus session if active
+  try {
+    const savedFocus = JSON.parse(localStorage.getItem("focusSession"));
+    if (savedFocus && savedFocus.active) {
+      const elapsedSec = Math.floor((Date.now() - savedFocus.start) / 1000);
+      const remaining = savedFocus.duration * 60 - elapsedSec;
+      if (remaining > 0) {
+        setFocusActive(true);
+        setFocusDuration(savedFocus.duration);
+        setFocusRemaining(remaining);
+      } else {
+        localStorage.removeItem("focusSession");
+      }
+    }
+  } catch (e) { /* ignore parse errors */ }
+
+  // restore break if active
+  try {
+    const savedBreak = JSON.parse(localStorage.getItem("breakSession"));
+    if (savedBreak && savedBreak.active) {
+      const remaining = Math.ceil((savedBreak.endTime - Date.now()) / 1000);
+      if (remaining > 0) {
+        setOnBreak(true);
+        setBreakRemaining(remaining);
+      } else {
+        localStorage.removeItem("breakSession");
+      }
+    }
+  } catch (e) {}
+}, []); // run once on mount 
 // ---- Start Challenge ----
 function startChallenge(type, target, duration) {
   const base = { type, target, startDate: Date.now() };
@@ -1201,6 +1332,24 @@ useEffect(() => {
   // 🧹 clean up old proof images automatically
   autoCleanOldProofs(5);
 }, []);
+
+
+  useEffect(() => {
+  let interval;
+  if (focusActive && focusRemaining > 0) {
+    interval = setInterval(() => {
+      setFocusRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          endFocusSession(true); // success
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
+  return () => clearInterval(interval);
+}, [focusActive, focusRemaining]);
   
 // === MOTIVATION SYSTEM (works even if app closed) ===
 useEffect(() => {
@@ -2820,6 +2969,94 @@ function runArchitectDailyReport(testMode = false) {
     </div>
   </div>
 )}   
+
+  {/* ===== Focus Controls ===== */}
+<div className="bg-gray-800 p-4 rounded-2xl mt-4 shadow-lg text-center">
+  {!focusActive && !onBreak ? (
+    <>
+      <h2 className="text-lg font-bold mb-2">🎯 Focus Mode</h2>
+      <p className="text-sm text-gray-300 mb-3">Choose session length:</p>
+      <div className="flex justify-center gap-3">
+        {[25, 45, 60].map(min => (
+          <button
+            key={min}
+            onClick={() => startFocusSession(min)}
+            className="px-4 py-2 bg-indigo-600 rounded-xl hover:bg-indigo-700"
+          >
+            {min} min
+          </button>
+        ))}
+      </div>
+    </>
+  ) : (
+    <div>
+      <h2 className="text-lg font-bold mb-2">{focusActive ? "🕒 Focus Active" : "☕ On Break"}</h2>
+      <p className="text-sm text-gray-200 mb-3">
+        {focusActive ? `${focusDuration} minute session` : `Break time`}
+      </p>
+      <p className="text-2xl font-mono mb-3">
+        {focusActive
+          ? `${Math.floor(focusRemaining/60).toString().padStart(2,'0')}:${String(focusRemaining%60).padStart(2,'0')}`
+          : `${Math.floor(breakRemaining/60).toString().padStart(2,'0')}:${String(breakRemaining%60).padStart(2,'0')}`
+        }
+      </p>
+      {focusActive ? (
+        <button onClick={() => endFocusSession(false)} className="px-4 py-2 bg-red-600 rounded-xl">Abort Focus</button>
+      ) : (
+        <button onClick={finishBreak} className="px-4 py-2 bg-emerald-600 rounded-xl">Skip Break</button>
+      )}
+    </div>
+  )}
+</div>
+
+{/* ===== Immersive Overlays ===== */}
+{focusActive && (
+  <div className="fixed inset-0 bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-white z-50 flex flex-col items-center justify-center">
+    <h1 className="text-3xl font-bold mb-4 tracking-wide animate-pulse">🎯 Deep Focus Mode</h1>
+    <p className="text-lg text-gray-300 mb-2">{focusDuration}-minute session</p>
+    <p className="text-6xl font-mono my-6">
+      {Math.floor(focusRemaining/60).toString().padStart(2,'0')}:
+      {String(focusRemaining%60).padStart(2,'0')}
+    </p>
+    <button onClick={() => endFocusSession(false)} className="px-6 py-3 bg-red-700 rounded-xl">Abort Focus</button>
+  </div>
+)}
+
+{onBreak && (
+  <div className="fixed inset-0 bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-900 text-white z-50 flex flex-col items-center justify-center">
+    <h1 className="text-3xl font-bold mb-4">☕ Break Time</h1>
+    <p className="text-5xl font-mono mb-6">
+      {Math.floor(breakRemaining/60).toString().padStart(2,'0')}:
+      {String(breakRemaining%60).padStart(2,'0')}
+    </p>
+    <button onClick={finishBreak} className="px-4 py-2 bg-emerald-600 rounded-xl">End Break</button>
+  </div>
+)}
+
+{/* ===== Focus Stats ===== */}
+<div className="bg-gray-800 mt-6 p-4 rounded-2xl shadow-md text-gray-200">
+  <div className="flex justify-between items-center mb-2">
+    <h3 className="text-lg font-bold">🧭 Focus Stats</h3>
+    <div className="text-sm text-gray-400">Total Sessions: {focusStats.length}</div>
+  </div>
+
+  {focusStats.length === 0 ? (
+    <p className="text-sm text-gray-400">No sessions yet. Start a Focus session.</p>
+  ) : (
+    <ul className="text-sm space-y-1 max-h-36 overflow-y-auto">
+      {focusStats.slice().reverse().map((s,i) => (
+        <li key={i} className="flex justify-between border-b border-gray-700 py-1">
+          <span>{s.date}</span>
+          <span className="text-emerald-400">{s.minutes} min</span>
+        </li>
+      ))}
+    </ul>
+  )}
+
+  <div className="mt-3 text-sm text-gray-400">
+    Total minutes: {focusStats.reduce((a,b)=>a+(b.minutes||0),0)}
+  </div>
+</div>
       {/* Dopamine Detox Section */}
       <div  className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
