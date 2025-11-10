@@ -2499,63 +2499,64 @@ useEffect(() => {
 }, []); // ✅ Only run once
   
  function handlePunishmentAction(index, action) {
-  const updated = [...punishments];
-  const p = updated[index];
+const updated = [...punishments];
+const p = updated[index];
 
-  if (!p || !p.text) return;
+if (!p || !p.text) return;
 
-  // Helper: close modal safely
-  const closeModal = () => {
-    setPunishments([]);
-    localStorage.setItem("punishments", JSON.stringify([]));
-    if (typeof setShowPunishmentModal === "function") {
-      setShowPunishmentModal(false);
-    }
-  };
-
-  if (action === "complete") {
-    updated.splice(index, 1);
-    setPunishments(updated);
-    localStorage.setItem("punishments", JSON.stringify(updated));
-
-    if (p.text.toLowerCase().includes("daily log for")) {
-      try {
-        const contracts = JSON.parse(localStorage.getItem("shadowContracts")) || [];
-        const updatedContracts = contracts.map(c => {
-          if (p.text.includes(c.goal)) {
-            const dayIndex = Math.floor((Date.now() - c.start) / (24 * 60 * 60 * 1000));
-            if (dayIndex >= 0 && dayIndex < c.days) {
-              const newProg = [...c.progress];
-              newProg[dayIndex] = true;
-              return { ...c, progress: newProg };
-            }
-          }
-          return c;
-        });
-        localStorage.setItem("shadowContracts", JSON.stringify(updatedContracts));
-        setContracts(updatedContracts);
-        alert("✅ Daily log marked complete for your contract!");
-      } catch (err) {
-        console.error("Contract update failed:", err);
-      }
-    } else {
-      alert("✅ Punishment completed!");
-    }
-
-    // 🟢 Force close modal after completion
-    closeModal();
+// Helper: close modal safely
+const closeModal = () => {
+  if (typeof setShowPunishmentModal === "function") {
+    setShowPunishmentModal(false);
   }
+  // ⛔ Do NOT clear punishments here — it causes modal to reopen instantly
+};
 
-  if (action === "forgive") {
-    setXP(prev => Math.max(0, prev - 10));
-    updated.splice(index, 1);
-    setPunishments(updated);
-    localStorage.setItem("punishments", JSON.stringify(updated));
-    alert("⚖️ Forgiven (-10 XP)");
+if (action === "complete") {
+updated.splice(index, 1);
+setPunishments(updated);
+localStorage.setItem("punishments", JSON.stringify(updated));
 
-    // 🟢 Force close modal after forgiveness
-    closeModal();
-  }
+if (p.text.toLowerCase().includes("daily log for")) {  
+  try {  
+    const contracts = JSON.parse(localStorage.getItem("shadowContracts")) || [];  
+    const updatedContracts = contracts.map(c => {  
+      if (p.text.includes(c.goal)) {  
+        const dayIndex = Math.floor((Date.now() - c.start) / (24 * 60 * 60 * 1000));  
+        if (dayIndex >= 0 && dayIndex < c.days) {  
+          const newProg = [...c.progress];  
+          newProg[dayIndex] = true;  
+          return { ...c, progress: newProg };  
+        }  
+      }  
+      return c;  
+    });  
+    localStorage.setItem("shadowContracts", JSON.stringify(updatedContracts));  
+    setContracts(updatedContracts);  
+    alert("✅ Daily log marked complete for your contract!");  
+  } catch (err) {  
+    console.error("Contract update failed:", err);  
+  }  
+} else {  
+  alert("✅ Punishment completed!");  
+}  
+
+// 🟢 Force close modal after completion  
+closeModal();
+
+}
+
+if (action === "forgive") {
+setXP(prev => Math.max(0, prev - 10));
+updated.splice(index, 1);
+setPunishments(updated);
+localStorage.setItem("punishments", JSON.stringify(updated));
+alert("⚖️ Forgiven (-10 XP)");
+
+// 🟢 Force close modal after forgiveness  
+closeModal();
+
+}
   }
   
   // === Add / Complete Tasks ===
