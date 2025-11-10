@@ -2487,7 +2487,7 @@ wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
   // Reset xpStartValue for tomorrow's calculation
   localStorage.setItem('xpStartValue', String(xp));
 }
-
+if (sessionStorage.getItem("punishmentCleared") === "true") return;
  function handlePunishmentAction(index, action) {
   const updated = [...punishments];
   const p = updated[index];
@@ -2497,6 +2497,7 @@ wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
   // Helper: close modal safely
   const closeModal = () => {
     setPunishments([]);
+    sessionStorage.setItem("punishmentCleared", "true");
     localStorage.setItem("punishments", JSON.stringify([]));
     if (typeof setShowPunishmentModal === "function") {
       setShowPunishmentModal(false);
