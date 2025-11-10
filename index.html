@@ -2487,7 +2487,14 @@ wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
   // Reset xpStartValue for tomorrow's calculation
   localStorage.setItem('xpStartValue', String(xp));
 }
-if (sessionStorage.getItem("punishmentCleared") === "true") return;
+
+useEffect(() => {
+  if (sessionStorage.getItem("punishmentCleared") === "true") return;
+
+  const saved = JSON.parse(localStorage.getItem("punishments")) || [];
+  setPunishments(saved);
+}, []); // ✅ Only run once
+  
  function handlePunishmentAction(index, action) {
   const updated = [...punishments];
   const p = updated[index];
@@ -2497,7 +2504,6 @@ if (sessionStorage.getItem("punishmentCleared") === "true") return;
   // Helper: close modal safely
   const closeModal = () => {
     setPunishments([]);
-    sessionStorage.setItem("punishmentCleared", "true");
     localStorage.setItem("punishments", JSON.stringify([]));
     if (typeof setShowPunishmentModal === "function") {
       setShowPunishmentModal(false);
