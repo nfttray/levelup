@@ -2488,6 +2488,57 @@ wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
   localStorage.setItem('xpStartValue', String(xp));
 }
 
+  function handlePunishmentAction(index, action) {
+  const updated = [...punishments];
+  const p = updated[index];
+
+  // 🔒 Safety: agar punishment object hi invalid hai
+  if (!p || !p.text) return;
+
+  // ✅ Action: Complete button
+  if (action === "complete") {
+    // sabse pehle punishment remove kar do
+    updated.splice(index, 1);
+    setPunishments(updated);
+    localStorage.setItem("punishments", JSON.stringify(updated));
+
+    // 🔍 Only for contract-type punishments (text contains "daily log for")
+    if (p.text.toLowerCase().includes("daily log for")) {
+      try {
+        const contracts = JSON.parse(localStorage.getItem("shadowContracts")) || [];
+        const updatedContracts = contracts.map(c => {
+          if (p.text.includes(c.goal)) {
+            const dayIndex = Math.floor((Date.now() - c.start) / (24 * 60 * 60 * 1000));
+            if (dayIndex >= 0 && dayIndex < c.days) {
+              const newProg = [...c.progress];
+              newProg[dayIndex] = true;
+              return { ...c, progress: newProg };
+            }
+          }
+          return c;
+        });
+        localStorage.setItem("shadowContracts", JSON.stringify(updatedContracts));
+        setContracts(updatedContracts);
+        alert("✅ Daily log marked complete for your contract!");
+      } catch (err) {
+        console.error("Contract update failed:", err);
+      }
+    } else {
+      // Normal task punishment (no contract)
+      alert("✅ Punishment completed!");
+    }
+  }
+
+  // 🚫 Action: Forgive button
+  if (action === "forgive") {
+    setXP(prev => Math.max(0, prev - 10));
+    updated.splice(index, 1);
+    setPunishments(updated);
+    localStorage.setItem("punishments", JSON.stringify(updated));
+    alert("⚖️ Forgiven (-10 XP)");
+  }
+  }
+  
   // === Add / Complete Tasks ===
   function addPunishment(p){
     setPunishments([...punishments,p]);
