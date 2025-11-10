@@ -2488,21 +2488,17 @@ wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
   localStorage.setItem('xpStartValue', String(xp));
 }
 
-  function handlePunishmentAction(index, action) {
+ function handlePunishmentAction(index, action) {
   const updated = [...punishments];
   const p = updated[index];
 
-  // 🔒 Safety: agar punishment object hi invalid hai
   if (!p || !p.text) return;
 
-  // ✅ Action: Complete button
   if (action === "complete") {
-    // sabse pehle punishment remove kar do
     updated.splice(index, 1);
     setPunishments(updated);
     localStorage.setItem("punishments", JSON.stringify(updated));
 
-    // 🔍 Only for contract-type punishments (text contains "daily log for")
     if (p.text.toLowerCase().includes("daily log for")) {
       try {
         const contracts = JSON.parse(localStorage.getItem("shadowContracts")) || [];
@@ -2524,20 +2520,24 @@ wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
         console.error("Contract update failed:", err);
       }
     } else {
-      // Normal task punishment (no contract)
       alert("✅ Punishment completed!");
     }
+
+    // 👇 add this line here
+    if (updated.length === 0) setShowPunishmentModal(false);
   }
 
-  // 🚫 Action: Forgive button
   if (action === "forgive") {
     setXP(prev => Math.max(0, prev - 10));
     updated.splice(index, 1);
     setPunishments(updated);
     localStorage.setItem("punishments", JSON.stringify(updated));
     alert("⚖️ Forgiven (-10 XP)");
+
+    // 👇 add this line here
+    if (updated.length === 0) setShowPunishmentModal(false);
   }
-  }
+  } 
   
   // === Add / Complete Tasks ===
   function addPunishment(p){
