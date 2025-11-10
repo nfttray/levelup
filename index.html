@@ -828,18 +828,21 @@ useEffect(() => {
 
   function handleContractsPostEnd(updatedContracts) {
   // Save already called by caller; just ensure chain continues
-  if (!hasActiveContract(updatedContracts)) {
-    // Force prompt for new contract
+if (!hasActiveContract(updatedContracts)) {
+  // only lock if truly no contracts at all
+  const activeContracts = updatedContracts.filter(c => !c.done && !c.failed);
+  if (activeContracts.length === 0) {
     setTimeout(() => {
       setShowNewContract(true);
       setUiLockedByContract(true);
       setLockdown(true);
       alert("🕯️ Contract cycle ended. Forge the next one immediately.");
     }, 800);
-  } else {
-    // unlock if there is at least one active contract
-    setUiLockedByContract(false);
-    if (punishments.length === 0) setLockdown(false);
+  }
+} else {
+  setUiLockedByContract(false);
+  // 🔧 unlock properly after punishment complete/forgive
+  setLockdown(false);
   }
   }
 
