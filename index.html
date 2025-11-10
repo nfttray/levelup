@@ -2498,8 +2498,8 @@ useEffect(() => {
   setPunishments(saved);
 }, []); // ✅ Only run once
   
-function handlePunishmentAction(index, action) {
-  // Clone list
+
+  function handlePunishmentAction(index, action) {
   const updated = [...punishments];
   const p = updated[index];
   if (!p || !p.text) return;
@@ -2509,11 +2509,10 @@ function handlePunishmentAction(index, action) {
     setPunishments(updated);
     localStorage.setItem("punishments", JSON.stringify(updated));
 
-    // Optional: contract progress update
     if (p.text.toLowerCase().includes("daily log for")) {
       try {
         const contracts = JSON.parse(localStorage.getItem("shadowContracts")) || [];
-        const changed = contracts.map(c => {
+        const updatedContracts = contracts.map(c => {
           if (p.text.includes(c.goal)) {
             const dayIndex = Math.floor((Date.now() - c.start) / (24 * 60 * 60 * 1000));
             if (dayIndex >= 0 && dayIndex < c.days) {
@@ -2524,11 +2523,14 @@ function handlePunishmentAction(index, action) {
           }
           return c;
         });
-        localStorage.setItem("shadowContracts", JSON.stringify(changed));
-        setContracts(changed);
+        localStorage.setItem("shadowContracts", JSON.stringify(updatedContracts));
+        setContracts(updatedContracts);
+        alert("✅ Daily log marked complete for your contract!");
       } catch (err) {
         console.error("Contract update failed:", err);
       }
+    } else {
+      alert("✅ Punishment completed!");
     }
   }
 
@@ -2537,25 +2539,17 @@ function handlePunishmentAction(index, action) {
     updated.splice(index, 1);
     setPunishments(updated);
     localStorage.setItem("punishments", JSON.stringify(updated));
+    alert("⚖️ Forgiven (-10 XP)");
   }
 
-  // 🔓 always unlock & close
+  // 🧹 Clear all punishments so modal closes
+  setPunishments([]);
+  localStorage.setItem("punishments", JSON.stringify([]));
+
+  // 🔓 Unlock UI
   setLockdown(false);
   setUiLockedByContract(false);
-
-  // 🧩 force React to hide modal: no punishments = no modal
-  if (updated.length === 0) {
-    // clear any leftovers
-    localStorage.removeItem("punishments");
   }
-
-  // 🪄 trigger re-render without modal
-  setTimeout(() => {
-    const el = document.querySelector("#punishmentModal");
-    if (el) el.style.display = "none";
-  }, 100);
-  }
-  
   // === Add / Complete Tasks ===
   function addPunishment(p){
     setPunishments([...punishments,p]);
