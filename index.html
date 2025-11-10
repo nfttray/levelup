@@ -2494,6 +2494,15 @@ wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
 
   if (!p || !p.text) return;
 
+  // Helper: close modal safely
+  const closeModal = () => {
+    setPunishments([]);
+    localStorage.setItem("punishments", JSON.stringify([]));
+    if (typeof setShowPunishmentModal === "function") {
+      setShowPunishmentModal(false);
+    }
+  };
+
   if (action === "complete") {
     updated.splice(index, 1);
     setPunishments(updated);
@@ -2523,8 +2532,8 @@ wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
       alert("✅ Punishment completed!");
     }
 
-    // 👇 add this line here
-    if (updated.length === 0) setShowPunishmentModal(false);
+    // 🟢 Force close modal after completion
+    closeModal();
   }
 
   if (action === "forgive") {
@@ -2534,10 +2543,10 @@ wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
     localStorage.setItem("punishments", JSON.stringify(updated));
     alert("⚖️ Forgiven (-10 XP)");
 
-    // 👇 add this line here
-    if (updated.length === 0) setShowPunishmentModal(false);
+    // 🟢 Force close modal after forgiveness
+    closeModal();
   }
-  } 
+  }
   
   // === Add / Complete Tasks ===
   function addPunishment(p){
