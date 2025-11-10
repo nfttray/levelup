@@ -2498,65 +2498,75 @@ useEffect(() => {
   setPunishments(saved);
 }, []); // ✅ Only run once
   
- function handlePunishmentAction(index, action) {
-const updated = [...punishments];
-const p = updated[index];
+function handlePunishmentAction(index, action) {
+  const updated = [...punishments];
+  const p = updated[index];
+  if (!p || !p.text) return;
 
-if (!p || !p.text) return;
+  // ✅ Always close modal safely after handling
+  const closeModal = () => {
+    try {
+      // force the modal state to false directly
+      if (window.setShowPunishmentModal) {
+        window.setShowPunishmentModal(false);
+      }
+      if (typeof setShowPunishmentModal === "function") {
+        setShowPunishmentModal(false);
+      }
+    } catch (err) {
+      console.warn("Modal close failed:", err);
+    }
+  };
 
-// Helper: close modal safely
-const closeModal = () => {
-  if (typeof setShowPunishmentModal === "function") {
-    setShowPunishmentModal(false);
+  if (action === "complete") {
+    // remove from list
+    updated.splice(index, 1);
+    setPunishments(updated);
+    localStorage.setItem("punishments", JSON.stringify(updated));
+
+    // mark daily contract if text matches
+    if (p.text.toLowerCase().includes("daily log for")) {
+      try {
+        const contracts = JSON.parse(localStorage.getItem("shadowContracts")) || [];
+        const updatedContracts = contracts.map(c => {
+          if (p.text.includes(c.goal)) {
+            const dayIndex = Math.floor((Date.now() - c.start) / (24 * 60 * 60 * 1000));
+            if (dayIndex >= 0 && dayIndex < c.days) {
+              const newProg = [...c.progress];
+              newProg[dayIndex] = true;
+              return { ...c, progress: newProg };
+            }
+          }
+          return c;
+        });
+        localStorage.setItem("shadowContracts", JSON.stringify(updatedContracts));
+        setContracts(updatedContracts);
+        alert("✅ Daily log marked complete for your contract!");
+      } catch (err) {
+        console.error("Contract update failed:", err);
+      }
+    } else {
+      alert("✅ Punishment completed!");
+    }
+
+    // 🟢 ensure modal closes
+    closeModal();
   }
-  // ⛔ Do NOT clear punishments here — it causes modal to reopen instantly
-};
 
-if (action === "complete") {
-updated.splice(index, 1);
-setPunishments(updated);
-localStorage.setItem("punishments", JSON.stringify(updated));
+  if (action === "forgive") {
+    setXP(prev => Math.max(0, prev - 10));
+    updated.splice(index, 1);
+    setPunishments(updated);
+    localStorage.setItem("punishments", JSON.stringify(updated));
+    alert("⚖️ Forgiven (-10 XP)");
 
-if (p.text.toLowerCase().includes("daily log for")) {  
-  try {  
-    const contracts = JSON.parse(localStorage.getItem("shadowContracts")) || [];  
-    const updatedContracts = contracts.map(c => {  
-      if (p.text.includes(c.goal)) {  
-        const dayIndex = Math.floor((Date.now() - c.start) / (24 * 60 * 60 * 1000));  
-        if (dayIndex >= 0 && dayIndex < c.days) {  
-          const newProg = [...c.progress];  
-          newProg[dayIndex] = true;  
-          return { ...c, progress: newProg };  
-        }  
-      }  
-      return c;  
-    });  
-    localStorage.setItem("shadowContracts", JSON.stringify(updatedContracts));  
-    setContracts(updatedContracts);  
-    alert("✅ Daily log marked complete for your contract!");  
-  } catch (err) {  
-    console.error("Contract update failed:", err);  
-  }  
-} else {  
-  alert("✅ Punishment completed!");  
-}  
+    // 🟢 ensure modal closes
+    closeModal();
+  }
 
-// 🟢 Force close modal after completion  
-closeModal();
-
-}
-
-if (action === "forgive") {
-setXP(prev => Math.max(0, prev - 10));
-updated.splice(index, 1);
-setPunishments(updated);
-localStorage.setItem("punishments", JSON.stringify(updated));
-alert("⚖️ Forgiven (-10 XP)");
-
-// 🟢 Force close modal after forgiveness  
-closeModal();
-
-}
+  // 🔓 also clear lock (if any)
+  setLockdown(false);
+  setUiLockedByContract(false);
   }
   
   // === Add / Complete Tasks ===
