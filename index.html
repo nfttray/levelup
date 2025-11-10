@@ -3966,17 +3966,18 @@ function runArchitectDailyReport(testMode = false) {
 
       <div className="flex flex-col gap-3 mt-5">
         <button
-          onClick={completePunishment}
-          className="bg-green-600 hover:bg-green-700 transition-colors duration-200 py-3 rounded-lg font-semibold shadow-md text-white"
-        >
-          Complete
-        </button>
-        <button
-          onClick={forgivePunishment}
-          className="bg-yellow-500 hover:bg-yellow-600 transition-colors duration-200 py-3 rounded-lg font-semibold shadow-md text-white"
-        >
-          Forgive (-{punishments[0].deathMode ? 25 : 10} XP)
-        </button>
+  onClick={() => handlePunishmentAction(0, "complete")}
+  className="bg-green-600 hover:bg-green-700 transition-colors duration-200 py-3 rounded-lg font-semibold shadow-md text-white"
+>
+  Complete
+</button>
+
+<button
+  onClick={() => handlePunishmentAction(0, "forgive")}
+  className="bg-yellow-500 hover:bg-yellow-600 transition-colors duration-200 py-3 rounded-lg font-semibold shadow-md text-white"
+>
+  Forgive (-{punishments[0].deathMode ? 25 : 10} XP)
+</button>
       </div>
     </div>
 
