@@ -2055,6 +2055,25 @@ useEffect(() => {
     localStorage.setItem("fogDate", today);
   }
 }, []);
+
+  // === Architect Daily Check Trigger ===
+useEffect(() => {
+  const todayKey = new Date().toDateString();
+  const lastCheck = localStorage.getItem("lastArchitectCheck");
+
+  // run once per calendar day, only when app first opens
+  if (lastCheck !== todayKey) {
+    // small delay to let UI load first
+    setTimeout(() => {
+      showArchitectModal("🕛 The Architect has arrived to judge your day...", "neutral");
+
+      // run main report after short pause
+      setTimeout(() => {
+        runArchitectDailyReport();
+      }, 3500);
+    }, 1500);
+  }
+}, []);
   
   // Boss Fight Check
 useEffect(() => {
@@ -2771,7 +2790,19 @@ function runArchitectDailyReport(testMode = false) {
   const yesterdayKey = yesterdayDate.toISOString().split("T")[0];
   const todayKey = new Date().toDateString();
 
+  // stop if there is no history yet (first day)
+  const history = JSON.parse(localStorage.getItem("history") || "[]");
+  if (!Array.isArray(history) || history.length === 0) {
+    console.log("Architect skipped: first day, no history yet.");
+    return;
+  }
 
+  // check that yesterday actually exists in history
+  const hasYesterday = history.some(h => h.date === yesterdayKey);
+  if (!hasYesterday) {
+    console.log("Architect skipped: no data for yesterday yet.");
+    return;
+  }
   // prevent duplicate runs in same day
   if (!testMode) {
     const last = localStorage.getItem("lastArchitectCheck");
