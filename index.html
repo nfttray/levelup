@@ -575,6 +575,45 @@ const presets = {
   monarch: { rivalXP: 100,threshold: 90, fogRate: 1.4, debtPenalty: 6, focusReward: 3 },
 };
 
+// === Architect Crystals ===
+const [architectCrystals, setArchitectCrystals] = useState(
+  JSON.parse(localStorage.getItem("architectCrystals") || "[]")
+);
+
+function saveArchitectCrystals(arr) {
+  setArchitectCrystals(arr);
+  localStorage.setItem("architectCrystals", JSON.stringify(arr));
+}
+
+function addArchitectCrystal(reason, bonus = 5) {
+  const newCrystal = {
+    id: Date.now(),
+    date: new Date().toLocaleDateString(),
+    reason,
+    xpValue: bonus,
+  };
+  const updated = [...architectCrystals, newCrystal];
+  saveArchitectCrystals(updated);
+  addJournalEntry?.(`💎 Architect forged a crystal: ${reason}`);
+}
+
+function useArchitectCrystal(id) {
+  const crystal = architectCrystals.find((c) => c.id === id);
+  if (!crystal) return alert("No such crystal found.");
+  const updated = architectCrystals.filter((c) => c.id !== id);
+  saveArchitectCrystals(updated);
+
+  setXP((prev) => {
+    const next = prev + crystal.xpValue;
+    localStorage.setItem("xp", String(next));
+    return next;
+  });
+  setFogLevel((prev) => Math.max(0, prev - 5));
+  setDebt?.((prev) => Math.max(0, prev - 2));
+  addJournalEntry?.(`✨ Absorbed an Architect Crystal → +${crystal.xpValue} XP, –5 Fog, –2 Debt`);
+  alert(`✨ Absorbed Architect Crystal → +${crystal.xpValue} XP, –5 Fog, –2 Debt`);
+  }
+  
 function applyPreset(level) {
   const p = presets[level];
   setSettings({
@@ -2828,6 +2867,12 @@ function runArchitectDailyReport(testMode = false) {
     setFogLevel(prev => Math.max(0, prev - 15));
     setDopamineLevel(prev => Math.min(100, prev + 10));
 
+    // 🎁 Architect Crystal reward
+if (percentage >= 85) {
+  addArchitectCrystal("Excellent discipline day", 5);
+} else if (percentage >= 70) {
+  addArchitectCrystal("Stable consistency day", 2);
+  }
     const msg =
       `✅ Excellent Discipline!\nOverall Score: ${totalPercent}%\n` +
       `+5 XP, −15 Fog, +10 Dopamine.`;
@@ -4169,7 +4214,27 @@ function runArchitectDailyReport(testMode = false) {
     </div>
   </div>
 )}
-  
+  {/* Architect Crystal Storage */}
+<div className="mt-4 border-t border-gray-700 pt-3 text-left">
+  <h3 className="text-lg font-semibold text-purple-400 mb-2">💎 Architect Crystals</h3>
+  {architectCrystals.length === 0 && (
+    <p className="text-gray-400 text-sm">No stored crystals yet.</p>
+  )}
+  {architectCrystals.map((c) => (
+    <div
+      key={c.id}
+      className="flex justify-between items-center mb-1 text-sm text-gray-200"
+    >
+      <span>{c.reason} ({c.xpValue} XP)</span>
+      <button
+        onClick={() => useArchitectCrystal(c.id)}
+        className="bg-purple-700 hover:bg-purple-800 px-2 py-1 rounded text-xs"
+      >
+        Absorb
+      </button>
+    </div>
+  ))}
+</div>
       {/* Daily Quest Modal */}
       {showDailyQuest && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
