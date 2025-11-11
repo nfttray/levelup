@@ -2712,7 +2712,7 @@ function runArchitectDailyReport(testMode = false) {
   }
 
   // ---------- load data ----------
-  const history = JSON.parse(localStorage.getItem("history") || "[]");
+  
   const prevDayData = history.find(h => h.date === yesterdayKey) || {};
 
   const xpToday =
