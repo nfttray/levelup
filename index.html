@@ -1747,16 +1747,7 @@ useEffect(() => {
   return () => clearTimeout(midnightTimeout);
 }, [contracts]);
 
-  useEffect(() => {
-  const last = localStorage.getItem("lastArchitectCheck");
-  const todayKey = new Date().toDateString();
-  const hour = new Date().getHours();
-
-  // when app opens after midnight
-  if (hour >= 0 && hour < 3 && last !== todayKey) {
-    runArchitectDailyReport();
-  }
-}, []);
+  
   
 // === Decay System Effect ===
   useEffect(() => {
@@ -2780,19 +2771,7 @@ function runArchitectDailyReport(testMode = false) {
   const yesterdayKey = yesterdayDate.toISOString().split("T")[0];
   const todayKey = new Date().toDateString();
 
-  // stop if there is no history yet (first day)
-  const history = JSON.parse(localStorage.getItem("history") || "[]");
-  if (!Array.isArray(history) || history.length === 0) {
-    console.log("Architect skipped: first day, no history yet.");
-    return;
-  }
 
-  // check that yesterday actually exists in history
-  const hasYesterday = history.some(h => h.date === yesterdayKey);
-  if (!hasYesterday) {
-    console.log("Architect skipped: no data for yesterday yet.");
-    return;
-  }
   // prevent duplicate runs in same day
   if (!testMode) {
     const last = localStorage.getItem("lastArchitectCheck");
