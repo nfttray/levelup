@@ -1747,6 +1747,17 @@ useEffect(() => {
   return () => clearTimeout(midnightTimeout);
 }, [contracts]);
 
+  useEffect(() => {
+  const last = localStorage.getItem("lastArchitectCheck");
+  const todayKey = new Date().toDateString();
+  const hour = new Date().getHours();
+
+  // when app opens after midnight
+  if (hour >= 0 && hour < 3 && last !== todayKey) {
+    runArchitectDailyReport();
+    showArchitectModal("🕛 The Architect has arrived to judge your day...", "neutral");
+  }
+}, []);
   
 // === Decay System Effect ===
   useEffect(() => {
