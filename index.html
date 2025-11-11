@@ -2093,16 +2093,24 @@ useEffect(() => {
   }
 
   // ✅ Step 2: Schedule at midnight
-  const now = new Date();
-  const millisTillMidnight =
-    new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) - now;
+  // ⚙️ TEST MODE — give Rival XP every 1 minute instead of once per day
+useEffect(() => {
+  const giveDailyRivalXP = () => {
+    const newXP = rivalXP + DAILY_RIVAL_XP;
+    setRivalXP(newXP);
+    localStorage.setItem("rivalXP", String(newXP));
+    localStorage.setItem("lastRivalUpdate", Date.now());
+    console.log(`🕒 Rival gained +${DAILY_RIVAL_XP} XP (total: ${newXP})`);
+  };
 
-  const midnightTimeout = setTimeout(() => {
-    giveDailyRivalXP();
-    setInterval(giveDailyRivalXP, 24 * 60 * 60 * 1000);
-  }, millisTillMidnight);
+  // Run immediately once on start
+  giveDailyRivalXP();
 
-  return () => clearTimeout(midnightTimeout);
+  // Repeat every 1 minute
+  const interval = setInterval(giveDailyRivalXP, 60 * 1000);
+
+  // Cleanup on unmount
+  return () => clearInterval(interval);
 }, []);
   
   useEffect(() => {
