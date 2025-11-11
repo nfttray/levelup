@@ -1613,10 +1613,17 @@ useEffect(() => {
       // If dayIndexNow >=1 and yesterday not marked → mark penalty
       const yesterdayIndex = dayIndexNow - 1;
       if (yesterdayIndex >= 0 && c.progress[yesterdayIndex] === false) {
-  // ⚠️ Missed yesterday's log — warning only (no punishment)
-  console.warn(`⚠️ You missed logging progress for "${c.goal}" yesterday.`);
-  alert(`⚠️ You missed logging progress for "${c.goal}" yesterday. Please update today's log to stay on track!`);
+  // ⚠️ Missed yesterday's log — give warning and light penalty (no punishment modal)
+  console.warn(`⚠️ Missed daily log for "${c.goal}"`);
+  alert(`⚠️ You missed logging progress for "${c.goal}" yesterday.\nDebt +5 | XP -3`);
+
+  // Apply soft penalty directly (no addPunishment)
+  increaseDebt(5);
+  setXP(prev => Math.max(0, prev - 3));
+
+  // Optionally note this so we don't repeat the same warning constantly
   const newProg = [...c.progress];
+  c.missNoted = true;
   changed = true;
   }
 
@@ -2547,6 +2554,19 @@ useEffect(() => {
     closeModal();
   }
   }
+
+  // 🕒 Auto-clear Focus Stats at end of each day
+(function clearOldFocusStats() {
+  const today = new Date().toISOString().split("T")[0]; // e.g. "2025-11-11"
+  const lastReset = localStorage.getItem("focusLastReset");
+
+  if (lastReset !== today) {
+    // New day → clear stats
+    localStorage.removeItem("focusStats");
+    localStorage.setItem("focusLastReset", today);
+    console.log("🧹 Focus Stats cleared for a new day");
+  }
+})();
   
   // === Add / Complete Tasks ===
   function addPunishment(p){
