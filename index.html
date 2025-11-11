@@ -1613,19 +1613,12 @@ useEffect(() => {
       // If dayIndexNow >=1 and yesterday not marked → mark penalty
       const yesterdayIndex = dayIndexNow - 1;
       if (yesterdayIndex >= 0 && c.progress[yesterdayIndex] === false) {
-        // Missed yesterday's log → immediate penalty
-        addPunishment({
-          type: "dailyMiss",
-          text: `❌ Missed daily log for "${c.goal}"`,
-          deathMode: false
-        });
-        increaseDebt(5);
-        setXP(prev => Math.max(0, prev - 3));
-        // Mark it as "noted" so that we don't punish for same day repeatedly:
-        const newProg = [...c.progress];
-        // optional: leave false but we could tag; for simplicity we won't flip progress
-        changed = true;
-      }
+  // ⚠️ Missed yesterday's log — warning only (no punishment)
+  console.warn(`⚠️ You missed logging progress for "${c.goal}" yesterday.`);
+  alert(`⚠️ You missed logging progress for "${c.goal}" yesterday. Please update today's log to stay on track!`);
+  const newProg = [...c.progress];
+  changed = true;
+  }
 
       // Expiration check
       if (now >= c.end) {
