@@ -1487,21 +1487,24 @@ useEffect(() => {
       const dayIndexNow = Math.floor((now - c.start) / (24*60*60*1000));
       // If dayIndexNow >=1 and yesterday not marked → mark penalty
       const yesterdayIndex = dayIndexNow - 1;
-      if (yesterdayIndex >= 0 && c.progress[yesterdayIndex] === false) {
-        // Missed yesterday's log → immediate penalty
-        addPunishment({
-          type: "dailyMiss",
-          text: `❌ Missed daily log for "${c.goal}"`,
-          deathMode: false
-        });
-        increaseDebt(5);
-        setXP(prev => Math.max(0, prev - 3));
-        // Mark it as "noted" so that we don't punish for same day repeatedly:
-        const newProg = [...c.progress];
-        // optional: leave false but we could tag; for simplicity we won't flip progress
-        changed = true;
-      }
+      if (yesterdayIndex >= 0 && c.progress[yesterdayIndex] === false && !c.missNoted) {
+  // Missed yesterday's log → immediate penalty (only once)
+  addPunishment({
+    type: "dailyMiss",
+    text: `❌ Missed daily log for "${c.goal}"`,
+    deathMode: false
+  });
 
+  // Apply penalty once
+  increaseDebt(5);
+  setXP(prev => Math.max(0, prev - 3));
+
+  // ✅ Mark this miss as already punished
+  const newProg = [...c.progress];
+  const tagged = { ...c, progress: newProg, missNoted: true };
+  changed = true;
+  return tagged;
+  }
       // Expiration check
       if (now >= c.end) {
         const completedDays = c.progress.filter(Boolean).length;
@@ -2364,10 +2367,16 @@ wakeUpOnTime: localStorage.getItem("wakeUpOnTime") === "true",
 }
 
   // === Add / Complete Tasks ===
-  function addPunishment(p){
-    setPunishments([...punishments,p]);
-    setLockdown(true);
-}
+  function addPunishment(p) {
+  const already = punishments.some(x => x.text === p.text && x.type === p.type);
+  if (already) return;  // don’t add again
+
+  const next = [...punishments, p];
+  setPunishments(next);
+  localStorage.setItem("punishments", JSON.stringify(next));
+  setLockdown(true);
+  }
+  
   function completePunishment(){
     const [first, ...rest] = punishments;
     let gain = 0;
