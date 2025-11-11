@@ -557,6 +557,40 @@ const [lesson, setLesson] = React.useState("");
 const [resolveText, setResolveText] = React.useState("");
 const [journalToast, setJournalToast] = React.useState("");
 
+
+  const [showSettings, setShowSettings] = useState(false);
+const [difficulty, setDifficulty] = useState(localStorage.getItem("difficulty") || "medium");
+const [settings, setSettings] = useState(() => ({
+  rivalXP: parseInt(localStorage.getItem("rivalXPdaily")) || 70,
+  architectThreshold: parseInt(localStorage.getItem("architectThreshold")) || 80,
+  fogRate: parseFloat(localStorage.getItem("fogRate")) || 1.0,
+  debtPenalty: parseInt(localStorage.getItem("debtPenalty")) || 3,
+  focusReward: parseInt(localStorage.getItem("focusReward")) || 5,
+}));
+
+const presets = {
+  easy:    { rivalXP: 40, threshold: 70, fogRate: 0.8, debtPenalty: 2, focusReward: 6 },
+  medium:  { rivalXP: 70, threshold: 80, fogRate: 1.0, debtPenalty: 3, focusReward: 5 },
+  hard:    { rivalXP: 90, threshold: 85, fogRate: 1.2, debtPenalty: 5, focusReward: 4 },
+  monarch: { rivalXP: 100,threshold: 90, fogRate: 1.4, debtPenalty: 6, focusReward: 3 },
+};
+
+function applyPreset(level) {
+  const p = presets[level];
+  setSettings({
+    rivalXP: p.rivalXP,
+    architectThreshold: p.threshold,
+    fogRate: p.fogRate,
+    debtPenalty: p.debtPenalty,
+    focusReward: p.focusReward,
+  });
+  setDifficulty(level);
+  Object.entries(p).forEach(([key, val]) =>
+    localStorage.setItem(key === "threshold" ? "architectThreshold" : key, val)
+  );
+  localStorage.setItem("difficulty", level);
+  }
+  
 // 🧩 Load crystals from localStorage
 function loadCrystals() {
   try {
@@ -2949,6 +2983,12 @@ function runArchitectDailyReport(testMode = false) {
   >
     <path d="M256 0L96 160l64 64L192 192l32 32L96 352l64 64L416 160 352 96 256 0z" />
   </svg>
+  <button
+  onClick={() => setShowSettings(true)}
+  className="bg-purple-700 hover:bg-purple-800 px-3 py-2 rounded-md text-sm font-bold"
+>
+  ⚙️ Settings
+</button>
 </h1>
 
 <p className="text-gray-400 text-sm">
@@ -4089,6 +4129,47 @@ function runArchitectDailyReport(testMode = false) {
     </div>
   </div>
 )}
+
+{showSettings && (
+  <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+    <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md text-center border border-purple-500 shadow-2xl animate-fadeIn">
+      <h2 className="text-2xl font-bold mb-4 text-purple-400">⚙️ Settings</h2>
+
+      <p className="text-gray-300 mb-3">Select Difficulty</p>
+      <div className="flex justify-around mb-4">
+        {["easy", "medium", "hard", "monarch"].map((mode) => (
+          <button
+            key={mode}
+            onClick={() => applyPreset(mode)}
+            className={`px-3 py-2 rounded-lg font-semibold ${
+              difficulty === mode
+                ? "bg-purple-600"
+                : "bg-gray-700 hover:bg-gray-600"
+            }`}
+          >
+            {mode.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      <div className="text-left text-sm space-y-2 mb-4">
+        <p>🧠 Rival Daily XP: <b>{settings.rivalXP}</b></p>
+        <p>🏛 Architect Threshold: <b>{settings.architectThreshold}%</b></p>
+        <p>🌫 Fog Rate: <b>{settings.fogRate}x</b></p>
+        <p>💀 Debt Penalty: <b>+{settings.debtPenalty}</b></p>
+        <p>✨ Focus Reward: <b>+{settings.focusReward} XP</b></p>
+      </div>
+
+      <button
+        onClick={() => setShowSettings(false)}
+        className="bg-purple-700 hover:bg-purple-800 px-4 py-2 rounded-lg font-bold shadow-lg w-full"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+  
       {/* Daily Quest Modal */}
       {showDailyQuest && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
