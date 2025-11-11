@@ -2057,6 +2057,7 @@ useEffect(() => {
 }, []);
 
   // === Architect Daily Check Trigger ===
+// === Architect Daily Check Trigger ===
 useEffect(() => {
   const todayKey = new Date().toDateString();
   const lastCheck = localStorage.getItem("lastArchitectCheck");
@@ -2065,11 +2066,17 @@ useEffect(() => {
   if (lastCheck !== todayKey) {
     // small delay to let UI load first
     setTimeout(() => {
+      // Step 1: show neutral "arrival" message
       showArchitectModal("🕛 The Architect has arrived to judge your day...", "neutral");
 
-      // run main report after short pause
+      // Step 2: close that modal before running the report
       setTimeout(() => {
-        runArchitectDailyReport();
+        closeArchitectModal(); // close the neutral modal
+
+        // Step 3: after a short gap, run the real judgment
+        setTimeout(() => {
+          runArchitectDailyReport(); // now it can open its own modal
+        }, 600);
       }, 3500);
     }, 1500);
   }
