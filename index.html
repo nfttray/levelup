@@ -1755,7 +1755,6 @@ useEffect(() => {
   // when app opens after midnight
   if (hour >= 0 && hour < 3 && last !== todayKey) {
     runArchitectDailyReport();
-    showArchitectModal("🕛 The Architect has arrived to judge your day...", "neutral");
   }
 }, []);
   
