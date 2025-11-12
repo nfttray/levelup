@@ -2089,13 +2089,7 @@ useEffect(() => {
   }
 }, []);
 
-  useEffect(() => {
-  // Expose test functions for console
-  window.runArchitectDailyReportTest = () => runArchitectDailyReport(true);
-  window.showArchitectModalTest = (msg = "Test feedback") =>
-    showArchitectModal(msg, "positive");
-}, []);
-  
+
   // === Architect Daily Check Trigger ===
 useEffect(() => {
   const todayKey = new Date().toDateString();
@@ -2932,9 +2926,9 @@ function runArchitectDailyReport(testMode = false) {
     setDopamineLevel(prev => Math.min(100, prev + 10));
 
     // 🎁 Architect Crystal reward
-if (percentage >= 85) {
+if (totalPercent >= 85) {
   addArchitectCrystal("Excellent discipline day", 5);
-} else if (percentage >= 70) {
+} else if (totalPercent >= 70) {
   addArchitectCrystal("Stable consistency day", 2);
   }
     const msg =
