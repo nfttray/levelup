@@ -400,12 +400,7 @@ const [breakRemaining, setBreakRemaining] = useState(0); // seconds
 const [focusStats, setFocusStats] = useState(
   JSON.parse(localStorage.getItem("focusStats") || "[]")
 );
-// 🕒 Manual Duration Modal
-const [showManualModal, setShowManualModal] = useState(false);
-const [manualType, setManualType] = useState("");
-const [manualTitle, setManualTitle] = useState("");
-const [manualMinutes, setManualMinutes] = useState("");
-  
+
   // ---------- Proof modal / missed-task accountability ----------
 const [showProofModal, setShowProofModal] = useState(false);
 const [proofTask, setProofTask] = useState(null);
@@ -585,7 +580,12 @@ const presets = {
 const [architectCrystals, setArchitectCrystals] = useState(
   JSON.parse(localStorage.getItem("architectCrystals") || "[]")
 );
-
+// 🕒 Manual Duration Modal
+const [showManualModal, setShowManualModal] = useState(false);
+const [manualType, setManualType] = useState("");
+const [manualTitle, setManualTitle] = useState("");
+const [manualMinutes, setManualMinutes] = useState("");
+  
 // Open manual duration modal
 function openManualDurationModal(type, title) {
   setManualType(type);
