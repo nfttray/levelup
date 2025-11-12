@@ -2089,6 +2089,23 @@ useEffect(() => {
   }
 }, []);
 
+  useEffect(() => {
+  // Manual test function for Architect crystal reward
+  window.testArchitectPositive = () => {
+    const fakeScore = 90; // simulate 90% = Excellent discipline day
+    const totalPercent = fakeScore;
+
+    if (totalPercent >= 85) {
+      addArchitectCrystal("Excellent discipline day (manual test)", 5);
+    } else if (totalPercent >= 70) {
+      addArchitectCrystal("Stable consistency day (manual test)", 2);
+    }
+
+    showArchitectModal("✅ Test: Positive feedback simulated", "positive");
+    console.log("✅ Architect test run → Crystal should appear in localStorage.");
+  };
+}, []);
+  
   // === Architect Daily Check Trigger ===
 useEffect(() => {
   const todayKey = new Date().toDateString();
