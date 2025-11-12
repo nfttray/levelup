@@ -1289,7 +1289,7 @@ function getCharacterForm(level) {
   if (level <= 0) level = 1;
   if (level >= 11) level = 11;
 
-  img.src = characterForms[level - 1];
+  img.src = characterImages[level - 1];
 
   // Add glow/aura for certain levels
   if ([4,6,8,10,11].includes(level)) {
