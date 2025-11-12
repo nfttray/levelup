@@ -1618,6 +1618,39 @@ useEffect(() => {
     localStorage.setItem("emergencyUsed", "false");
   }
 }, []);
+
+  // === Shadow Contract / Anchor Scheduler ===
+useEffect(() => {
+  const todayKey = new Date().toDateString();
+  const lastReset = localStorage.getItem("lastAnchorReset");
+  let anchorsDone = JSON.parse(localStorage.getItem("anchorsDone") || "{}");
+
+  // 🔄 reset each new day
+  if (lastReset !== todayKey) {
+    anchorsDone = {};
+    localStorage.setItem("anchorsDone", JSON.stringify(anchorsDone));
+    localStorage.setItem("lastAnchorReset", todayKey);
+  }
+
+  const checkAnchors = () => {
+    const now = new Date();
+    const current = now.toTimeString().slice(0, 5); // "HH:MM"
+
+    anchorTimes.forEach(a => {
+      if (current === a.time && !anchorsDone[a.id]) {
+        if (showArchitect) return; // don't overlap Architect modal
+        console.log("⏳ Opening anchor:", a.label);
+        openAnchorModal(a);
+        anchorsDone[a.id] = true;
+        localStorage.setItem("anchorsDone", JSON.stringify(anchorsDone));
+      }
+    });
+  };
+
+  checkAnchors();
+  const interval = setInterval(checkAnchors, 60 * 1000);
+  return () => clearInterval(interval);
+}, [showArchitect]);
   // ==========================================================
 // ⏱️ JOURNAL OF RESOLVE - EFFECTS
 // ==========================================================
