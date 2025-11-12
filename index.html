@@ -596,14 +596,14 @@ function openManualDurationModal(type, title) {
 
 // Save manual duration
 function saveManualDuration() {
-  const minutes = Number(manualMinutes);
-  if (!minutes || minutes <= 0) return;
+  console.log("SAVE BUTTON CLICKED ✅", manualMinutes);
 
-  // 🟣 Add to productive time
+  const minutes = Number(manualMinutes);
+  if (!minutes || minutes <= 0) return alert("Enter valid minutes!");
+
   const prev = Number(localStorage.getItem("productiveMinutes") || 0);
   localStorage.setItem("productiveMinutes", prev + minutes);
 
-  // 🟣 Save to manual history
   const history = JSON.parse(localStorage.getItem("manualActivities") || "[]");
   history.push({
     date: new Date().toISOString().split("T")[0],
@@ -617,13 +617,12 @@ function saveManualDuration() {
     `✅ ${manualType} completed: ${manualTitle} (+${minutes} min productive time)`
   );
 
-  // 🧩 ⬇️ YAHAN ye nayi 3 line paste karo — bilkul iss comment ke baad
   const idx = localStorage.getItem("pendingPunishmentIndex");
   if (idx !== null) {
     localStorage.removeItem("pendingPunishmentIndex");
   }
 
-  // 🟢 Close modal after saving
+  console.log("✅ Added to productiveMinutes, closing modal...");
   setShowManualModal(false);
   }
   
@@ -4370,12 +4369,12 @@ if (totalPercent >= 85) {
         >
           Cancel
         </button>
-        <button
-          onClick={saveManualDuration}
-          className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition"
-        >
-          Save
-        </button>
+<button
+  onClick={saveManualDuration}
+  className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition"
+>
+  Save
+</button>
       </div>
     </div>
   </div>
