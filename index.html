@@ -586,8 +586,7 @@ const [showDurationModal, setShowDurationModal] = useState(false);
 const [durationType, setDurationType] = useState("");
 const [durationTitle, setDurationTitle] = useState("");
 const [durationMinutes, setDurationMinutes] = useState("");
-  const [productiveMinutes, setProductiveMinutes] = useState(0);
-const [wastageMinutes, setWastageMinutes] = useState(0);
+  
 // productive UI states
 const [productiveMinutes, setProductiveMinutes] = useState(Number(localStorage.getItem("productiveMinutes") || 0));
 const [wastageMinutes, setWastageMinutes] = useState(Number(localStorage.getItem("wastageMinutes") || 0));
