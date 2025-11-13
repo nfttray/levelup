@@ -588,8 +588,94 @@ const [durationTitle, setDurationTitle] = useState("");
 const [durationMinutes, setDurationMinutes] = useState("");
   const [productiveMinutes, setProductiveMinutes] = useState(0);
 const [wastageMinutes, setWastageMinutes] = useState(0);
+// productive UI states
+const [productiveMinutes, setProductiveMinutes] = useState(Number(localStorage.getItem("productiveMinutes") || 0));
+const [wastageMinutes, setWastageMinutes] = useState(Number(localStorage.getItem("wastageMinutes") || 0));
 
+// app-usage states
+const [activeApp, setActiveApp] = useState(null);
+const [appStartTime, setAppStartTime] = useState(null);
+const [appElapsed, setAppElapsed] = useState(0);
+const [showAppUsageModal, setShowAppUsageModal] = useState(false);
 
+// duration modal (punishment/dungeon) states you already added — keep them
+// const [showDurationModal,...] etc.
+
+  // === helper: unified add productive time ===
+function addProductiveTime(minutes, source = "General") {
+  const prev = Number(localStorage.getItem("productiveMinutes") || 0);
+  const newTotal = prev + Number(minutes);
+  localStorage.setItem("productiveMinutes", newTotal);
+  setProductiveMinutes(newTotal);
+
+  // optional history log
+  const history = JSON.parse(localStorage.getItem("manualActivities") || "[]");
+  history.push({
+    date: new Date().toISOString().split("T")[0],
+    type: source,
+    title: `${source}`,
+    minutes: Number(minutes),
+  });
+  localStorage.setItem("manualActivities", JSON.stringify(history));
+
+  console.log(`✅ ${source}: +${minutes} min`);
+  }
+
+// Start tracking an app session (call from shortcut buttons)
+function startAppUsage(appName, appURL) {
+  setActiveApp(appName);
+  setAppStartTime(Date.now());
+  // try to open web version in new tab - optional
+  try { window.open(appURL, "_blank"); } catch (e) { /* ignore */ }
+  console.log(`▶ Started ${appName}`);
+}
+
+// Stop tracking (user presses Stop timer in UI)
+function stopAppUsage() {
+  if (!appStartTime || !activeApp) return;
+  const elapsedMs = Date.now() - appStartTime;
+  const minutes = Math.max(1, Math.round(elapsedMs / 60000)); // at least 1 min
+  setAppElapsed(minutes);
+  setShowAppUsageModal(true);
+}
+
+// Handle productiv/waste selection from modal
+function handleAppUsageResult(choice) {
+  const minutes = Number(appElapsed || 0);
+  if (minutes <= 0) {
+    setShowAppUsageModal(false);
+    setActiveApp(null);
+    setAppStartTime(null);
+    setAppElapsed(0);
+    return;
+  }
+
+  if (choice === "productive") {
+    addProductiveTime(minutes, `App: ${activeApp}`);
+  } else {
+    const prev = Number(localStorage.getItem("wastageMinutes") || 0);
+    const newTotal = prev + minutes;
+    localStorage.setItem("wastageMinutes", newTotal);
+    setWastageMinutes(newTotal);
+
+    // log
+    const history = JSON.parse(localStorage.getItem("manualActivities") || "[]");
+    history.push({
+      date: new Date().toISOString().split("T")[0],
+      type: "AppUsage",
+      title: `${activeApp} (waste)`,
+      minutes,
+    });
+    localStorage.setItem("manualActivities", JSON.stringify(history));
+  }
+
+  // reset active session
+  setShowAppUsageModal(false);
+  setActiveApp(null);
+  setAppElapsed(0);
+  setAppStartTime(null);
+  }
+  
 // 🔹 Open modal
 function openDurationModal(type, title) {
   setDurationType(type);
@@ -1070,7 +1156,7 @@ function autoCleanOldProofs(days = 5) {
 
     // reward
     setXP(prev => (prev || 0) + 5);
-
+addProductiveTime(focusDuration || 60, "Focus Session");
     // auto-start break (5 min)
     startBreak(5);
 
@@ -2188,24 +2274,24 @@ useEffect(() => {
 }, []);
 
   
-// Load stored values on startup
 useEffect(() => {
-  const prod = Number(localStorage.getItem("productiveMinutes") || 0);
-  const waste = Number(localStorage.getItem("wastageMinutes") || 0);
-  setProductiveMinutes(prod);
-  setWastageMinutes(waste);
-}, []);
-
-  useEffect(() => {
   const today = new Date().toISOString().split("T")[0];
   const lastReset = localStorage.getItem("productivityDate");
+
+  // 1️⃣ Daily reset if date changed
   if (lastReset !== today) {
     localStorage.setItem("productivityDate", today);
     localStorage.setItem("productiveMinutes", "0");
     localStorage.setItem("wastageMinutes", "0");
-    setProductiveMinutes(0);
-    setWastageMinutes(0);
+    localStorage.setItem("manualActivities", JSON.stringify([])); // optional clear log
+    console.log("🔄 Daily productivity reset complete");
   }
+
+  // 2️⃣ Load stored values (after reset if any)
+  const prod = Number(localStorage.getItem("productiveMinutes") || 0);
+  const waste = Number(localStorage.getItem("wastageMinutes") || 0);
+  setProductiveMinutes(prod);
+  setWastageMinutes(waste);
 }, []);
   
   // Boss Fight Check
@@ -2866,12 +2952,20 @@ useEffect(() => {
     setNewTask({type:'daily',title:'',start:'',end:'',days:''});
   }
 
-  function completeTask(id) {
+function completeTask(id) {
   const completedTask = tasks.find(t => t.id === id);
-    // inside completeTask(id), after const completedTask = tasks.find(...)
-autoMarkContractsForGoal(completedTask.title);
+
+  // auto mark contracts
+  autoMarkContractsForGoal(completedTask.title);
+
+  // remove from active list
   setTasks(tasks.filter(t => t.id !== id));
   setXP(xp + 2);
+
+  // ✅ Add productive minutes for completed task
+  // If your tasks have a stored duration, use that; otherwise default 60 min
+  const minutes = completedTask.duration || 60;
+  addProductiveTime(minutes, "Daily Task");
 
   // Add to task log (for small boss reference)
   const updatedLog = [...taskLog, completedTask.title].slice(-7); // Keep only last 7
@@ -2885,9 +2979,9 @@ autoMarkContractsForGoal(completedTask.title);
   }
 
   setBossCountdown(bossCountdown + 1);
-    handleTaskCompletion();
-    }
-
+  handleTaskCompletion();
+  }
+  
   function completeHabit(id){
     const updated=habits.map(h=>h.id===id?{...h,done:true}:h);
     setHabits(updated);
@@ -3865,7 +3959,34 @@ if (totalPercent >= 85) {
     {journalToast}
   </div>
 )}
-      
+
+ <div className="mt-6 grid grid-cols-2 gap-3">
+  <button onClick={() => startAppUsage("YouTube", "https://www.youtube.com")} className="bg-red-600 ...">🎬 YouTube</button>
+  <button onClick={() => startAppUsage("WhatsApp", "https://web.whatsapp.com")} className="bg-green-600 ...">💬 WhatsApp</button>
+  <button onClick={() => startAppUsage("Telegram", "https://web.telegram.org")} className="bg-blue-600 ...">📩 Telegram</button>
+  <button onClick={() => startAppUsage("Instagram", "https://www.instagram.com")} className="bg-pink-600 ...">📸 Instagram</button>
+</div>   
+      {activeApp && (
+  <div className="mt-3 flex items-center gap-3">
+    <div className="px-3 py-2 bg-gray-800 rounded-lg text-sm text-gray-200">
+      Active: <span className="font-semibold ml-2">{activeApp}</span>
+    </div>
+    <button onClick={stopAppUsage} className="px-3 py-2 bg-yellow-600 rounded-lg text-white">Stop timer</button>
+  </div>
+)}
+      {showAppUsageModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <div className="bg-gray-900 text-white p-5 rounded-2xl w-80 border border-purple-500 shadow-lg">
+      <h3 className="text-lg font-semibold mb-2 text-center">{activeApp} session</h3>
+      <p className="text-sm text-gray-300 mb-3 text-center">Duration: <span className="font-medium">{appElapsed} min</span></p>
+      <p className="text-sm text-gray-400 mb-4 text-center">Was this productive or wastage?</p>
+      <div className="flex gap-3 justify-center">
+        <button onClick={() => handleAppUsageResult("productive")} className="px-4 py-2 bg-green-600 rounded-lg">Productive</button>
+        <button onClick={() => handleAppUsageResult("waste")} className="px-4 py-2 bg-red-600 rounded-lg">Wastage</button>
+      </div>
+    </div>
+  </div>
+)}
       {/* Dopamine Detox Section */}
       <div  className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
