@@ -580,52 +580,58 @@ const presets = {
 const [architectCrystals, setArchitectCrystals] = useState(
   JSON.parse(localStorage.getItem("architectCrystals") || "[]")
 );
-// 🕒 Manual Duration Modal
-const [showManualModal, setShowManualModal] = useState(false);
-const [manualType, setManualType] = useState("");
-const [manualTitle, setManualTitle] = useState("");
-const [manualMinutes, setManualMinutes] = useState("");
-  
-// Open manual duration modal
-function openManualDurationModal(type, title) {
-  setManualType(type);
-  setManualTitle(title);
-  setManualMinutes("");
-  setShowManualModal(true);
+
+// 🕒 Duration Modal states
+const [showDurationModal, setShowDurationModal] = useState(false);
+const [durationType, setDurationType] = useState("");
+const [durationTitle, setDurationTitle] = useState("");
+const [durationMinutes, setDurationMinutes] = useState("");
+
+// 🔹 Open modal
+function openDurationModal(type, title) {
+  setDurationType(type);
+  setDurationTitle(title);
+  setDurationMinutes("");
+  setShowDurationModal(true);
 }
 
-// Save manual duration
-function saveManualDuration() {
-  console.log("SAVE BUTTON CLICKED ✅", manualMinutes);
+// 🔹 Save duration
+function handleDurationSave() {
+  try {
+    console.log("⏳ handleDurationSave triggered", durationMinutes);
+    const mins = Number(durationMinutes);
+    if (!mins || mins <= 0) {
+      alert("Enter valid minutes!");
+      return;
+    }
 
-  const minutes = Number(manualMinutes);
-  if (!minutes || minutes <= 0) return alert("Enter valid minutes!");
+    // 🧮 Add to productive minutes
+    const prev = Number(localStorage.getItem("productiveMinutes") || 0);
+    localStorage.setItem("productiveMinutes", prev + mins);
 
-  const prev = Number(localStorage.getItem("productiveMinutes") || 0);
-  localStorage.setItem("productiveMinutes", prev + minutes);
+    // 🧾 Save to manual history
+    const history = JSON.parse(localStorage.getItem("manualActivities") || "[]");
+    history.push({
+      date: new Date().toISOString().split("T")[0],
+      type: durationType,
+      title: durationTitle,
+      minutes: mins,
+    });
+    localStorage.setItem("manualActivities", JSON.stringify(history));
 
-  const history = JSON.parse(localStorage.getItem("manualActivities") || "[]");
-  history.push({
-    date: new Date().toISOString().split("T")[0],
-    type: manualType,
-    title: manualTitle,
-    minutes
-  });
-  localStorage.setItem("manualActivities", JSON.stringify(history));
+    console.log(
+      `✅ ${durationType} completed: ${durationTitle} (+${mins} min productive time)`
+    );
 
-  addJournalEntry?.(
-    `✅ ${manualType} completed: ${manualTitle} (+${minutes} min productive time)`
-  );
-
-  const idx = localStorage.getItem("pendingPunishmentIndex");
-  if (idx !== null) {
+    // 🧹 Clean pending index if any
     localStorage.removeItem("pendingPunishmentIndex");
-  }
 
-  console.log("✅ Added to productiveMinutes, closing modal...");
-  setShowManualModal(false);
+    // ✅ Close modal
+    setShowDurationModal(false);
+  } catch (err) {
+    console.error("Error saving duration:", err);
   }
-  
+  }  
 function saveArchitectCrystals(arr) {
   setArchitectCrystals(arr);
   localStorage.setItem("architectCrystals", JSON.stringify(arr));
@@ -2693,16 +2699,18 @@ useEffect(() => {
   };
 
   if (action === "complete") {
+    // 🔹 1. Open manual duration modal first
+    openDurationModal("Punishment", p.text);
+    // 🔹 2. Store index temporarily so we can link it later
+    localStorage.setItem("pendingPunishmentIndex", index);
 
-  // 🔹 1. Open manual duration modal before completing
-  openManualDurationModal("Punishment", p.text);
+    // ⚠️ Don’t immediately clear punishment yet — wait until user saves time.
+    // So comment out these 3 lines ↓
+    // updated.splice(index, 1);
+    // setPunishments(updated);
+    // localStorage.setItem("punishments", JSON.stringify(updated));
 
-  // 🔹 2. Store index temporarily so we can link it later
-  localStorage.setItem("pendingPunishmentIndex", index);
-    updated.splice(index, 1);
-    setPunishments(updated);
-    localStorage.setItem("punishments", JSON.stringify(updated));
-
+    // ⚙️ Optionally, mark contract completions right away (keep this)
     if (p.text.toLowerCase().includes("daily log for")) {
       try {
         const contracts = JSON.parse(localStorage.getItem("shadowContracts")) || [];
@@ -2724,10 +2732,10 @@ useEffect(() => {
         console.error("Contract update failed:", err);
       }
     } else {
-      alert("✅ Punishment completed!");
+      alert("⏳ Record duration to complete punishment!");
     }
 
-    // 🟢 Force close modal after completion
+    // 🟢 Close punishment modal only, not everything
     closeModal();
   }
 
@@ -2741,7 +2749,8 @@ useEffect(() => {
     // 🟢 Force close modal after forgiveness
     closeModal();
   }
-  }
+}
+
 
   // 🕒 Auto-clear Focus Stats at end of each day
 (function clearOldFocusStats() {
@@ -4245,6 +4254,40 @@ if (totalPercent >= 85) {
     `}</style>
   </div>
 )}
+
+  {showDurationModal && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+    <div className="bg-gray-900 text-white p-6 rounded-2xl shadow-lg w-80 border border-purple-500">
+      <h2 className="text-lg font-semibold mb-3 text-center">
+        {durationType} Completed!
+      </h2>
+      <p className="text-sm text-gray-300 mb-3 text-center">
+        How long did it take? (minutes)
+      </p>
+      <input
+        type="number"
+        className="w-full p-2 text-black rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
+        value={durationMinutes}
+        onChange={(e) => setDurationMinutes(e.target.value)}
+        placeholder="Enter minutes"
+      />
+      <div className="flex justify-between mt-4">
+        <button
+          onClick={() => setShowDurationModal(false)}
+          className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleDurationSave}
+          className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition"
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 {/* Architect Modal */}
 {showArchitect && (
   <div id="architectModal" className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
@@ -4346,40 +4389,7 @@ if (totalPercent >= 85) {
     </div>
   ))}
 </div>
-{showManualModal && (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-    <div className="bg-gray-900 text-white p-6 rounded-2xl shadow-lg w-80 border border-purple-500">
-      <h2 className="text-lg font-semibold mb-3 text-center">
-        {manualType} Completed!
-      </h2>
-      <p className="text-sm text-gray-300 mb-3 text-center">
-        How long did it take? (minutes)
-      </p>
-      <input
-        type="number"
-        className="w-full p-2 text-black rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
-        value={manualMinutes}
-        onChange={(e) => setManualMinutes(e.target.value)}
-        placeholder="Enter minutes"
-      />
-      <div className="flex justify-between mt-4">
-        <button
-          onClick={() => setShowManualModal(false)}
-          className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition"
-        >
-          Cancel
-        </button>
-<button
-  onClick={saveManualDuration}
-  className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition"
->
-  Save
-</button>
-      </div>
-    </div>
-  </div>
-)}
-  
+
       {/* Daily Quest Modal */}
       {showDailyQuest && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
