@@ -544,6 +544,11 @@ const [showAnchorModal, setShowAnchorModal] = useState(false);
 const [currentAnchor, setCurrentAnchor] = useState(null);
 const [anchorQueueLock, setAnchorQueueLock] = useState(false); // prevent double popups
 
+
+  // 🟥 CONTRACT SYSTEM — Independent Modal
+const [showContractModal, setShowContractModal] = useState(false);
+const [contractModalMessage, setContractModalMessage] = useState("");
+
   // ==========================================================
 // 🔮 JOURNAL OF RESOLVE - FUNCTIONS
 // ==========================================================
@@ -1873,47 +1878,66 @@ useEffect(() => {
     updated = updated.map(c => {
       if (c.done || c.failed) return c;
 
-      // Compute day index for "yesterday" to check whether yesterday was logged.
-      const dayIndexNow = Math.floor((now - c.start) / (24*60*60*1000));
-      // If dayIndexNow >=1 and yesterday not marked → mark penalty
+      // Calculate day index
+      const dayIndexNow = Math.floor((now - c.start) / (24 * 60 * 60 * 1000));
       const yesterdayIndex = dayIndexNow - 1;
-      if (yesterdayIndex >= 0 && c.progress[yesterdayIndex] === false) {
-  // ⚠️ Missed yesterday's log — give warning and light penalty (no punishment modal)
-  console.warn(`⚠️ Missed daily log for "${c.goal}"`);
-  alert(`⚠️ You missed logging progress for "${c.goal}" yesterday.\nDebt +5 | XP -3`);
 
-  // Apply soft penalty directly (no addPunishment)
-  increaseDebt(5);
-  setXP(prev => Math.max(0, prev - 3));
+      // ⚠️ Missed Yesterday Logging
+      if (
+        yesterdayIndex >= 0 &&
+        c.progress[yesterdayIndex] === false &&
+        !c.missNoted
+      ) {
+        setContractModalMessage(
+          `⚠️ You missed logging progress for "${c.goal}" yesterday.\n\n🩸 Debt +5 | XP -3`
+        );
+        setShowContractModal(true);
 
-  // Optionally note this so we don't repeat the same warning constantly
-  const newProg = [...c.progress];
-  c.missNoted = true;
-  changed = true;
-  }
+        increaseDebt(5);
+        setXP(prev => Math.max(0, prev - 3));
 
-      // Expiration check
+        c.missNoted = true;
+        changed = true;
+      }
+
+      // ⚰️ Expiration Check
       if (now >= c.end) {
         const completedDays = c.progress.filter(Boolean).length;
+
         if (completedDays >= c.days) {
+          // Completed Contract
           c = { ...c, done: true };
+
+          setContractModalMessage(
+            `✅ Contract Completed!\n\n"${c.goal}" has been successfully finished.\n+10 XP | Fog -20`
+          );
+          setShowContractModal(true);
+
           setXP(prev => prev + 10);
           setFogLevel(prev => Math.max(0, prev - 20));
-          alert(`✅ Contract "${c.goal}" completed on expiry.`);
           changed = true;
+
         } else {
+          // Failed Contract
           c = { ...c, failed: true };
+
           addPunishment({
             type: "contractFail",
-            text: `💀 Contract failed on expiry: "${c.goal}"`,
+            text: `💀 Contract failed: "${c.goal}"`,
             deathMode: true
           });
+
+          setContractModalMessage(
+            `💀 Contract Failed!\n\n"${c.goal}" was not completed in time.\n🩸 Debt +10 | XP -10`
+          );
+          setShowContractModal(true);
+
           increaseDebt(10);
           setXP(prev => Math.max(0, prev - 10));
-          alert(`💀 Contract "${c.goal}" failed on expiry.`);
           changed = true;
         }
       }
+
       return c;
     });
 
@@ -1923,10 +1947,10 @@ useEffect(() => {
     }
   }
 
-  // Run at load
+  // Run on app load
   checkContractsForDayMissesAndExpire();
 
-  // schedule: run at midnight and also every 6 hours as fallback
+  // Schedule next midnight + fallback every 6 hours
   const now = new Date();
   const millisTillMidnight =
     new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5) - now;
@@ -1938,7 +1962,6 @@ useEffect(() => {
 
   return () => clearTimeout(midnightTimeout);
 }, [contracts]);
-
   
   
 // === Decay System Effect ===
@@ -3605,7 +3628,30 @@ if (totalPercent >= 85) {
     </div>
   </div>
 )}
+{/* 🔥 INDEPENDENT CONTRACT POPUP */}
+{showContractModal && (
+  <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center backdrop-blur-sm">
+    <div className="bg-gray-900 text-white p-6 rounded-2xl w-80 border border-red-500 shadow-2xl">
+      <h2 className="text-lg font-bold text-center mb-3 text-red-400">
+        Contract Alert
+      </h2>
 
+      <p className="text-sm text-gray-200 text-center whitespace-pre-line">
+        {contractModalMessage}
+      </p>
+
+      <div className="flex justify-center mt-5">
+        <button
+          onClick={() => setShowContractModal(false)}
+          className="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition font-semibold"
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+      
       {/* NEW CONTRACT MODAL (locks other UI when shown) */}
 {showNewContract && (
   <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
