@@ -67,18 +67,20 @@
 }
 </style>
 <style>
-.daily-wrapper {
-  margin: 20px 0;
+
+.daily-reflection-card {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid #333;
   padding: 20px;
-  background: #101010;
   border-radius: 14px;
-  border: 1px solid #2b2b2b;
+  margin-top: 20px;
+  backdrop-filter: blur(4px);
 }
 
-.daily-wrapper h3 {
+.dr-title {
+  color: #fff;
   margin-bottom: 15px;
-  color: #fafafa;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 600;
 }
 
@@ -95,7 +97,7 @@
   outline: none;
   white-space: pre-wrap;
 
-  /* THESE 3 FIX RTL COMPLETELY */
+  /* FINAL LTR FIX */
   direction: ltr !important;
   unicode-bidi: plaintext !important;
   text-align: left !important;
@@ -111,8 +113,8 @@
   padding: 12px;
   background: #4caf50;
   border: none;
-  color: white;
   border-radius: 10px;
+  color: white;
   font-size: 1rem;
   cursor: pointer;
 }
@@ -599,11 +601,10 @@ const [showAnchorModal, setShowAnchorModal] = useState(false);
 const [currentAnchor, setCurrentAnchor] = useState(null);
 const [anchorQueueLock, setAnchorQueueLock] = useState(false); // prevent double popups
 
-  const [dailyQuestion, setDailyQuestion] = useState(localStorage.getItem("dailyQuestion") || "");
-const [dailyAnswer, setDailyAnswer] = useState(localStorage.getItem("dailyAnswer") || "");
-const [questionDone, setQuestionDone] = useState(localStorage.getItem("questionDone") === "true");
-const [lastQuestionDay, setLastQuestionDay] = useState(localStorage.getItem("lastQuestionDay") || "");
-
+  const [dailyQuestion, setDailyQuestion] = React.useState(localStorage.getItem("dailyQuestion") || "");
+const [dailyAnswer, setDailyAnswer] = React.useState(localStorage.getItem("dailyAnswer") || "");
+const [questionDone, setQuestionDone] = React.useState(localStorage.getItem("questionDone") === "true");
+const [lastQuestionDay, setLastQuestionDay] = React.useState(localStorage.getItem("lastQuestionDay") || "");
   // 🟥 CONTRACT SYSTEM — Independent Modal
 const [showContractModal, setShowContractModal] = useState(false);
 const [contractModalMessage, setContractModalMessage] = useState("");
@@ -662,20 +663,7 @@ const [appElapsed, setAppElapsed] = useState(0);
 const [showAppUsageModal, setShowAppUsageModal] = useState(false);
 
 
-  function punishForMissingQuestion() {
-  // XP reduce
-  setXP(prev => {
-    const newXP = Math.max(0, prev - 5); 
-    localStorage.setItem("xp", newXP);
-    return newXP;
-  });
-
-  // Debt increase
-  increaseDebt(5);
-
-  // Optional bad feeling punishment
-console.log("You failed to submit today's question. XP -20, Debt +5.");
-  }
+  
 // duration modal (punishment/dungeon) states you already added — keep them
 // const [showDurationModal,...] etc.
 
@@ -1889,20 +1877,17 @@ useEffect(() => {
   const interval = setInterval(checkAnchors, 60 * 1000);
   return () => clearInterval(interval);
 }, [showArchitect]);
-
-useEffect(() => {
+React.useEffect(() => {
   const today = new Date().toDateString();
   const savedDay = localStorage.getItem("lastQuestionDay");
 
   if (savedDay !== today) {
 
-    // punish if not completed yesterday
     if (localStorage.getItem("questionDone") !== "true") {
-      setXP(prev => Math.max(0, prev - 20));  // XP -20
-      increaseDebt(5);                        // Debt +5
+      setXP(prev => Math.max(0, prev - 5));
+      increaseDebt(5);
     }
 
-    // reset new day
     setDailyQuestion("");
     setDailyAnswer("");
     setQuestionDone(false);
@@ -1911,6 +1896,8 @@ useEffect(() => {
     localStorage.setItem("dailyAnswer", "");
     localStorage.setItem("questionDone", "false");
     localStorage.setItem("lastQuestionDay", today);
+
+    setLastQuestionDay(today);
   }
 }, []);
   // ==========================================================
@@ -4162,43 +4149,6 @@ if (totalPercent >= 85) {
   </div>
 )}
 
-      <div className="daily-wrapper">
-  <h3>Daily Reflection</h3>
-
-  <div
-    className="note-box"
-    contentEditable={!questionDone}
-    suppressContentEditableWarning={true}
-    onInput={(e) => {
-      setDailyQuestion(e.target.innerText);
-      localStorage.setItem("dailyQuestion", e.target.innerText);
-    }}
-  >
-{dailyQuestion || "\u202AWrite your question here…"}
-  </div>
-<div
-    className="note-box"
-    contentEditable={!questionDone}
-    suppressContentEditableWarning={true}
-    onInput={(e) => {
-      setDailyAnswer(e.target.innerText);
-      localStorage.setItem("dailyAnswer", e.target.innerText);
-    }}
-  >
-    {dailyAnswer || "\u202AWrite your answer here…"}
-  </div>
-      <button
-    className="complete-btn"
-    disabled={questionDone}
-    onClick={() => {
-      setQuestionDone(true);
-      localStorage.setItem("questionDone", "true");
-    }}
-  >
-    {questionDone ? "Completed ✓" : "Mark as Completed"}
-  </button>
-</div>
-      
       {/* Dopamine Detox Section */}
       <div  className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
@@ -4990,6 +4940,45 @@ if (totalPercent >= 85) {
   </div>
 )}
 </div>
+<div className="daily-reflection-card">
+  <h2 className="dr-title">Daily Reflection</h2>
+
+  <div
+    className="note-box"
+    contentEditable={!questionDone}
+    suppressContentEditableWarning={true}
+    onInput={(e) => {
+      setDailyQuestion(e.target.innerText);
+      localStorage.setItem("dailyQuestion", e.target.innerText);
+    }}
+  >
+    {dailyQuestion || "Write your question here…"}
+  </div>
+
+  <div
+    className="note-box"
+    contentEditable={!questionDone}
+    suppressContentEditableWarning={true}
+    onInput={(e) => {
+      setDailyAnswer(e.target.innerText);
+      localStorage.setItem("dailyAnswer", e.target.innerText);
+    }}
+  >
+    {dailyAnswer || "Write your answer here…"}
+  </div>
+
+  <button
+    className="complete-btn"
+    disabled={questionDone}
+    onClick={() => {
+      setQuestionDone(true);
+      localStorage.setItem("questionDone", "true");
+    }}
+  >
+    {questionDone ? "Completed ✓" : "Mark as Completed"}
+  </button>
+</div>
+      
       <HistoryCalendar 
     debt={debt} 
     onSelectDay={(day) => setSelectedHistoryDay(day)} 
