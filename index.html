@@ -2619,11 +2619,12 @@ function toggleQuestDone(index){
 // === Debt Increase Helper ===
 function increaseDebt(amount) {
   setDebt(prev => {
-    const newDebt = prev + amount;
+    const newDebt = Math.min(50, prev + amount); // cap at 50
     localStorage.setItem('debt', newDebt);
     return newDebt;
   });
   }
+  
   // --- add this helper (place near increaseDebt / completePunishment helpers) ---
 function gainXP(amount) {
   setXP(prev => {
