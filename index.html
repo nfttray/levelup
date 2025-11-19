@@ -94,8 +94,11 @@
   font-size: 1rem;
   outline: none;
   white-space: pre-wrap;
-  direction: ltr;
-text-align: left;
+
+  /* THESE 3 FIX RTL COMPLETELY */
+  direction: ltr !important;
+  unicode-bidi: plaintext !important;
+  text-align: left !important;
 }
 
 .note-box:focus {
