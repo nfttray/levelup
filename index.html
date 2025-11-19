@@ -31,80 +31,7 @@
   </style>
 
 <style>
-.daily-question-box {
-  background: #151515;
-  padding: 20px;
-  border-radius: 14px;
-  margin: 18px 0;
-  border: 1px solid #2a2a2a;
-  box-shadow: 0 0 20px rgba(0,0,0,0.25);
-  transition: 0.3s ease;
-}
 
-.daily-question-box:hover {
-  box-shadow: 0 0 30px rgba(0,0,0,0.35);
-  transform: translateY(-2px);
-}
-
-.daily-question-box h3 {
-  margin-bottom: 12px;
-  font-size: 1.2rem;
-  color: #f5f5f5;
-  font-weight: 600;
-}
-
-.daily-question-box p {
-  margin: 8px 0;
-  font-size: 0.95rem;
-  color: #cccccc;
-}
-
-/* INPUT */
-.daily-question-box input {
-  width: 100%;
-  padding: 12px 14px;
-  margin: 10px 0;
-  border-radius: 10px;
-  border: 1px solid #333;
-  background: #1e1e1e;
-  color: #eaeaea;
-  outline: none;
-  font-size: 0.95rem;
-  transition: 0.2s ease;
-}
-
-.daily-question-box input:focus {
-  border-color: #4caf50;
-  box-shadow: 0 0 6px rgba(76,175,80,0.5);
-}
-
-/* BUTTON */
-.daily-question-box button {
-  margin-top: 5px;
-  padding: 10px 18px;
-  border-radius: 10px;
-  border: none;
-  background: #4caf50;
-  color: #ffffff;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: 0.25s ease;
-  width: 100%;
-}
-
-.daily-question-box button:hover {
-  background: #52c55a;
-  box-shadow: 0 0 10px rgba(76,175,80,0.5);
-}
-
-/* COMPLETED MESSAGE */
-.daily-question-box .completed {
-  color: #7bf77b;
-  font-weight: 600;
-  text-align: center;
-  padding: 10px 0;
-}
-  
   @keyframes fadeIn {
   from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
@@ -140,6 +67,36 @@
 }
 </style>
 <style>
+  .big-textbox {
+  width: 100%;
+  min-height: 140px;
+  max-height: 300px;
+  padding: 14px;
+  margin: 10px 0;
+  background: #1b1b1b;
+  border: 1px solid #333;
+  border-radius: 12px;
+  color: #f2f2f2;
+  font-size: 1rem;
+  resize: vertical;
+  overflow-y: auto;
+}
+
+.complete-btn {
+  padding: 12px;
+  width: 100%;
+  background: #4caf50;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.complete-btn:hover {
+  background: #5edb61;
+}
   @keyframes premiumGlow {
   0% {
     filter: drop-shadow(0 0 6px var(--badge-color)) 
@@ -618,10 +575,10 @@ const [showAnchorModal, setShowAnchorModal] = useState(false);
 const [currentAnchor, setCurrentAnchor] = useState(null);
 const [anchorQueueLock, setAnchorQueueLock] = useState(false); // prevent double popups
 
-  const [dailyQuestion, setDailyQuestion] = useState(localStorage.getItem("dailyQuestion") || "");
-const [dailyAnswer, setDailyAnswer] = useState(localStorage.getItem("dailyAnswer") || "");
-const [lastQuestionCheck, setLastQuestionCheck] = useState(localStorage.getItem("lastQuestionCheck") || "");
-
+  const [dailyQuestion, setDailyQuestion] = useState("");
+const [dailyAnswer, setDailyAnswer] = useState("");
+const [questionDone, setQuestionDone] = useState(false);
+const [lastQuestionDay, setLastQuestionDay] = useState(localStorage.getItem("lastQuestionDay") || "");
 
   // 🟥 CONTRACT SYSTEM — Independent Modal
 const [showContractModal, setShowContractModal] = useState(false);
@@ -1912,23 +1869,28 @@ useEffect(() => {
   useEffect(() => {
   const today = new Date().toDateString();
 
-  if (lastQuestionCheck !== today) {
+  // first time run
+  if (lastQuestionDay !== today) {
 
-    // If yesterday's question was NOT completed → punishment
-    if (!dailyQuestion || !dailyAnswer) {
-      punishForMissingQuestion();
+    // previous day incomplete? punishment
+    if (!questionDone) {
+      setXP(prev => Math.max(0, prev - 5));   // XP -20
+      increaseDebt(5);                         // Debt +5
+      console.log("Daily question incomplete → XP -5, Debt +5");
     }
 
-    // Reset for new day
+    // Reset new day
     setDailyQuestion("");
     setDailyAnswer("");
-    localStorage.removeItem("dailyQuestion");
-    localStorage.removeItem("dailyAnswer");
+    setQuestionDone(false);
+    localStorage.setItem("dailyQuestion", "");
+    localStorage.setItem("dailyAnswer", "");
+    localStorage.setItem("questionDone", "false");
+    localStorage.setItem("lastQuestionDay", today);
 
-    setLastQuestionCheck(today);
-    localStorage.setItem("lastQuestionCheck", today);
+    setLastQuestionDay(today);
   }
-}, [lastQuestionCheck]);
+}, []);
   // ==========================================================
 // ⏱️ JOURNAL OF RESOLVE - EFFECTS
 // ==========================================================
@@ -4178,38 +4140,36 @@ if (totalPercent >= 85) {
   </div>
 )}
 
-  <div className="daily-question-box">
-  <h3>Daily Self Question</h3>
-
-  {!dailyQuestion && (
-    <>
-      <input 
-        type="text"
-        placeholder="Write today's question..."
-        value={dailyQuestion}
-        onChange={(e) => {
-          setDailyQuestion(e.target.value);
-          localStorage.setItem("dailyQuestion", e.target.value);
-        }}
-      />
-    </>
-  )}
-
-  {dailyQuestion && !dailyAnswer && (
-    <>
-      <p><b>Question:</b> {dailyQuestion}</p>
-      <input
-        type="text"
-        placeholder="Write your answer..."
-        value={dailyAnswer}
-        onChange={(e) => {
-          setDailyAnswer(e.target.value);
-          localStorage.setItem("dailyAnswer", e.target.value);
-        }}
-      />
-    </>
-  )}
-</div>
+      <textarea
+  className="big-textbox"
+  placeholder="Write your question here…"
+  value={dailyQuestion}
+  onChange={(e) => {
+    setDailyQuestion(e.target.value);
+    localStorage.setItem("dailyQuestion", e.target.value);
+  }}
+  rows="6"
+/>
+<textarea
+  className="big-textbox"
+  placeholder="Write your answer here…"
+  value={dailyAnswer}
+  onChange={(e) => {
+    setDailyAnswer(e.target.value);
+    localStorage.setItem("dailyAnswer", e.target.value);
+  }}
+  rows="8"
+/>
+      <button
+  className="complete-btn"
+  onClick={() => {
+    setQuestionDone(true);
+    localStorage.setItem("questionDone", "true");
+  }}
+>
+  Mark as Completed
+</button>
+      
       {/* Dopamine Detox Section */}
       <div  className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">
   <h2 className="text-xl font-semibold mb-4 text-green-400 tracking-wide">
