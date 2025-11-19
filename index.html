@@ -4943,29 +4943,31 @@ if (totalPercent >= 85) {
 <div className="daily-reflection-card">
   <h2 className="dr-title">Daily Reflection</h2>
 
-  <div
-    className="note-box"
-    contentEditable={!questionDone}
-    suppressContentEditableWarning={true}
-    onInput={(e) => {
-      setDailyQuestion(e.target.innerText);
-      localStorage.setItem("dailyQuestion", e.target.innerText);
-    }}
-  >
-    {dailyQuestion || "Write your question here…"}
-  </div>
+<div
+  className="note-box"
+  contentEditable={!questionDone}
+  suppressContentEditableWarning={true}
+  dir="ltr"
+  onInput={(e) => {
+    setDailyQuestion(e.target.innerText);
+    localStorage.setItem("dailyQuestion", e.target.innerText);
+  }}
+>
+  {dailyQuestion || "Write your question here…"}
+</div>
 
   <div
-    className="note-box"
-    contentEditable={!questionDone}
-    suppressContentEditableWarning={true}
-    onInput={(e) => {
-      setDailyAnswer(e.target.innerText);
-      localStorage.setItem("dailyAnswer", e.target.innerText);
-    }}
-  >
-    {dailyAnswer || "Write your answer here…"}
-  </div>
+  className="note-box"
+  contentEditable={!questionDone}
+  suppressContentEditableWarning={true}
+  dir="ltr"
+  onInput={(e) => {
+    setDailyAnswer(e.target.innerText);
+    localStorage.setItem("dailyAnswer", e.target.innerText);
+  }}
+>
+  {dailyAnswer || "Write your answer here…"}
+</div>
 
   <button
     className="complete-btn"
