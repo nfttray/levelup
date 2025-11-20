@@ -3112,7 +3112,7 @@ function closeArchitectModal() {
 function applyDynamicThreshold() {
   // Increase / decrease and clamp 65-85
   if (architectPositiveStreak >= 3) {
-    const next = Math.min(80, architectThreshold + 5);
+    const next = Math.min(70, architectThreshold + 5);
     setArchitectThreshold(next);
     localStorage.setItem('architectThreshold', String(next));
     setArchitectPositiveStreak(0);
