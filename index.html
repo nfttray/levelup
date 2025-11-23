@@ -463,6 +463,11 @@ const SpinWheelUI = (
 
 function renderBadHabitButtons() {
   const box = document.getElementById("habitBtns");
+  if (!box) {
+    console.log("habitBtns NOT FOUND");
+    return;
+  }
+
   box.innerHTML = "";
 
   badHabits.forEach(habit => {
@@ -474,18 +479,41 @@ function renderBadHabitButtons() {
     btn.style.border = "none";
     btn.style.borderRadius = "8px";
     btn.onclick = () => {
-      closeHabitPopup();
-      openSpinWheel();
+      closeHabitPopup();  
+      openSpinWheel();    // ← THE IMPORTANT PART
     };
     box.appendChild(btn);
   });
-}
+  }
 
 function openBadHabitSelector() {
-  ReactDOM.createRoot(document.getElementById("popup-root")).render(BadHabitUI);
-  setTimeout(() => renderBadHabitButtons(), 50);
-}
+  const root = document.getElementById("popup-root");
+  const renderer = ReactDOM.createRoot(root);
+  
+  renderer.render(BadHabitUI);
 
+  // TRIPLE CHECK LOADER (very important)
+  let tries = 0;
+  const tryRender = setInterval(() => {
+    const box = document.getElementById("habitBtns");
+    if (box) {
+      clearInterval(tryRender);
+      renderBadHabitButtons();
+    }
+    tries++;
+    if (tries > 20) clearInterval(tryRender); // max 400ms
+  }, 20);
+  }
+function openSpinWheel() {
+  ReactDOM.createRoot(document.getElementById("popup-root")).render(SpinWheelUI);
+
+  setTimeout(() => {
+    renderWheelSlices();
+    document.getElementById("spinBtn").onclick = () => {
+      spinWheel(result => alert("Wheel Result: " + result));
+    };
+  }, 50);
+  }
 function closeHabitPopup() {
   ReactDOM.createRoot(document.getElementById("popup-root")).render(<div></div>);
   }
