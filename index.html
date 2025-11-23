@@ -504,18 +504,94 @@ function openBadHabitSelector() {
     if (tries > 20) clearInterval(tryRender); // max 400ms
   }, 20);
   }
+  
 function openSpinWheel() {
-  ReactDOM.createRoot(document.getElementById("popup-root")).render(SpinWheelUI);
+  const popup = document.getElementById("popup-root");
+  const renderer = ReactDOM.createRoot(popup);
+  renderer.render(SpinWheelUI);
 
-  setTimeout(() => {
-    renderWheelSlices();
-    document.getElementById("spinBtn").onclick = () => {
-      spinWheel(result => alert("Wheel Result: " + result));
-    };
-  }, 50);
+  // WAIT UNTIL DOM IS READY
+  let tries = 0;
+  const check = setInterval(() => {
+    
+    const wheel = document.getElementById("spinWheel");
+    const spinBtn = document.getElementById("spinBtn");
+
+    if (wheel && spinBtn) {
+      clearInterval(check);
+
+      // Render wheel slices now
+      renderWheelSlices();
+
+      // Attach click
+      spinBtn.onclick = () => {
+        spinWheel(result => {
+          alert("Wheel Result: " + result);
+        });
+      };
+
+      return;
+    }
+
+    tries++;
+    if (tries > 40) {
+      clearInterval(check);
+      alert("Spin wheel failed to load UI.");
+    }
+
+  }, 25);
   }
+  
 function closeHabitPopup() {
   ReactDOM.createRoot(document.getElementById("popup-root")).render(<div></div>);
+  }
+  function renderWheelSlices() {
+  const wheel = document.getElementById("spinWheel");
+  if (!wheel) return;
+
+  wheel.innerHTML = "";
+
+  const slotCount = wheelOptions.length;
+  const deg = 360 / slotCount;
+
+  wheelOptions.forEach((opt, i) => {
+    const slice = document.createElement("div");
+    slice.style.position = "absolute";
+    slice.style.width = "50%";
+    slice.style.height = "50%";
+    slice.style.left = "50%";
+    slice.style.top = "50%";
+    slice.style.transformOrigin = "0 0";
+    slice.style.transform = `rotate(${i * deg}deg)`;
+    slice.style.clipPath = "polygon(0 0, 100% 0, 0 100%)";
+    slice.style.background = (i % 2) ? "#b5179e" : "#7209b7";
+    slice.style.color = "white";
+    slice.style.display = "flex";
+    slice.style.alignItems = "center";
+    slice.style.justifyContent = "center";
+    slice.style.fontSize = "11px";
+
+    slice.innerText = opt;
+
+    wheel.appendChild(slice);
+  });
+  }
+  function spinWheel(callback) {
+  if (spinning) return;
+  spinning = true;
+
+  const wheel = document.getElementById("spinWheel");
+  const randomSpin = 360 * 7 + Math.floor(Math.random() * 360);
+
+  wheelAngle += randomSpin;
+  wheel.style.transform = `rotate(${wheelAngle}deg)`;
+
+  setTimeout(() => {
+    spinning = false;
+    const normalized = wheelAngle % 360;
+    const index = wheelOptions.length - 1 - Math.floor(normalized / (360 / wheelOptions.length));
+    callback(wheelOptions[index]);
+  }, 4200);
   }
 // === XP SYSTEM ===
 const rankTitles = ['E-Rank Hunter','D-Rank','C-Rank','B-Rank','A-Rank','S-Rank'];
