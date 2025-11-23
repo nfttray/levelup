@@ -200,6 +200,7 @@
 <body class="text-white">
 <div class="overlay"></div>
 <div id="root"></div>
+  <div id="popup-root"></div>
 <script type="text/babel">
 const { useState, useEffect } = React;
 
@@ -387,6 +388,107 @@ const fogReduceOptions = [
   "Sunlight"
 ];
 
+  // === BAD HABIT SELECTOR UI ===
+const BadHabitUI = (
+  <div id="habitPopup" style={{
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.85)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 99999
+  }}>
+    <div style={{
+      width: "320px",
+      background: "#0f0f1f",
+      padding: "18px",
+      borderRadius: "12px",
+      border: "2px solid purple",
+      color: "white"
+    }}>
+      <h3 style={{textAlign:"center", marginBottom:"10px"}}>⚠️ Select Bad Habit</h3>
+      <div id="habitBtns" style={{display:"flex",flexDirection:"column",gap:"10px"}}></div>
+    </div>
+  </div>
+);
+
+// === SPIN WHEEL UI ===
+const SpinWheelUI = (
+  <div id="wheelPopup" style={{
+    position:"fixed", inset:0,
+    background:"rgba(0,0,0,0.85)",
+    display:"flex", alignItems:"center", justifyContent:"center",
+    zIndex:99999
+  }}>
+    <div style={{position:"relative", textAlign:"center"}}>
+
+      <div style={{
+        width:0, height:0,
+        borderLeft:"20px solid transparent",
+        borderRight:"20px solid transparent",
+        borderBottom:"35px solid yellow",
+        position:"absolute", top:"-45px", left:"50%",
+        transform:"translateX(-50%)",
+        filter:"drop-shadow(0px 0px 10px yellow)"
+      }}></div>
+
+      <div id="spinWheel" style={{
+        width:"300px", height:"300px",
+        borderRadius:"50%", overflow:"hidden",
+        border:"8px solid purple",
+        transition:"4s cubic-bezier(.17,.67,.25,1.25)",
+        boxShadow:"0 0 20px purple"
+      }}></div>
+
+      <button id="spinBtn" style={{
+        marginTop:"20px", padding:"10px 20px",
+        background:"purple", color:"white",
+        border:"none", borderRadius:"10px",
+        cursor:"pointer"
+      }}>SPIN</button>
+
+    </div>
+  </div>
+);
+
+  const badHabits = [
+  "Wasted Time",
+  "Mindless Scrolling",
+  "Checked Social Media",
+  "Procrastinated",
+  "Long Break",
+  "Avoided Study"
+];
+
+function renderBadHabitButtons() {
+  const box = document.getElementById("habitBtns");
+  box.innerHTML = "";
+
+  badHabits.forEach(habit => {
+    const btn = document.createElement("button");
+    btn.innerText = habit;
+    btn.style.padding = "10px";
+    btn.style.background = "#6d28d9";
+    btn.style.color = "white";
+    btn.style.border = "none";
+    btn.style.borderRadius = "8px";
+    btn.onclick = () => {
+      closeHabitPopup();
+      openSpinWheel();
+    };
+    box.appendChild(btn);
+  });
+}
+
+function openBadHabitSelector() {
+  ReactDOM.createRoot(document.getElementById("popup-root")).render(BadHabitUI);
+  setTimeout(() => renderBadHabitButtons(), 50);
+}
+
+function closeHabitPopup() {
+  ReactDOM.createRoot(document.getElementById("popup-root")).render(<div></div>);
+  }
 // === XP SYSTEM ===
 const rankTitles = ['E-Rank Hunter','D-Rank','C-Rank','B-Rank','A-Rank','S-Rank'];
 
@@ -4456,7 +4558,12 @@ if (totalPercent >= 85) {
     )}
   </div>
 </div> 
-
+<button 
+  onClick={() => openBadHabitSelector()}
+  className="fixed bottom-5 right-5 bg-red-600 px-4 py-2 rounded-lg"
+>
+  ⚠ Bad Habit
+</button>
 
 <div className="mt-5 max-w-sm mx-auto bg-gray-900 p-5 rounded-xl shadow-lg text-center text-white">
   <h2 className="text-lg font-semibold mb-4">Fog Meter</h2>
