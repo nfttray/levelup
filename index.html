@@ -388,6 +388,7 @@ const fogReduceOptions = [
   "Sunlight"
 ];
 
+  
   // === BAD HABIT SELECTOR UI ===
 const BadHabitUI = (
   <div id="habitPopup" style={{
@@ -452,6 +453,22 @@ const SpinWheelUI = (
   </div>
 );
 
+  // === SPIN WHEEL VARIABLES ===
+let wheelOptions = [
+  "XP -30",
+  "Fog +10%",
+  "Study Timer 25 min",
+  "10 Push-ups",
+  "Fog Spike +15%",
+  "Double Punishment",
+  "Watch YouTube 30 min",
+  "MiniBoss Fight",
+  "Lock Social Media"
+];
+
+let spinning = false;
+let wheelAngle = 0;
+  
   const badHabits = [
   "Wasted Time",
   "Mindless Scrolling",
