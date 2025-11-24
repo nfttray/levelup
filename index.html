@@ -422,28 +422,7 @@ const SpinWheelUI = (
     display:"flex", alignItems:"center", justifyContent:"center",
     zIndex:99999
   }}>
-    <div 
-  id="closeWheel" 
-  style={{
-    position: "absolute",
-    top: "10px",
-    right: "10px",
-    width: "30px",
-    height: "30px",
-    borderRadius: "50%",
-    background: "rgba(255,255,255,0.2)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "20px",
-    color: "white",
-    cursor: "pointer",
-    zIndex: 9999,
-    backdropFilter: "blur(4px)"
-  }}
->
-  ✕
-</div>
+    
     <div style={{position:"relative", textAlign:"center"}}>
 
       <div style={{
@@ -571,12 +550,7 @@ function openSpinWheel() {
     if (tries > 50) clearInterval(wait);
   }, 25);
 
-  const closeBtn = document.getElementById("closeWheel");
-if (closeBtn) {
-  closeBtn.onclick = () => {
-    document.getElementById("popup-root").innerHTML = "";
-  };
-  }
+
   }
   
 function closeHabitPopup() {
@@ -610,6 +584,10 @@ function spinWheel(callback) {
     ];
 
     callback(result);
+  
+setTimeout(() => {
+  document.getElementById("popup-root").innerHTML = "";
+}, 1500);
   }, 4200);
   }
 
