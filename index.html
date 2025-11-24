@@ -522,72 +522,66 @@ function openBadHabitSelector() {
     if (tries > 20) clearInterval(tryRender); // max 400ms
   }, 20);
   }
-  
-function openSpinWheel() {
+
+  function openSpinWheel() {
   const popup = document.getElementById("popup-root");
   const renderer = ReactDOM.createRoot(popup);
   renderer.render(SpinWheelUI);
 
-  let tries = 0;
+  let c = 0;
 
-  const wait = setInterval(() => {
+  const timer = setInterval(() => {
     const wheel = document.getElementById("spinWheel");
     const btn = document.getElementById("spinBtn");
 
     if (wheel && btn) {
-      clearInterval(wait);
+      clearInterval(timer);
 
       renderWheelSlices();
 
-      btn.onclick = () => {
+      btn.onclick = () =>
         spinWheel(result => {
           applyWheelResult(result);
+
+          setTimeout(() => {
+            popup.innerHTML = "";
+          }, 1500);
         });
-      };
     }
 
-    tries++;
-    if (tries > 50) clearInterval(wait);
-  }, 25);
-
-
+    if (c++ > 80) clearInterval(timer);
+  }, 30);
   }
+
   
 function closeHabitPopup() {
   ReactDOM.createRoot(document.getElementById("popup-root")).render(<div></div>);
   }
-  
-function spinWheel(callback) {
+  function spinWheel(callback) {
   if (spinning) return;
   spinning = true;
 
   const wheel = document.getElementById("spinWheel");
 
-  const fullRot = 360 * 6;
-  const finalExtra = Math.floor(Math.random() * 360);
-  const finalSpin = fullRot + finalExtra;
+  const totalRot = 360 * 6;
+  const extra = Math.random() * 360;
+  const final = totalRot + extra;
 
-  wheelAngle += finalSpin;
-
-  wheel.style.transform = `rotate(${wheelAngle}deg)`;
+  wheelAngle = (wheelAngle + final) % 360;
+  wheel.style.transform = `rotate(${final}deg)`;
 
   setTimeout(() => {
     spinning = false;
 
-    const normalized = ((wheelAngle % 360) + 360) % 360;
-    const sliceSize = 360 / wheelOptions.length;
+    const sliceAngle = 360 / wheelOptions.length;
+    const landed = (360 - (extra % 360)) % 360;
 
-    const index = Math.floor(normalized / sliceSize);
+    const index = Math.floor(landed / sliceAngle);
 
-    const result = wheelOptions[
-      (wheelOptions.length - index) % wheelOptions.length
-    ];
+    const result = wheelOptions[index];
 
     callback(result);
-  
-setTimeout(() => {
-  document.getElementById("popup-root").innerHTML = "";
-}, 1500);
+
   }, 4200);
   }
 
@@ -600,6 +594,7 @@ setTimeout(() => {
 
   wheelOptions.forEach((label, i) => {
     const slice = document.createElement("div");
+
     slice.style.position = "absolute";
     slice.style.width = "50%";
     slice.style.height = "50%";
@@ -608,7 +603,7 @@ setTimeout(() => {
     slice.style.transformOrigin = "0 0";
     slice.style.transform = `rotate(${i * deg}deg)`;
     slice.style.clipPath = "polygon(0 0, 100% 0, 0 100%)";
-    slice.style.background = (i % 2 === 0) ? "#8b5cf6" : "#d946ef";
+    slice.style.background = (i % 2 === 0) ? "#b026ff" : "#d946ef";
 
     const txt = document.createElement("div");
     txt.innerText = label;
@@ -617,57 +612,47 @@ setTimeout(() => {
     txt.style.top = "30px";
     txt.style.transform = `rotate(${deg / 2}deg)`;
     txt.style.color = "white";
-    txt.style.fontWeight = "bold";
     txt.style.fontSize = "12px";
-
+    txt.style.fontWeight = "bold";
     slice.appendChild(txt);
+
     wheel.appendChild(slice);
   });
   }
 
-  function applyWheelResult(result) {
-  if (result.includes("XP -")) {
-    const val = parseInt(result.replace("XP -", "").trim());
-    const prev = parseInt(localStorage.getItem("xp") || "0");
-    localStorage.setItem("xp", prev - val);
-    alert("XP -" + val);
+function applyWheelResult(result) {
+  console.log("Result:", result);
+
+  if (result.startsWith("XP -")) {
+    const v = parseInt(result.replace("XP -", ""));
+    const xp = parseInt(localStorage.getItem("xp") || "0");
+    localStorage.setItem("xp", xp - v);
   }
 
-  if (result.includes("XP +")) {
-    const val = parseInt(result.replace("XP +", "").trim());
-    const prev = parseInt(localStorage.getItem("xp") || "0");
-    localStorage.setItem("xp", prev + val);
-    alert("XP +" + val);
+  if (result.startsWith("XP +")) {
+    const v = parseInt(result.replace("XP +", ""));
+    const xp = parseInt(localStorage.getItem("xp") || "0");
+    localStorage.setItem("xp", xp + v);
   }
 
-  if (result.includes("Fog +")) {
-    const val = parseInt(result.replace("Fog +", "").trim());
-    const prev = parseInt(localStorage.getItem("fog") || "0");
-    localStorage.setItem("fog", prev + val);
-    alert("Fog +" + val);
+  if (result.startsWith("Fog +")) {
+    const v = parseInt(result.replace("Fog +", ""));
+    const f = parseInt(localStorage.getItem("fog") || "0");
+    localStorage.setItem("fog", f + v);
   }
 
-  if (result.includes("Fog -")) {
-    const val = parseInt(result.replace("Fog -", "").trim());
-    const prev = parseInt(localStorage.getItem("fog") || "0");
-    localStorage.setItem("fog", prev - val);
-    alert("Fog -" + val);
+  if (result.startsWith("Fog -")) {
+    const v = parseInt(result.replace("Fog -", ""));
+    const f = parseInt(localStorage.getItem("fog") || "0");
+    localStorage.setItem("fog", f - v);
   }
 
-  if (result === "LockSocial") {
+  if (result.includes("Lock Social")) {
     localStorage.setItem("social_block", "1");
-    alert("Social Blocked Today!");
   }
+  }  
 
-  if (result === "Pushups") {
-    alert("Do 10 Pushups RIGHT NOW!");
-  }
-
-  if (result === "Study Timer 25 min") {
-    localStorage.setItem("forcedStudy", "25");
-    alert("Study 25 Minutes NOW!");
-  }
-  }
+  
 // === XP SYSTEM ===
 const rankTitles = ['E-Rank Hunter','D-Rank','C-Rank','B-Rank','A-Rank','S-Rank'];
 
