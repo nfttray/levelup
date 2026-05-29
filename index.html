@@ -1710,22 +1710,7 @@ useEffect(() => {
 }, []);
 
 
-  useEffect(() => {
-  let interval;
-  if (focusActive && focusRemaining > 0) {
-    interval = setInterval(() => {
-      setFocusRemaining(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          endFocusSession(true); // success
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }
-  return () => clearInterval(interval);
-}, [focusActive, focusRemaining]);
+  
 
   useEffect(() => {
   const today = new Date().toLocaleDateString();
