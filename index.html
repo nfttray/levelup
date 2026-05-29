@@ -3814,30 +3814,7 @@ if (totalPercent >= 85) {
   </div>
 </div>
 
-{/* ===== Focus Stats ===== */}
-<div className="bg-gray-800 mt-6 p-4 rounded-2xl shadow-md text-gray-200">
-  <div className="flex justify-between items-center mb-2">
-    <h3 className="text-lg font-bold">🧭 Focus Stats</h3>
-    <div className="text-sm text-gray-400">Total Sessions: {focusStats.length}</div>
-  </div>
 
-  {focusStats.length === 0 ? (
-    <p className="text-sm text-gray-400">No sessions yet. Start a Focus session.</p>
-  ) : (
-    <ul className="text-sm space-y-1 max-h-36 overflow-y-auto">
-      {focusStats.slice().reverse().map((s,i) => (
-        <li key={i} className="flex justify-between border-b border-gray-700 py-1">
-          <span>{s.date}</span>
-          <span className="text-emerald-400">{s.minutes} min</span>
-        </li>
-      ))}
-    </ul>
-  )}
-
-  <div className="mt-3 text-sm text-gray-400">
-    Total minutes: {focusStats.reduce((a,b)=>a+(b.minutes||0),0)}
-  </div>
-</div>
 
 {/* ==========================================================
      🔮 JOURNAL OF RESOLVE - UI SECTION
