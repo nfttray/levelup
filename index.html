@@ -441,7 +441,7 @@ function App(){
   const [habits,setHabits]=useState(JSON.parse(localStorage.getItem('habits'))||[]);
   const [punishments,setPunishments]=useState(JSON.parse(localStorage.getItem('punishments'))||[]);
   const [showAddModal,setShowAddModal]=useState(false);
-  const [newTask,setNewTask]=useState({type:'daily',title:'',start:'',end:'',days:''});
+  const [newTask,setNewTask]=useState({type:'daily',title:'',days:''});
   const [bossCountdown,setBossCountdown]=useState(parseInt(localStorage.getItem('bossCountdown'))||0);
  const [rivalXP,setRivalXP]=useState(parseFloat(localStorage.getItem('rivalXP'))||0);
   const [rivalLevel,setRivalLevel]=useState(parseInt(localStorage.getItem('rivalLevel'))||1);
@@ -2933,7 +2933,7 @@ useEffect(() => {
     if(newTask.type==='habit'){setHabits([...habits,task]);}
     else{setTasks([...tasks,task]);}
     setShowAddModal(false);
-    setNewTask({type:'daily',title:'',start:'',end:'',days:''});
+    setNewTask({type:'daily',title:'',days:''});
   }
 
 function completeTask(id) {
@@ -4631,9 +4631,10 @@ if (totalPercent >= 85) {
         <div>
           <p className="font-bold text-sm">{task.title}</p>
           <p className="text-xs text-gray-400">
-  {task.type === 'daily'
-    ? `Time: ${task.start}-${task.end}`
-    : getRemainingDays(task)}
+{task.type === 'daily'
+ ? 'Duration Based Task'
+ : getRemainingDays(task)}
+            
 </p>
           <p className="text-xs text-yellow-400">
       {taskTimers[task.id] || ""}
@@ -4641,10 +4642,10 @@ if (totalPercent >= 85) {
         </div>
         {!lockdown && (
           <button
-            onClick={() => completeTask(task.id)}
+          onClick={() => openDurationModal("Daily Task", task.title)}
             className="bg-green-500 px-2 py-1 rounded text-sm hover:bg-green-600 hover:scale-105 transition-all duration-300"
           >
-            Done
+            Start Task
           </button>
         )}
       </div>
@@ -4718,22 +4719,7 @@ if (totalPercent >= 85) {
         placeholder="Task Title"
         className="mb-3 w-full p-2 text-black rounded"
       />
-      {newTask.type === 'daily' && (
-        <div className="flex gap-2 mb-3">
-          <input
-            type="time"
-            value={newTask.start}
-            onChange={e => setNewTask({ ...newTask, start: e.target.value })}
-            className="p-2 text-black rounded w-1/2"
-          />
-          <input
-            type="time"
-            value={newTask.end}
-            onChange={e => setNewTask({ ...newTask, end: e.target.value })}
-            className="p-2 text-black rounded w-1/2"
-          />
-        </div>
-      )}
+      
       {newTask.type === 'timed' && (
         <input
           type="number"
