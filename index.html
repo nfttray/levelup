@@ -2687,6 +2687,18 @@ function handleProofTimeout(taskId) {
 
   // reward XP (tune amount as you like)
   setXP(prev => (prev || 0) + 5);
+    const prevMinutes = Number(
+  localStorage.getItem("productiveMinutes") || 0
+);
+
+localStorage.setItem(
+  "productiveMinutes",
+  prevMinutes + activeTaskMinutes
+);
+
+setProductiveMinutes(
+  prev => prev + activeTaskMinutes
+);
 
   // cleanup modal & timeout
   if (proofTimeoutsRef.current[proofTask.id]) {
