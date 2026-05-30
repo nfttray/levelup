@@ -2679,6 +2679,14 @@ function handleProofTimeout(taskId) {
 
   // reward XP (tune amount as you like)
   setXP(prev => (prev || 0) + 5);
+    if (proofTask?.type === "daily") {
+  const updatedTasks = tasks.filter(
+    task => task.id !== proofTask.id
+  );
+
+  setTasks(updatedTasks);
+  localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+  }
     const prevMinutes = Number(
   localStorage.getItem("productiveMinutes") || 0
 );
