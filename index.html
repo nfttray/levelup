@@ -661,6 +661,9 @@ const [activeApp, setActiveApp] = useState(null);
 const [appStartTime, setAppStartTime] = useState(null);
 const [appElapsed, setAppElapsed] = useState(0);
 const [showAppUsageModal, setShowAppUsageModal] = useState(false);
+  const [taskTimerActive, setTaskTimerActive] = useState(false);
+const [taskTimerRemaining, setTaskTimerRemaining] = useState(0);
+const [activeDailyTask, setActiveDailyTask] = useState(null);
 
 
   
@@ -759,12 +762,19 @@ function openDurationModal(type, title) {
       alert("Enter valid minutes!");
       return;
     }
-
-    // 🧮 Add to productive minutes
-    const prev = Number(localStorage.getItem("productiveMinutes") || 0);
-    localStorage.setItem("productiveMinutes", prev + mins);
-setProductiveMinutes(prev => prev + mins);
     
+if (durationType === "Daily Task") {
+  setActiveDailyTask(durationTitle);
+  setTaskTimerRemaining(mins * 60);
+  setTaskTimerActive(true);
+  setShowDurationModal(false);
+  return;
+}
+    // 🧮 Add to productive minutes
+  //  const prev = Number(localStorage.getItem("productiveMinutes") || 0);
+  //  localStorage.setItem("productiveMinutes", prev + mins);
+// setProductiveMinutes(prev => prev + mins);
+
     // 🧾 Save to manual history
     const history = JSON.parse(localStorage.getItem("manualActivities") || "[]");
     history.push({
@@ -1656,7 +1666,25 @@ useEffect(() => {
   autoCleanOldProofs(5);
 }, []);
 
+useEffect(() => {
+  if (!taskTimerActive) return;
 
+  const interval = setInterval(() => {
+    setTaskTimerRemaining(prev => {
+      if (prev <= 1) {
+        clearInterval(interval);
+        setTaskTimerActive(false);
+
+        // YAHAN proof modal open karna hai
+
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [taskTimerActive]);
   
 
   useEffect(() => {
