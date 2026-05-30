@@ -1555,38 +1555,9 @@ function getAuraColor(level) {
     // only consider incomplete tasks
     if (task.completed) return;
 
-    if (task.type === 'daily') {
-      const [endH, endM] = task.end.split(':').map(Number);
-      const endTime = new Date();
-      endTime.setHours(endH, endM, 0, 0);
-
-      if (now > endTime) {
-        // if proof already submitted, ignore
-        if (task.proof || task.completed) return;
-
-        // if we've already started proofPending for this task, ensure modal or timeout exists
-        if (!task.proofPending) {
-          // mark proof pending with timestamp
-          updatedTasks[idx] = { ...task, proofPending: true, missedAt: Date.now() };
-          // open modal for the first missed one right away
-          // but only open modal if no other modal is visible
-          if (!showProofModal) {
-            setProofTask(updatedTasks[idx]);
-            setShowProofModal(true);
-            // start grace timeout
-            startProofTimeout(updatedTasks[idx]);
-          }
-        } else {
-          // if proofPending exists already but no modal shown, show it (app reopened later)
-          if (!showProofModal) {
-            setProofTask(updatedTasks[idx]);
-            setShowProofModal(true);
-            // ensure a timeout exists (maybe app reopened after restart)
-            ensureProofTimeout(updatedTasks[idx]);
-          }
-        }
-      }
-    } else if (task.type === 'timed') {
+    
+    
+    else if (task.type === 'timed') {
       // original logic: deadline = created + days
       const createdDate = new Date(task.created);
       const deadline = new Date(createdDate);
