@@ -664,7 +664,8 @@ const [showAppUsageModal, setShowAppUsageModal] = useState(false);
   const [taskTimerActive, setTaskTimerActive] = useState(false);
 const [taskTimerRemaining, setTaskTimerRemaining] = useState(0);
 const [activeDailyTask, setActiveDailyTask] = useState(null);
-
+const [activeDailyTaskId, setActiveDailyTaskId] = useState(null);
+const [activeTaskMinutes, setActiveTaskMinutes] = useState(0);
 
   
 // duration modal (punishment/dungeon) states you already added — keep them
@@ -764,6 +765,7 @@ function openDurationModal(type, title) {
     }
     
 if (durationType === "Daily Task") {
+  setActiveTaskMinutes(mins);
   setActiveDailyTask(durationTitle);
   setTaskTimerRemaining(mins * 60);
   setTaskTimerActive(true);
@@ -1676,6 +1678,7 @@ useEffect(() => {
   setTaskTimerActive(false);
 
   setProofTask({
+    id: activeDailyTaskId,
     title: activeDailyTask,
     type: "daily"
   });
@@ -4622,7 +4625,11 @@ if (totalPercent >= 85) {
         </div>
         {!lockdown && (
           <button
-          onClick={() => openDurationModal("Daily Task", task.title)}
+          onClick={() => {
+  setActiveDailyTask(task.title);
+  setActiveDailyTaskId(task.id);
+  openDurationModal("Daily Task", task.title);
+}}
             className="bg-green-500 px-2 py-1 rounded text-sm hover:bg-green-600 hover:scale-105 transition-all duration-300"
           >
             Start Task
