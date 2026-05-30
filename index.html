@@ -1589,17 +1589,7 @@ function getAuraColor(level) {
   }
 const [taskTimers, setTaskTimers] = useState({});
 
-useEffect(() => {
-  const interval = setInterval(() => {
-    let updatedTimers = {};
-    tasks.forEach(task => {
-      updatedTimers[task.id] = getTaskRemainingTime(task);
-    });
-    setTaskTimers(updatedTimers);
-  }, 1000);
 
-  return () => clearInterval(interval);
-}, [tasks]);
 
   useEffect(() => {
   const checkAnchor = () => {
