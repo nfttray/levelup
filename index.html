@@ -765,6 +765,8 @@ function openDurationModal(type, title) {
     }
     
 if (durationType === "Daily Task") {
+  console.log("DAILY TIMER START", mins);
+
   setActiveTaskMinutes(mins);
   setActiveDailyTask(durationTitle);
   setTaskTimerRemaining(mins * 60);
