@@ -1672,13 +1672,18 @@ useEffect(() => {
   const interval = setInterval(() => {
     setTaskTimerRemaining(prev => {
       if (prev <= 1) {
-        clearInterval(interval);
-        setTaskTimerActive(false);
+  clearInterval(interval);
+  setTaskTimerActive(false);
 
-        // YAHAN proof modal open karna hai
+  setProofTask({
+    title: activeDailyTask,
+    type: "daily"
+  });
 
-        return 0;
-      }
+  setShowProofModal(true);
+
+  return 0;
+  }
       return prev - 1;
     });
   }, 1000);
