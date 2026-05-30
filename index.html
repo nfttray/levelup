@@ -4777,7 +4777,11 @@ if (totalPercent >= 85) {
     {questionDone ? "Completed ✓" : "Mark as Completed"}
   </button>
 </div>
-      
+      {taskTimerActive && (
+  <div className="bg-purple-900 text-white p-3 rounded-xl m-2">
+    ⏳ Timer Running: {taskTimerRemaining}s
+  </div>
+)}
       <HistoryCalendar 
     debt={debt} 
     onSelectDay={(day) => setSelectedHistoryDay(day)} 
