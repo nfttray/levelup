@@ -4613,6 +4613,11 @@ if (totalPercent >= 85) {
 {/* Tasks Section */}
 <div className="mt-6 p-4 bg-gray-800 rounded-xl shadow-lg max-w-md mx-auto">      
 <div className="mt-5">
+        {taskTimerActive && (
+  <div className="bg-purple-900 text-white p-3 rounded-xl m-2">
+    ⏳ Timer Running: {taskTimerRemaining}s
+  </div>
+)}
   <h2 className="text-lg mb-2 font-semibold">Tasks</h2>
   <div className="mb-3 flex justify-end">
     {!lockdown && (
@@ -4795,11 +4800,7 @@ if (totalPercent >= 85) {
     {questionDone ? "Completed ✓" : "Mark as Completed"}
   </button>
 </div>
-      {taskTimerActive && (
-  <div className="bg-purple-900 text-white p-3 rounded-xl m-2">
-    ⏳ Timer Running: {taskTimerRemaining}s
-  </div>
-)}
+
       <HistoryCalendar 
     debt={debt} 
     onSelectDay={(day) => setSelectedHistoryDay(day)} 
