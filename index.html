@@ -769,6 +769,12 @@ if (durationType === "Daily Task") {
 
   setActiveTaskMinutes(mins);
   setActiveDailyTask(durationTitle);
+
+  const endTime = Date.now() + mins * 60 * 1000;
+
+localStorage.setItem("taskEndTime", endTime);
+localStorage.setItem("activeDailyTask", durationTitle);
+localStorage.setItem("activeDailyTaskId", activeDailyTaskId);
   setTaskTimerRemaining(mins * 60);
   setTaskTimerActive(true);
   setShowDurationModal(false);
@@ -1898,7 +1904,34 @@ useEffect(() => {
 
   return () => clearTimeout(midnightTimeout);
 }, [contracts]);
-  
+
+
+  useEffect(() => {
+  const endTime = Number(localStorage.getItem("taskEndTime"));
+
+  if (!endTime) return;
+
+  const remaining = Math.floor((endTime - Date.now()) / 1000);
+
+  if (remaining > 0) {
+    setTaskTimerRemaining(remaining);
+    setTaskTimerActive(true);
+
+    const savedTask =
+      localStorage.getItem("activeDailyTask");
+
+    const savedTaskId =
+      localStorage.getItem("activeDailyTaskId");
+
+    if (savedTask) setActiveDailyTask(savedTask);
+    if (savedTaskId) setActiveDailyTaskId(savedTaskId);
+
+  } else {
+    localStorage.removeItem("taskEndTime");
+    localStorage.removeItem("activeDailyTask");
+    localStorage.removeItem("activeDailyTaskId");
+  }
+}, []);
   
 // === Decay System Effect ===
   useEffect(() => {
